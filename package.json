@@ -1,0 +1,11 @@
+{
+  "name": "bingo-app",
+  "version": "1.0.0",
+  "description": "The Bingo Application is a Spring Boot-based project that allows users to participate in a bingo game. It includes features for user authentication, session management, and lottery drawing operations.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
