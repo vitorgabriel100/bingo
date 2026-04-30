@@ -354,144 +354,175 @@ export default function TvPage() {
   useWebSocket([`/topic/tv/${sessaoId}`], handleWsMessage);
 
   return (
-    <div className="tv-page">
-      <audio ref={introAudioRef} src="/sounds/bingo-start.mp3" preload="auto" />
-      <audio
-        ref={machineAudioRef}
-        src="/sounds/bingo-machine.mp3"
-        preload="auto"
-        loop
-      />
+  <div className={`tv-page casino-tv fase-${faseAnimacao}`}>
+    <audio ref={introAudioRef} src="/sounds/bingo-start.mp3" preload="auto" />
+    <audio
+      ref={machineAudioRef}
+      src="/sounds/bingo-machine.mp3"
+      preload="auto"
+      loop
+    />
 
-      {!somLiberado && (
-        <button className="tv-enable-sound" onClick={liberarSom}>
-          Ativar som da TV
-        </button>
-      )}
+    {!somLiberado && (
+      <button className="tv-enable-sound" onClick={liberarSom}>
+        Ativar som da TV
+      </button>
+    )}
 
-      {faseAnimacao === "countdown" && (
-        <div className="tv-countdown-overlay">
-          <div className="tv-countdown-content">
-            <span>PREPARE-SE</span>
-            <strong>{countdown}</strong>
-          </div>
+    {faseAnimacao === "countdown" && (
+      <div className="tv-countdown-overlay">
+        <div className="tv-countdown-content">
+          <span>PREPARE-SE</span>
+          <strong>{countdown}</strong>
         </div>
-      )}
+      </div>
+    )}
 
-      <header className="tv-header">
-        <div className="tv-title">
-          <strong>BINGO BENEFICENTE</strong>
-          <span>
-            {numeroRodada ? `RODADA ${numeroRodada} • ` : ""}
-            {statusRodada}
-          </span>
-        </div>
+    <header className="casino-tv-header">
+      <div className="casino-brand">
+        <span>BINGO BENEFICENTE</span>
+        <strong>
+          {numeroRodada ? `RODADA ${numeroRodada}` : "TRANSMISSÃO AO VIVO"}
+        </strong>
+      </div>
 
-        <div className="tv-prize-now">
-          <span>CONCORRENDO AGORA</span>
-          <strong>{formatarPremio(premioAtual)}</strong>
-        </div>
+      <div className="casino-status">
+        <span>STATUS</span>
+        <strong>{statusRodada}</strong>
+      </div>
 
-        <div className="tv-mini-card">
-          <span>LINHA</span>
-          <strong>R$ {valores.linha}</strong>
-        </div>
+      <div className="casino-prize">
+        <span>CONCORRENDO AGORA</span>
+        <strong>{formatarPremio(premioAtual)}</strong>
+      </div>
+    </header>
 
-        <div className="tv-mini-card">
-          <span>BINGO</span>
-          <strong>R$ {valores.bingo}</strong>
-        </div>
+    <main className="casino-tv-main">
+      <section className="casino-machine-area">
+        <div className="casino-message">{mensagem}</div>
 
-        <div className="tv-mini-card">
-          <span>ACUMULADO</span>
-          <strong>R$ {valores.acumulado}</strong>
-        </div>
-      </header>
-
-      <main className="tv-main tv-main-simple">
-        <section className="tv-center">
-          <div className="tv-message">{mensagem}</div>
-
-          <div className="tv-current-prize-banner">
-            <span>Valendo prêmio de</span>
-            <strong>{formatarPremio(premioAtual)}</strong>
+        <div className={`casino-bingo-machine ${faseAnimacao === "spinning" ? "spinning" : ""}`}>
+          <div className="casino-light-column left">
+            <i></i><i></i><i></i><i></i><i></i>
           </div>
 
-          <div className="tv-machine-stage">
-            <div
-              className={`tv-globe ${
-                faseAnimacao === "spinning" ? "is-spinning" : ""
-              }`}
-            >
-              <div className="tv-globe-shine" />
-
-              <span className="tv-mini-ball ball-1">8</span>
-              <span className="tv-mini-ball ball-2">21</span>
-              <span className="tv-mini-ball ball-3">33</span>
-              <span className="tv-mini-ball ball-4">46</span>
-              <span className="tv-mini-ball ball-5">59</span>
-              <span className="tv-mini-ball ball-6">72</span>
-              <span className="tv-mini-ball ball-7">15</span>
-              <span className="tv-mini-ball ball-8">64</span>
-            </div>
-
-            <div className="tv-drop-track">
-              {numeroAnimado !== null && (
-                <div
-                  className={`tv-drawn-ball ${
-                    faseAnimacao === "dropping" ? "is-dropping" : ""
-                  } ${faseAnimacao === "revealed" ? "is-revealed" : ""}`}
-                >
-                  {String(numeroAnimado).padStart(2, "0")}
-                </div>
-              )}
-            </div>
+          <div className="casino-light-column right">
+            <i></i><i></i><i></i><i></i><i></i>
           </div>
 
-          <div className="tv-ball-area">
-            <div className={`tv-final-ball ${numeroAtual ? "has-number" : ""}`}>
+          <div className="casino-top-tube">
+            <div className="casino-top-ball">
               <span>
                 {numeroAtual ? String(numeroAtual).padStart(2, "0") : "--"}
               </span>
             </div>
+            <div className="casino-tube-glass"></div>
           </div>
 
-          <div className="tv-last-balls">
-            {historico.length > 0 ? (
-              historico
-                .slice()
-                .reverse()
-                .slice(0, 8)
-                .map((n, index) => (
-                  <span key={`${n}-${index}`}>
+          <div className="casino-globe-wrap">
+            <div className="casino-globe">
+              <div className="casino-globe-shine"></div>
+              <div className="casino-globe-ring"></div>
+              <div className="casino-globe-center"></div>
+              <div className="casino-globe-arm arm-1"></div>
+              <div className="casino-globe-arm arm-2"></div>
+              <div className="casino-globe-arm arm-3"></div>
+              <div className="casino-globe-arm arm-4"></div>
+
+              <div className="casino-inner-balls">
+                {[
+                  3, 5, 8, 12, 15, 18, 21, 22, 27, 31,
+                  33, 37, 41, 44, 48, 49, 52, 56, 59, 62,
+                  64, 67, 71, 72, 73, 75, 9, 14, 25, 36,
+                  43, 54, 68, 70, 6, 11
+                ].map((n, index) => (
+                  <span
+                    key={`${n}-${index}`}
+                    className={`casino-inner-ball ib-${index + 1}`}
+                  >
                     {String(n).padStart(2, "0")}
                   </span>
-                ))
-            ) : (
-              <p>Sem números sorteados ainda</p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="casino-output-tube">
+            {numeroAnimado !== null && (
+              <div
+                className={`casino-drawn-ball ${
+                  faseAnimacao === "dropping" ? "dropping" : ""
+                } ${faseAnimacao === "revealed" ? "revealed" : ""}`}
+              >
+                <span>{String(numeroAnimado).padStart(2, "0")}</span>
+              </div>
             )}
           </div>
-        </section>
 
-        <aside className="tv-board">
-          <div className="tv-board-title">
-            <strong>{historico.length}/75</strong>
-            <span>BOLAS SORTEADAS</span>
+          <div className="casino-machine-base">
+            <div className="casino-results-strip">
+              {historico.length > 0 ? (
+                historico
+                  .slice()
+                  .reverse()
+                  .slice(0, 8)
+                  .reverse()
+                  .map((n, index) => (
+                    <span key={`${n}-${index}`}>
+                      {String(n).padStart(2, "0")}
+                    </span>
+                  ))
+              ) : (
+                <>
+                  <span>--</span>
+                  <span>--</span>
+                  <span>--</span>
+                  <span>--</span>
+                  <span>--</span>
+                  <span>--</span>
+                  <span>--</span>
+                  <span>--</span>
+                </>
+              )}
+            </div>
           </div>
+        </div>
+      </section>
 
-          <div className="tv-number-grid bingo-75-grid">
-            {todosNumeros.map((n) => (
-              <span key={n} className={historico.includes(n) ? "drawn" : ""}>
-                {String(n).padStart(2, "0")}
-              </span>
-            ))}
+      <aside className="casino-side-panel">
+        <div className="casino-side-title">
+          <span>BOLAS SORTEADAS</span>
+          <strong>{historico.length}/75</strong>
+        </div>
+
+        <div className="casino-number-grid">
+          {todosNumeros.map((n) => (
+            <span key={n} className={historico.includes(n) ? "drawn" : ""}>
+              {String(n).padStart(2, "0")}
+            </span>
+          ))}
+        </div>
+
+        <div className="casino-values">
+          <div>
+            <span>LINHA</span>
+            <strong>R$ {valores.linha}</strong>
           </div>
-        </aside>
-      </main>
+          <div>
+            <span>BINGO</span>
+            <strong>R$ {valores.bingo}</strong>
+          </div>
+          <div>
+            <span>ACUMULADO</span>
+            <strong>R$ {valores.acumulado}</strong>
+          </div>
+        </div>
+      </aside>
+    </main>
 
-      <footer className="tv-footer">
-        Cartela manual • Bingo tradicional 1 a 75
-      </footer>
-    </div>
-  );
+    <footer className="casino-tv-footer">
+      Cartela manual • Bingo tradicional 1 a 75
+    </footer>
+  </div>
+);
 }

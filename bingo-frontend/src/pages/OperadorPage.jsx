@@ -387,50 +387,41 @@ export default function OperadorPage() {
     sorteando;
 
   return (
-    <Layout title="Operador">
-      <div className="operator-page">
-        <section className="operator-main">
-          <div className="operator-status">
-            <span>Rodada ID: {rodadaId || "Nenhuma"}</span>
-            <strong className={`status-pill status-${statusRodada.toLowerCase()}`}>
+  <Layout title="Operador">
+    <div className="operator-simple-page">
+      <section className="operator-top">
+        <div className="operator-card operator-status-card">
+          <span className="operator-label">Rodada atual</span>
+          <div className="operator-status-line">
+            <strong>#{rodadaId || "--"}</strong>
+            <span className={`status-pill status-${statusRodada.toLowerCase()}`}>
               {statusRodada}
-            </strong>
+            </span>
+          </div>
+          <small>{mensagem}</small>
+        </div>
+
+        <div className="operator-card operator-current-card">
+          <span className="operator-label">Número sorteado</span>
+
+          <div className={`operator-current-ball ${sorteando ? "is-sorting" : ""}`}>
+            <span>
+              {numeroAnimado !== null && numeroAnimado !== undefined
+                ? String(numeroAnimado).padStart(2, "0")
+                : numeroAtual !== null && numeroAtual !== undefined
+                ? String(numeroAtual).padStart(2, "0")
+                : "--"}
+            </span>
           </div>
 
-          <div className="operator-ball">
-            <small>{mensagem}</small>
+          <p>{historico.length}/75 números sorteados</p>
+        </div>
 
-            <div className={`operator-draw-machine ${sorteando ? "is-sorting" : ""}`}>
-              <div className="operator-machine-globe">
-                <span className="operator-mini-ball mb-1">08</span>
-                <span className="operator-mini-ball mb-2">21</span>
-                <span className="operator-mini-ball mb-3">33</span>
-                <span className="operator-mini-ball mb-4">46</span>
-                <span className="operator-mini-ball mb-5">59</span>
-                <span className="operator-mini-ball mb-6">72</span>
-              </div>
-
-              <div className="operator-drop-area">
-                {numeroAnimado && (
-                  <div
-                    key={numeroAnimado}
-                    className={`operator-drawn-ball ${
-                      sorteando ? "is-dropping" : "is-visible"
-                    }`}
-                  >
-                    {String(numeroAnimado).padStart(2, "0")}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <p>{historico.length}/75 números sorteados</p>
-
-            <div className="current-prize-mini">
-              <span>Concorrendo agora</span>
-              <strong>{formatarPremio(premioAtual)}</strong>
-            </div>
-          </div>
+        <div className="operator-card operator-prize-card">
+          <span className="operator-label">Concorrendo agora</span>
+          <strong className="operator-prize-highlight">
+            {formatarPremio(premioAtual)}
+          </strong>
 
           <button
             className="draw-button"
@@ -439,39 +430,43 @@ export default function OperadorPage() {
           >
             {sorteando ? "SORTEANDO..." : "SORTEAR"}
           </button>
+        </div>
+      </section>
 
-          <div className="controls">
-            <button onClick={iniciarRodada} disabled={!rodadaId}>
-              Iniciar
-            </button>
+      <section className="operator-card operator-controls-card">
+        <div className="controls">
+          <button onClick={iniciarRodada} disabled={!rodadaId}>
+            Iniciar
+          </button>
 
-            <button onClick={pausarRodada} disabled={!rodadaId}>
-              Pausar
-            </button>
+          <button onClick={pausarRodada} disabled={!rodadaId}>
+            Pausar
+          </button>
 
-            <button
-              onClick={() => setAutoSorteio((v) => !v)}
-              disabled={
-                !rodadaId || statusRodada !== "EM_ANDAMENTO" || historico.length >= 75
-              }
-              className={autoSorteio ? "auto-on" : ""}
-            >
-              Auto: {autoSorteio ? "ON" : "OFF"}
-            </button>
+          <button
+            onClick={() => setAutoSorteio((v) => !v)}
+            disabled={
+              !rodadaId || statusRodada !== "EM_ANDAMENTO" || historico.length >= 75
+            }
+            className={autoSorteio ? "auto-on" : ""}
+          >
+            Auto: {autoSorteio ? "ON" : "OFF"}
+          </button>
 
-            <button className="danger" onClick={encerrarRodada} disabled={!rodadaId}>
-              Encerrar
-            </button>
+          <button className="danger" onClick={encerrarRodada} disabled={!rodadaId}>
+            Encerrar
+          </button>
 
-            <button onClick={novaRodada}>Nova Rodada</button>
+          <button onClick={novaRodada}>Nova Rodada</button>
 
-            <button onClick={() => navigate("/historico-rodadas")}>
-              Histórico
-            </button>
-          </div>
-        </section>
+          <button onClick={() => navigate("/historico-rodadas")}>
+            Histórico
+          </button>
+        </div>
+      </section>
 
-        <section className="prize-panel">
+      <section className="operator-middle">
+        <section className="operator-card prize-panel-simple">
           <div className="prize-header">
             <div>
               <span>Painel de Prêmios</span>
@@ -532,18 +527,7 @@ export default function OperadorPage() {
           </div>
         </section>
 
-        <section className="operator-grid">
-          {numeros.map((numero) => (
-            <div
-              key={numero}
-              className={historico.includes(numero) ? "grid-item drawn" : "grid-item"}
-            >
-              {String(numero).padStart(2, "0")}
-            </div>
-          ))}
-        </section>
-
-        <section className="operator-history">
+        <section className="operator-card operator-history-simple">
           <h3>Últimos números</h3>
 
           <div className="history-list">
@@ -551,7 +535,7 @@ export default function OperadorPage() {
               historico
                 .slice()
                 .reverse()
-                .slice(0, 12)
+                .slice(0, 15)
                 .map((n, index) => (
                   <span key={`${n}-${index}`}>{String(n).padStart(2, "0")}</span>
                 ))
@@ -560,7 +544,26 @@ export default function OperadorPage() {
             )}
           </div>
         </section>
-      </div>
-    </Layout>
-  );
+      </section>
+
+      <section className="operator-card operator-grid-simple">
+        <div className="grid-header">
+          <h3>Números do bingo</h3>
+          <span>{historico.length} marcados</span>
+        </div>
+
+        <div className="operator-grid">
+          {numeros.map((numero) => (
+            <div
+              key={numero}
+              className={historico.includes(numero) ? "grid-item drawn" : "grid-item"}
+            >
+              {String(numero).padStart(2, "0")}
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </Layout>
+);
 }
