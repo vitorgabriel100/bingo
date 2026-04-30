@@ -1,4 +1,4 @@
-package com.empresa.bingo.config;
+/* package com.empresa.bingo.config;
 
 import com.empresa.bingo.entity.Perfil;
 import com.empresa.bingo.entity.Usuario;
