@@ -63,4 +63,11 @@ public java.util.List<SessaoResponse> listar() {
 public SessaoResponse buscarSessaoAtiva() {
     return sessaoService.buscarSessaoAtiva();
 }
+
+@GetMapping("/ativa")
+@PreAuthorize("hasAnyRole('OPERADOR','ADMIN','GERENTE')")
+public SessaoResponse buscarSessaoAtiva(Authentication authentication) {
+    Usuario usuario = getUsuarioAutenticado(authentication);
+    return sessaoService.buscarOuCriarSessaoAtiva(usuario);
+}
 }

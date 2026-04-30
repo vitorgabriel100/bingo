@@ -172,6 +172,50 @@ public class SessaoService {
         return toResponse(sessao);
     }
 
+    @Transactional
+public SessaoResponse buscarOuCriarSessaoAtiva(Usuario usuarioLogado) {
+    var sessoes = sessaoBingoRepository.findAll();
+
+    var existente = sessoes.stream()
+            .filter(s -> s.getStatus() == StatusSessao.AGENDADA || s.getStatus() == StatusSessao.EM_ANDAMENTO)
+            .findFirst();
+
+    if (existente.isPresent()) {
+        return toResponse(existente.get());
+    }
+
+    Sala sala = salaRepository.findAll()
+            .stream()
+            .findFirst()
+            .orElseGet(() -> {
+                Sala nova = new Sala();
+                nova.setNome("Sala Principal");
+                nova.setAtiva(true);
+                return salaRepository.save(nova);
+            });
+
+    SessaoBingo sessao = SessaoBingo.builder()
+            .sala(sala)
+            .descricao("Sessão Principal")
+            .status(StatusSessao.AGENDADA)
+            .criadaPor(usuarioLogado)
+            .build();
+
+    sessao = sessaoBingoRepository.save(sessao);
+
+    for (int i = 1; i <= 20; i++) {
+        Rodada rodada = Rodada.builder()
+                .sessao(sessao)
+                .numeroRodada(i)
+                .status(StatusRodada.AGUARDANDO)
+                .build();
+
+        rodadaRepository.save(rodada);
+    }
+
+    return toResponse(sessao);
+}
+
     public SessaoBingo buscarSessao(Long sessaoId) {
         return sessaoBingoRepository.findById(sessaoId)
                 .orElseThrow(() -> new RegraNegocioException("Sessão não encontrada."));
