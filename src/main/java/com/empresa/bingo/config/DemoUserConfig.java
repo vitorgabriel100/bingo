@@ -5,6 +5,7 @@ import com.empresa.bingo.entity.Usuario;
 import com.empresa.bingo.model.Cliente;
 import com.empresa.bingo.repository.UsuarioRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -21,13 +22,16 @@ public class DemoUserConfig implements CommandLineRunner {
     private final EntityManager entityManager;
 
     @Override
+    @Transactional
     public void run(String... args) {
+        Cliente cliente = buscarOuCriarClienteDemo();
+
         criarUsuarioDemo(
                 "Administrador Demo",
                 "admin@demo.com",
                 "Admin@123",
                 1L,
-                1L
+                cliente
         );
 
         criarUsuarioDemo(
@@ -35,7 +39,7 @@ public class DemoUserConfig implements CommandLineRunner {
                 "operador@demo.com",
                 "Operador@123",
                 2L,
-                1L
+                cliente
         );
 
         criarUsuarioDemo(
@@ -43,8 +47,26 @@ public class DemoUserConfig implements CommandLineRunner {
                 "tv@demo.com",
                 "Tv@123",
                 3L,
-                1L
+                cliente
         );
+    }
+
+    private Cliente buscarOuCriarClienteDemo() {
+        Cliente cliente = entityManager.find(Cliente.class, 1L);
+
+        if (cliente != null) {
+            return cliente;
+        }
+
+        cliente = new Cliente();
+        cliente.setNome("Cliente Demo");
+        cliente.setAtivo(true);
+        cliente.setCriadoEm(LocalDateTime.now());
+
+        entityManager.persist(cliente);
+        entityManager.flush();
+
+        return cliente;
     }
 
     private void criarUsuarioDemo(
@@ -52,16 +74,13 @@ public class DemoUserConfig implements CommandLineRunner {
             String email,
             String senha,
             Long perfilId,
-            Long clienteId
+            Cliente cliente
     ) {
-        boolean existe = usuarioRepository.existsByEmail(email);
-
-        if (existe) {
+        if (usuarioRepository.existsByEmail(email)) {
             return;
         }
 
         Perfil perfil = entityManager.getReference(Perfil.class, perfilId);
-        Cliente cliente = entityManager.getReference(Cliente.class, clienteId);
 
         Usuario usuario = new Usuario();
         usuario.setNome(nome);
