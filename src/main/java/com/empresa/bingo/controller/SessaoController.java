@@ -51,4 +51,16 @@ public class SessaoController {
         return usuarioRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
     }
+
+    @GetMapping
+@PreAuthorize("hasAnyRole('OPERADOR','ADMIN','GERENTE')")
+public java.util.List<SessaoResponse> listar() {
+    return sessaoService.listarSessoes();
+}
+
+@GetMapping("/ativa")
+@PreAuthorize("hasAnyRole('OPERADOR','ADMIN','GERENTE')")
+public SessaoResponse buscarSessaoAtiva() {
+    return sessaoService.buscarSessaoAtiva();
+}
 }

@@ -31,8 +31,13 @@ public class SessaoService {
 
     @Transactional
     public SessaoResponse criarSessao(CriarSessaoRequest request, Usuario usuarioLogado) {
-        Sala sala = salaRepository.findById(request.getSalaId())
-                .orElseThrow(() -> new RegraNegocioException("Sala não encontrada."));
+        Sala sala = salaRepository.findAll().stream().findFirst()
+        .orElseGet(() -> {
+            Sala nova = new Sala();
+            nova.setNome("Sala Principal");
+            nova.setAtiva(true);
+            return salaRepository.save(nova);
+        });
 
         if (!Boolean.TRUE.equals(sala.getAtiva())) {
             throw new RegraNegocioException("A sala informada está inativa.");
@@ -183,4 +188,21 @@ public class SessaoService {
                 .salaNome(sessao.getSala().getNome())
                 .build();
     }
+
+    public java.util.List<SessaoResponse> listarSessoes() {
+    return sessaoBingoRepository.findAll()
+            .stream()
+            .map(this::toResponse)
+            .toList();
+}
+
+public SessaoResponse buscarSessaoAtiva() {
+    var lista = sessaoBingoRepository.findAll();
+
+    return lista.stream()
+            .filter(s -> s.getStatus().name().equals("EM_ANDAMENTO"))
+            .findFirst()
+            .map(this::toResponse)
+            .orElseThrow(() -> new RuntimeException("Nenhuma sessão ativa encontrada."));
+}
 }
