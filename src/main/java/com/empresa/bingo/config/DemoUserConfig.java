@@ -21,35 +21,20 @@ public class DemoUserConfig implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final EntityManager entityManager;
 
-    @Override
-    @Transactional
-    public void run(String... args) {
-        Cliente cliente = buscarOuCriarClienteDemo();
+   @Override
+@Transactional
+public void run(String... args) {
 
-        criarUsuarioDemo(
-                "Administrador Demo",
-                "admin@demo.com",
-                "Admin@123",
-                1L,
-                cliente
-        );
+    Cliente cliente = buscarOuCriarClienteDemo();
 
-        criarUsuarioDemo(
-                "Operador Demo",
-                "operador@demo.com",
-                "Operador@123",
-                2L,
-                cliente
-        );
+    Perfil admin = buscarOuCriarPerfil(1L, "ADMIN");
+    Perfil operador = buscarOuCriarPerfil(2L, "OPERADOR");
+    Perfil tv = buscarOuCriarPerfil(3L, "TV");
 
-        criarUsuarioDemo(
-                "TV Demo",
-                "tv@demo.com",
-                "Tv@123",
-                3L,
-                cliente
-        );
-    }
+    criarUsuarioDemo("Administrador Demo", "admin@demo.com", "Admin@123", admin, cliente);
+    criarUsuarioDemo("Operador Demo", "operador@demo.com", "Operador@123", operador, cliente);
+    criarUsuarioDemo("TV Demo", "tv@demo.com", "Tv@123", tv, cliente);
+}
 
     private Cliente buscarOuCriarClienteDemo() {
         Cliente cliente = entityManager.find(Cliente.class, 1L);
@@ -69,13 +54,31 @@ public class DemoUserConfig implements CommandLineRunner {
         return cliente;
     }
 
+    private Perfil buscarOuCriarPerfil(Long id, String nome) {
+    Perfil perfil = entityManager.find(Perfil.class, id);
+
+    if (perfil != null) {
+        return perfil;
+    }
+
+    perfil = new Perfil();
+    perfil.setId(id);
+    perfil.setNome(nome);
+
+    entityManager.persist(perfil);
+    entityManager.flush();
+
+    return perfil;
+}
+
     private void criarUsuarioDemo(
-            String nome,
-            String email,
-            String senha,
-            Long perfilId,
-            Cliente cliente
-    ) {
+        String nome,
+        String email,
+        String senha,
+        Perfil perfil,
+        Cliente cliente
+        usuario.setPerfil(perfil);
+) {
         if (usuarioRepository.existsByEmail(email)) {
             return;
         }
