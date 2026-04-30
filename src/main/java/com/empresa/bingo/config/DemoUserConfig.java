@@ -30,7 +30,7 @@ public class DemoUserConfig implements CommandLineRunner {
 
         Perfil admin = buscarOuCriarPerfil(NomePerfil.ADMIN);
         Perfil operador = buscarOuCriarPerfil(NomePerfil.OPERADOR);
-        Perfil tv = buscarOuCriarPerfil(NomePerfil.TV);
+        Perfil tv = buscarOuCriarPerfil(NomePerfil.OPERADOR);
 
         criarUsuario("Administrador", "admin@demo.com", "123456", admin, cliente);
         criarUsuario("Operador", "operador@demo.com", "123456", operador, cliente);
