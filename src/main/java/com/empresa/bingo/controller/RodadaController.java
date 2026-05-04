@@ -9,6 +9,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/rodadas")
 @RequiredArgsConstructor
@@ -39,31 +42,39 @@ public class RodadaController {
     }
 
     @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
-@PostMapping("/sessao/{sessaoId}")
-public RodadaResponse criarRodada(
-        @PathVariable Long sessaoId,
-        Authentication authentication
-) {
-    Usuario usuario = getUsuarioAutenticado(authentication);
-    return rodadaService.criarRodada(sessaoId, usuario);
-}
+    @PostMapping("/{id}/sortear")
+    public Map<String, Object> sortear(@PathVariable Long id, Authentication authentication) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.sortearNumero(id, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PostMapping("/sessao/{sessaoId}")
+    public RodadaResponse criarRodada(
+            @PathVariable Long sessaoId,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.criarRodada(sessaoId, usuario);
+    }
+
+    @GetMapping("/sessao/{sessaoId}")
+    public List<RodadaResponse> listarRodadas(@PathVariable Long sessaoId) {
+        return rodadaService.listarRodadasDaSessao(sessaoId);
+    }
+
+    @GetMapping("/sessao/{sessaoId}/ativa")
+    public RodadaResponse buscarRodadaAtiva(@PathVariable Long sessaoId) {
+        return rodadaService.buscarRodadaAtiva(sessaoId);
+    }
+
+    @GetMapping("/{id}/numeros")
+    public List<Map<String, Object>> listarNumerosDaRodada(@PathVariable Long id) {
+        return rodadaService.listarNumerosDaRodada(id);
+    }
 
     private Usuario getUsuarioAutenticado(Authentication authentication) {
         return usuarioRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
     }
-
-    @GetMapping("/sessao/{sessaoId}")
-public java.util.List<RodadaResponse> listarRodadas(
-        @PathVariable Long sessaoId
-) {
-    return rodadaService.listarRodadasDaSessao(sessaoId);
-}
-
-@GetMapping("/sessao/{sessaoId}/ativa")
-public RodadaResponse buscarRodadaAtiva(
-        @PathVariable Long sessaoId
-) {
-    return rodadaService.buscarRodadaAtiva(sessaoId);
-}
 }

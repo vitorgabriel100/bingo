@@ -1,12 +1,14 @@
 package com.empresa.bingo.service;
 
 import com.empresa.bingo.dto.rodada.RodadaResponse;
+import com.empresa.bingo.entity.NumeroSorteado;
 import com.empresa.bingo.entity.Rodada;
 import com.empresa.bingo.entity.SessaoBingo;
 import com.empresa.bingo.entity.Usuario;
 import com.empresa.bingo.enums.StatusRodada;
 import com.empresa.bingo.enums.StatusSessao;
 import com.empresa.bingo.exception.RegraNegocioException;
+import com.empresa.bingo.repository.NumeroSorteadoRepository;
 import com.empresa.bingo.repository.RodadaRepository;
 import com.empresa.bingo.repository.SessaoBingoRepository;
 import com.empresa.bingo.websocket.BingoEventPublisher;
@@ -15,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class RodadaService {
 
     private final RodadaRepository rodadaRepository;
     private final SessaoBingoRepository sessaoBingoRepository;
+    private final NumeroSorteadoRepository numeroSorteadoRepository;
     private final AuditoriaService auditoriaService;
     private final BingoEventPublisher bingoEventPublisher;
 
@@ -56,42 +62,43 @@ public class RodadaService {
             );
         }
 
-        // Encerra automaticamente qualquer outra rodada em andamento na mesma sessão
-        rodadaRepository.findBySessaoIdOrderByNumeroRodadaDesc(sessaoId)
-                .stream()
-                .filter(r -> r.getStatus() == StatusRodada.EM_ANDAMENTO)
-                .filter(r -> !r.getId().equals(rodadaAtualId))
-                .forEach(rodadaAntiga -> {
-                    rodadaAntiga.setStatus(StatusRodada.FINALIZADA);
+        List<Rodada> rodadasDaSessao = rodadaRepository.findBySessaoIdOrderByNumeroRodadaDesc(sessaoId);
 
-                    if (rodadaAntiga.getEncerrouEm() == null) {
-                        rodadaAntiga.setEncerrouEm(LocalDateTime.now());
-                    }
+        for (Rodada rodadaAntiga : rodadasDaSessao) {
+            if (rodadaAntiga.getStatus() == StatusRodada.EM_ANDAMENTO
+                    && !rodadaAntiga.getId().equals(rodadaAtualId)) {
 
-                    rodadaAntiga = rodadaRepository.save(rodadaAntiga);
+                rodadaAntiga.setStatus(StatusRodada.FINALIZADA);
 
-                    auditoriaService.registrar(
-                            usuarioLogado,
-                            "ENCERRAR_RODADA_AUTOMATICAMENTE",
-                            "RODADA",
-                            rodadaAntiga.getId(),
-                            "Rodada " + rodadaAntiga.getNumeroRodada()
-                                    + " encerrada automaticamente ao iniciar nova rodada."
-                    );
+                if (rodadaAntiga.getEncerrouEm() == null) {
+                    rodadaAntiga.setEncerrouEm(LocalDateTime.now());
+                }
 
-                    Map<String, Object> payloadRodadaAntiga = Map.of(
-                            "type", "ROUND_FINISHED",
-                            "rodadaId", rodadaAntiga.getId(),
-                            "sessaoId", sessaoId,
-                            "numeroRodada", rodadaAntiga.getNumeroRodada(),
-                            "status", rodadaAntiga.getStatus().name(),
-                            "timestamp", rodadaAntiga.getEncerrouEm().toString()
-                    );
+                rodadaAntiga = rodadaRepository.save(rodadaAntiga);
 
-                    bingoEventPublisher.publicarRodada(rodadaAntiga.getId(), payloadRodadaAntiga);
-                    bingoEventPublisher.publicarSessao(sessaoId, payloadRodadaAntiga);
-                    bingoEventPublisher.publicarTv(sessaoId, payloadRodadaAntiga);
-                });
+                auditoriaService.registrar(
+                        usuarioLogado,
+                        "ENCERRAR_RODADA_AUTOMATICAMENTE",
+                        "RODADA",
+                        rodadaAntiga.getId(),
+                        "Rodada " + rodadaAntiga.getNumeroRodada()
+                                + " encerrada automaticamente ao iniciar nova rodada."
+                );
+
+                Map<String, Object> payloadRodadaAntiga = Map.of(
+                        "type", "ROUND_FINISHED",
+                        "rodadaId", rodadaAntiga.getId(),
+                        "sessaoId", sessaoId,
+                        "numeroRodada", rodadaAntiga.getNumeroRodada(),
+                        "status", rodadaAntiga.getStatus().name(),
+                        "timestamp", rodadaAntiga.getEncerrouEm().toString()
+                );
+
+                bingoEventPublisher.publicarRodada(rodadaAntiga.getId(), payloadRodadaAntiga);
+                bingoEventPublisher.publicarSessao(sessaoId, payloadRodadaAntiga);
+                bingoEventPublisher.publicarTv(sessaoId, payloadRodadaAntiga);
+            }
+        }
 
         if (sessao.getStatus() == StatusSessao.CRIADA
                 || sessao.getStatus() == StatusSessao.AGENDADA
@@ -255,13 +262,78 @@ public class RodadaService {
         return toResponse(novaRodada);
     }
 
+    @Transactional
+    public Map<String, Object> sortearNumero(Long rodadaId, Usuario usuarioLogado) {
+        Rodada rodada = buscarRodada(rodadaId);
+
+        if (rodada.getStatus() != StatusRodada.EM_ANDAMENTO) {
+            throw new RegraNegocioException("A rodada não está em andamento.");
+        }
+
+        long quantidadeSorteada = numeroSorteadoRepository.countByRodadaId(rodadaId);
+
+        if (quantidadeSorteada >= 75) {
+            throw new RegraNegocioException("Todos os 75 números já foram sorteados.");
+        }
+
+        List<Integer> disponiveis = new ArrayList<>();
+
+        for (int numero = 1; numero <= 75; numero++) {
+            if (!numeroSorteadoRepository.existsByRodadaIdAndNumero(rodadaId, numero)) {
+                disponiveis.add(numero);
+            }
+        }
+
+        if (disponiveis.isEmpty()) {
+            throw new RegraNegocioException("Não há mais números disponíveis para sorteio.");
+        }
+
+        Integer numeroSorteado = disponiveis.get(new Random().nextInt(disponiveis.size()));
+        Integer ordem = (int) quantidadeSorteada + 1;
+
+        NumeroSorteado registro = NumeroSorteado.builder()
+                .rodada(rodada)
+                .numero(numeroSorteado)
+                .ordem(ordem)
+                .sorteadoEm(LocalDateTime.now())
+                .sorteadoPor(usuarioLogado)
+                .build();
+
+        registro = numeroSorteadoRepository.save(registro);
+
+        auditoriaService.registrar(
+                usuarioLogado,
+                "SORTEAR_NUMERO",
+                "RODADA",
+                rodada.getId(),
+                "Número " + numeroSorteado + " sorteado na rodada " + rodada.getNumeroRodada() + "."
+        );
+
+        Map<String, Object> payload = Map.of(
+                "type", "NUMBER_DRAWN",
+                "id", registro.getId(),
+                "numero", registro.getNumero(),
+                "ordem", registro.getOrdem(),
+                "rodadaId", rodada.getId(),
+                "sessaoId", rodada.getSessao().getId(),
+                "numeroRodada", rodada.getNumeroRodada(),
+                "sorteadoEm", registro.getSorteadoEm().toString()
+        );
+
+        bingoEventPublisher.publicarRodada(rodada.getId(), payload);
+        bingoEventPublisher.publicarSessao(rodada.getSessao().getId(), payload);
+        bingoEventPublisher.publicarTv(rodada.getSessao().getId(), payload);
+
+        return payload;
+    }
+
     public Rodada buscarRodada(Long rodadaId) {
         return rodadaRepository.findById(rodadaId)
                 .orElseThrow(() -> new RegraNegocioException("Rodada não encontrada."));
     }
 
     @Transactional(readOnly = true)
-    public java.util.List<RodadaResponse> listarRodadasDaSessao(Long sessaoId) {
+    public List<RodadaResponse> listarRodadasDaSessao(Long sessaoId) {
         return rodadaRepository
                 .findBySessaoIdOrderByNumeroRodadaDesc(sessaoId)
                 .stream()
@@ -275,6 +347,20 @@ public class RodadaService {
                 .findBySessaoIdAndStatus(sessaoId, StatusRodada.EM_ANDAMENTO)
                 .map(this::toResponse)
                 .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> listarNumerosDaRodada(Long rodadaId) {
+        return numeroSorteadoRepository.findByRodadaIdOrderByOrdemAsc(rodadaId)
+                .stream()
+                .map(numero -> Map.<String, Object>of(
+                        "id", numero.getId(),
+                        "numero", numero.getNumero(),
+                        "ordem", numero.getOrdem(),
+                        "rodadaId", numero.getRodada().getId(),
+                        "sorteadoEm", numero.getSorteadoEm().toString()
+                ))
+                .toList();
     }
 
     private RodadaResponse toResponse(Rodada rodada) {
