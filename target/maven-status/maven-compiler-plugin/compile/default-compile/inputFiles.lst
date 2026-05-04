@@ -1,6 +1,7 @@
 C:\bingo-app\src\main\java\com\empresa\bingo\BingoApplication.java
 C:\bingo-app\src\main\java\com\empresa\bingo\config\DataInitializer.java
 C:\bingo-app\src\main\java\com\empresa\bingo\config\DemoUserConfig.java
+C:\bingo-app\src\main\java\com\empresa\bingo\config\GlobalCorsConfig.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\AdminClienteController.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\AuthController.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\RodadaController.java
@@ -42,7 +43,6 @@ C:\bingo-app\src\main\java\com\empresa\bingo\repository\RodadaRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\SalaRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\SessaoBingoRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\UsuarioRepository.java
-C:\bingo-app\src\main\java\com\empresa\bingo\security\CorsFilter.java
 C:\bingo-app\src\main\java\com\empresa\bingo\security\JwtAuthenticationFilter.java
 C:\bingo-app\src\main\java\com\empresa\bingo\security\JwtService.java
 C:\bingo-app\src\main\java\com\empresa\bingo\security\SecurityConfig.java
