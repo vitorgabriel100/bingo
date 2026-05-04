@@ -35,6 +35,9 @@ public class RodadaService {
             throw new RegraNegocioException("A rodada não possui sessão vinculada.");
         }
 
+        Long sessaoId = sessao.getId();
+        Long rodadaAtualId = rodada.getId();
+
         if (sessao.getStatus() != StatusSessao.CRIADA
                 && sessao.getStatus() != StatusSessao.AGENDADA
                 && sessao.getStatus() != StatusSessao.PAUSADA
@@ -53,12 +56,42 @@ public class RodadaService {
             );
         }
 
-        boolean existeRodadaEmAndamento =
-                rodadaRepository.existsBySessaoIdAndStatus(sessao.getId(), StatusRodada.EM_ANDAMENTO);
+        // Encerra automaticamente qualquer outra rodada em andamento na mesma sessão
+        rodadaRepository.findBySessaoIdOrderByNumeroRodadaDesc(sessaoId)
+                .stream()
+                .filter(r -> r.getStatus() == StatusRodada.EM_ANDAMENTO)
+                .filter(r -> !r.getId().equals(rodadaAtualId))
+                .forEach(rodadaAntiga -> {
+                    rodadaAntiga.setStatus(StatusRodada.FINALIZADA);
 
-        if (existeRodadaEmAndamento && rodada.getStatus() != StatusRodada.EM_ANDAMENTO) {
-            throw new RegraNegocioException("Já existe outra rodada em andamento nessa sessão.");
-        }
+                    if (rodadaAntiga.getEncerrouEm() == null) {
+                        rodadaAntiga.setEncerrouEm(LocalDateTime.now());
+                    }
+
+                    rodadaAntiga = rodadaRepository.save(rodadaAntiga);
+
+                    auditoriaService.registrar(
+                            usuarioLogado,
+                            "ENCERRAR_RODADA_AUTOMATICAMENTE",
+                            "RODADA",
+                            rodadaAntiga.getId(),
+                            "Rodada " + rodadaAntiga.getNumeroRodada()
+                                    + " encerrada automaticamente ao iniciar nova rodada."
+                    );
+
+                    Map<String, Object> payloadRodadaAntiga = Map.of(
+                            "type", "ROUND_FINISHED",
+                            "rodadaId", rodadaAntiga.getId(),
+                            "sessaoId", sessaoId,
+                            "numeroRodada", rodadaAntiga.getNumeroRodada(),
+                            "status", rodadaAntiga.getStatus().name(),
+                            "timestamp", rodadaAntiga.getEncerrouEm().toString()
+                    );
+
+                    bingoEventPublisher.publicarRodada(rodadaAntiga.getId(), payloadRodadaAntiga);
+                    bingoEventPublisher.publicarSessao(sessaoId, payloadRodadaAntiga);
+                    bingoEventPublisher.publicarTv(sessaoId, payloadRodadaAntiga);
+                });
 
         if (sessao.getStatus() == StatusSessao.CRIADA
                 || sessao.getStatus() == StatusSessao.AGENDADA
