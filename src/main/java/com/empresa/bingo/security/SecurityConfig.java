@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,27 +34,21 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(Customizer.withDefaults())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Rotas públicas
                         .requestMatchers("/auth/**").permitAll()
-
-                        // Libera SockJS / WebSocket
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/ws/info/**").permitAll()
 
-                        // Rotas públicas necessárias para exibição
                         .requestMatchers(HttpMethod.GET, "/rodadas/*/numeros").permitAll()
 
-                        // Admin
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // Restante exige login
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -67,10 +62,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "https://bingo-mocha-rho.vercel.app",
-                "https://*.vercel.app"
+                "*"
         ));
 
         configuration.setAllowedMethods(List.of(
@@ -82,8 +74,14 @@ public class SecurityConfig {
                 "OPTIONS"
         ));
 
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowedHeaders(List.of(
+                "*"
+        ));
+
+        configuration.setExposedHeaders(List.of(
+                "Authorization"
+        ));
+
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
