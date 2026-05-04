@@ -10,7 +10,6 @@ com\empresa\bingo\security\SecurityConfig.class
 com\empresa\bingo\controller\RodadaController.class
 com\empresa\bingo\dto\auth\LoginResponse$LoginResponseBuilder.class
 com\empresa\bingo\entity\BingoSolicitacao.class
-com\empresa\bingo\config\GlobalCorsConfig$1.class
 com\empresa\bingo\service\AdminClienteService.class
 com\empresa\bingo\entity\SessaoBingo$SessaoBingoBuilder.class
 com\empresa\bingo\model\Cliente$ClienteBuilder.class
@@ -40,7 +39,6 @@ com\empresa\bingo\entity\Sala$SalaBuilder.class
 com\empresa\bingo\enums\PerfilUsuario.class
 com\empresa\bingo\entity\AuditoriaLog$AuditoriaLogBuilder.class
 com\empresa\bingo\model\Cliente.class
-com\empresa\bingo\config\GlobalCorsConfig.class
 com\empresa\bingo\entity\SessaoBingo.class
 com\empresa\bingo\model\Assinatura.class
 com\empresa\bingo\repository\SalaRepository.class
@@ -62,6 +60,7 @@ com\empresa\bingo\exception\RegraNegocioException.class
 com\empresa\bingo\enums\StatusSessao.class
 com\empresa\bingo\repository\AuditoriaLogRepository.class
 com\empresa\bingo\websocket\BingoEventPublisher.class
+com\empresa\bingo\config\WebCorsConfig.class
 com\empresa\bingo\repository\PerfilRepository.class
 com\empresa\bingo\controller\SorteioController.class
 com\empresa\bingo\dto\sessao\SessaoResponse$SessaoResponseBuilder.class
