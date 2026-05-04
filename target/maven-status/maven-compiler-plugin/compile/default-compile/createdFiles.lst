@@ -50,6 +50,7 @@ com\empresa\bingo\dto\sessao\CriarSessaoRequest.class
 com\empresa\bingo\controller\AuthController.class
 com\empresa\bingo\dto\rodada\RodadaResponse$RodadaResponseBuilder.class
 com\empresa\bingo\enums\StatusSolicitacaoBingo.class
+com\empresa\bingo\security\SecurityConfig$1.class
 com\empresa\bingo\dto\rodada\NumeroSorteadoResponse$NumeroSorteadoResponseBuilder.class
 com\empresa\bingo\service\SorteioService.class
 com\empresa\bingo\config\DataInitializer.class
@@ -60,7 +61,6 @@ com\empresa\bingo\exception\RegraNegocioException.class
 com\empresa\bingo\enums\StatusSessao.class
 com\empresa\bingo\repository\AuditoriaLogRepository.class
 com\empresa\bingo\websocket\BingoEventPublisher.class
-com\empresa\bingo\config\WebCorsConfig.class
 com\empresa\bingo\repository\PerfilRepository.class
 com\empresa\bingo\controller\SorteioController.class
 com\empresa\bingo\dto\sessao\SessaoResponse$SessaoResponseBuilder.class
