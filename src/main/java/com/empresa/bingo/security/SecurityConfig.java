@@ -39,9 +39,21 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/**", "/ws/**").permitAll()
+
+                        // Rotas públicas
+                        .requestMatchers("/auth/**").permitAll()
+
+                        // Libera SockJS / WebSocket
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/ws/info/**").permitAll()
+
+                        // Rotas públicas necessárias para exibição
                         .requestMatchers(HttpMethod.GET, "/rodadas/*/numeros").permitAll()
+
+                        // Admin
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Restante exige login
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -51,29 +63,43 @@ public class SecurityConfig {
     }
 
     @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-    configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "https://bingo-mocha-rho.vercel.app"
-    ));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://bingo-mocha-rho.vercel.app",
+                "https://*.vercel.app"
+        ));
 
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("*"));
-    configuration.setAllowCredentials(true);
-    configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
-}
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
+
         return provider;
     }
 
