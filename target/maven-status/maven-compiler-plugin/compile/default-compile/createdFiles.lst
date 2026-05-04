@@ -49,6 +49,7 @@ com\empresa\bingo\model\Assinatura$AssinaturaBuilder.class
 com\empresa\bingo\dto\sessao\CriarSessaoRequest.class
 com\empresa\bingo\controller\AuthController.class
 com\empresa\bingo\dto\rodada\RodadaResponse$RodadaResponseBuilder.class
+com\empresa\bingo\repository\BingoSolicitacaoRepository.class
 com\empresa\bingo\enums\StatusSolicitacaoBingo.class
 com\empresa\bingo\dto\rodada\NumeroSorteadoResponse$NumeroSorteadoResponseBuilder.class
 com\empresa\bingo\service\SorteioService.class
@@ -57,6 +58,7 @@ com\empresa\bingo\enums\StatusAssinatura.class
 com\empresa\bingo\dto\sessao\SessaoResponse.class
 com\empresa\bingo\service\AuthService.class
 com\empresa\bingo\exception\RegraNegocioException.class
+com\empresa\bingo\websocket\WebSocketConfig.class
 com\empresa\bingo\enums\StatusSessao.class
 com\empresa\bingo\repository\AuditoriaLogRepository.class
 com\empresa\bingo\websocket\BingoEventPublisher.class
