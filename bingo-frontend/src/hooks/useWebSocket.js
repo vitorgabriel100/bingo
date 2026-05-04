@@ -2,16 +2,38 @@ import { useEffect, useRef } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
-export default function useWebSocket({ sessaoId, rodadaId, onMessage }) {
+export default function useWebSocket(configOrTopics, maybeOnMessage) {
   const clientRef = useRef(null);
 
-  useEffect(() => {
-    if (!sessaoId && !rodadaId) return;
+  const modoAntigo = Array.isArray(configOrTopics);
 
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+  const sessaoId = !modoAntigo ? configOrTopics?.sessaoId : null;
+  const rodadaId = !modoAntigo ? configOrTopics?.rodadaId : null;
+
+  const onMessage = modoAntigo ? maybeOnMessage : configOrTopics?.onMessage;
+
+  const topics = modoAntigo
+    ? configOrTopics
+    : [
+        ...(sessaoId ? [`/topic/sessao/${sessaoId}`, `/topic/tv/${sessaoId}`] : []),
+        ...(rodadaId ? [`/topic/rodada/${rodadaId}`] : []),
+      ];
+
+  const topicsKey = topics.join("|");
+
+  useEffect(() => {
+    if (!onMessage) return;
+    if (!topics || topics.length === 0) return;
+
+    let apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+    apiUrl = apiUrl.replace(/\/$/, "");
+
+    if (window.location.protocol === "https:" && apiUrl.startsWith("http://")) {
+      apiUrl = apiUrl.replace("http://", "https://");
+    }
 
     const socketUrl = `${apiUrl}/ws`;
-
     const token = localStorage.getItem("token");
 
     const client = new Client({
@@ -22,32 +44,31 @@ export default function useWebSocket({ sessaoId, rodadaId, onMessage }) {
             Authorization: `Bearer ${token}`,
           }
         : {},
+
       onConnect: () => {
-        if (sessaoId) {
-          client.subscribe(`/topic/sessao/${sessaoId}`, (message) => {
-            if (message.body) {
-              onMessage(JSON.parse(message.body));
-            }
-          });
+        console.log("WebSocket conectado:", socketUrl);
 
-          client.subscribe(`/topic/tv/${sessaoId}`, (message) => {
-            if (message.body) {
-              onMessage(JSON.parse(message.body));
-            }
-          });
-        }
+        const topicosUnicos = [...new Set(topics)];
 
-        if (rodadaId) {
-          client.subscribe(`/topic/rodada/${rodadaId}`, (message) => {
-            if (message.body) {
-              onMessage(JSON.parse(message.body));
+        topicosUnicos.forEach((topic) => {
+          client.subscribe(topic, (message) => {
+            if (!message.body) return;
+
+            try {
+              const event = JSON.parse(message.body);
+              console.log("Evento recebido:", topic, event);
+              onMessage(event);
+            } catch (error) {
+              console.error("Erro ao processar mensagem WebSocket:", error);
             }
           });
-        }
+        });
       },
+
       onStompError: (frame) => {
         console.error("Erro STOMP:", frame);
       },
+
       onWebSocketError: (error) => {
         console.error("Erro WebSocket:", error);
       },
@@ -61,5 +82,5 @@ export default function useWebSocket({ sessaoId, rodadaId, onMessage }) {
         clientRef.current.deactivate();
       }
     };
-  }, [sessaoId, rodadaId, onMessage]);
+  }, [topicsKey, onMessage]);
 }

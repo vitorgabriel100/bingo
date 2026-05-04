@@ -47,7 +47,9 @@ export default function OperadorPage() {
     setNumeroAnimado(null);
     setSorteando(true);
 
-    setTimeout(() => setNumeroAnimado(numero), 80);
+    setTimeout(() => {
+      setNumeroAnimado(numero);
+    }, 80);
 
     setTimeout(() => {
       setNumeroAtual(numero);
@@ -62,6 +64,42 @@ export default function OperadorPage() {
     return [];
   }
 
+  function extrairNumeroSorteado(data) {
+    if (typeof data === "number") return data;
+
+    return (
+      data?.numero ??
+      data?.numeroSorteado ??
+      data?.valor ??
+      data?.bola ??
+      data?.numeroAtual ??
+      data?.number ??
+      data?.data?.numero ??
+      data?.data?.numeroSorteado ??
+      null
+    );
+  }
+
+  function registrarNumeroSorteado(numero) {
+    const numeroNormalizado = Number(numero);
+
+    if (!Number.isFinite(numeroNormalizado)) {
+      console.error("Número sorteado inválido:", numero);
+      setMensagem("Número sorteado inválido.");
+      setSorteando(false);
+      return;
+    }
+
+    iniciarAnimacaoBolinha(numeroNormalizado);
+
+    setHistorico((prev) => {
+      if (prev.includes(numeroNormalizado)) return prev;
+      return [...prev, numeroNormalizado];
+    });
+
+    setMensagem(`Saiu o ${String(numeroNormalizado).padStart(2, "0")}!`);
+  }
+
   async function criarSessaoAutomatica() {
     const tentativas = [
       () => api.post("/sessoes", { nome: "Sessão Principal" }),
@@ -72,7 +110,10 @@ export default function OperadorPage() {
     for (const tentativa of tentativas) {
       try {
         const response = await tentativa();
-        if (response.data?.id) return response.data;
+
+        if (response.data?.id) {
+          return response.data;
+        }
       } catch {
         // tenta o próximo formato
       }
@@ -87,12 +128,13 @@ export default function OperadorPage() {
 
       try {
         const ativa = await api.get("/sessoes/ativa");
+
         if (ativa.data?.id) {
           setSessaoId(ativa.data.id);
           return ativa.data.id;
         }
       } catch {
-        // se não tiver endpoint de sessão ativa, segue
+        // se não tiver sessão ativa, segue para listagem/criação
       }
 
       const response = await api.get("/sessoes");
@@ -100,23 +142,33 @@ export default function OperadorPage() {
 
       if (sessoes.length > 0) {
         const sessao =
-          sessoes.find((s) => s.status === "ATIVA" || s.ativa === true) ||
-          sessoes[0];
+          sessoes.find(
+            (s) =>
+              s.status === "ATIVA" ||
+              s.status === "EM_ANDAMENTO" ||
+              s.status === "AGENDADA" ||
+              s.ativa === true
+          ) || sessoes[0];
 
         setSessaoId(sessao.id);
         return sessao.id;
       }
 
       const novaSessao = await criarSessaoAutomatica();
+
       setSessaoId(novaSessao.id);
       setMensagem("Sessão criada automaticamente.");
+
       return novaSessao.id;
     } catch (error) {
       console.error("Erro ao carregar/criar sessão:", error);
+
       setMensagem(
         error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
           "Erro ao carregar ou criar sessão. Verifique os endpoints de sessão."
       );
+
       return null;
     }
   }
@@ -130,11 +182,13 @@ export default function OperadorPage() {
       if (response.data?.id) {
         setRodadaId(response.data.id);
         setStatusRodada(response.data.status || "AGUARDANDO");
+
         localStorage.setItem("rodadaSelecionadaId", response.data.id);
         localStorage.setItem(
           "rodadaSelecionadaStatus",
           response.data.status || "AGUARDANDO"
         );
+
         setMensagem(`Rodada ${response.data.numeroRodada} carregada.`);
       } else {
         setMensagem("Nenhuma rodada ativa. Crie uma nova rodada.");
@@ -149,7 +203,12 @@ export default function OperadorPage() {
 
     try {
       const response = await api.get(`/rodadas/${idRodada}/numeros`);
-      const numerosSorteados = response.data.map((item) => item.numero);
+
+      const numerosSorteados = extrairLista(response.data)
+        .map((item) => item?.numero ?? item?.numeroSorteado ?? item)
+        .filter((numero) => numero !== null && numero !== undefined)
+        .map(Number)
+        .filter((numero) => Number.isFinite(numero));
 
       setHistorico(numerosSorteados);
 
@@ -169,49 +228,68 @@ export default function OperadorPage() {
   const handleWsMessage = useCallback((event) => {
     if (!event?.type) return;
 
+    console.log("Evento WS Operador:", event);
+
     if (event.type === "NUMBER_DRAWN") {
-      iniciarAnimacaoBolinha(event.numero);
+      const numero = extrairNumeroSorteado(event);
 
-      setHistorico((prev) =>
-        prev.includes(event.numero) ? prev : [...prev, event.numero]
-      );
+      if (numero !== null && numero !== undefined) {
+        registrarNumeroSorteado(numero);
+      }
 
-      setMensagem(`Saiu o ${event.numero}!`);
+      return;
+    }
+
+    if (event.type === "ROUND_CREATED") {
+      if (event.rodadaId) {
+        setRodadaId(event.rodadaId);
+        localStorage.setItem("rodadaSelecionadaId", event.rodadaId);
+      }
+
+      setStatusRodada(event.status || "CRIADA");
+      localStorage.setItem("rodadaSelecionadaStatus", event.status || "CRIADA");
+
+      setMensagem(`Rodada ${event.numeroRodada || event.rodadaId} criada.`);
+      return;
     }
 
     if (event.type === "ROUND_STARTED") {
       setStatusRodada("EM_ANDAMENTO");
+      localStorage.setItem("rodadaSelecionadaStatus", "EM_ANDAMENTO");
       setMensagem("Rodada iniciada.");
+      return;
     }
 
     if (event.type === "ROUND_PAUSED") {
       setStatusRodada("PAUSADA");
+      localStorage.setItem("rodadaSelecionadaStatus", "PAUSADA");
       setAutoSorteio(false);
       setMensagem("Rodada pausada.");
+      return;
     }
 
     if (event.type === "ROUND_FINISHED") {
       setStatusRodada("FINALIZADA");
+      localStorage.setItem("rodadaSelecionadaStatus", "FINALIZADA");
       setAutoSorteio(false);
       setMensagem("Rodada encerrada.");
     }
   }, []);
 
-  useWebSocket(
-    sessaoId
-      ? rodadaId
-        ? [`/topic/sessao/${sessaoId}`, `/topic/rodada/${rodadaId}`]
-        : [`/topic/sessao/${sessaoId}`]
-      : [],
-    handleWsMessage
-  );
+  useWebSocket({
+    sessaoId,
+    rodadaId,
+    onMessage: handleWsMessage,
+  });
 
   useEffect(() => {
     async function iniciarTela() {
       const premioSalvo = localStorage.getItem("premioAtualOperador");
       const premiosPagosSalvos = localStorage.getItem("premiosPagosOperador");
 
-      if (premioSalvo) setPremioAtual(premioSalvo);
+      if (premioSalvo) {
+        setPremioAtual(premioSalvo);
+      }
 
       if (premiosPagosSalvos) {
         try {
@@ -222,6 +300,7 @@ export default function OperadorPage() {
       }
 
       const idSessao = await carregarOuCriarSessao();
+
       if (!idSessao) return;
 
       const rodadaSalva = localStorage.getItem("rodadaSelecionadaId");
@@ -259,14 +338,22 @@ export default function OperadorPage() {
 
     try {
       const response = await api.patch(`/rodadas/${rodadaId}/iniciar`);
+
       setStatusRodada(response.data.status || "EM_ANDAMENTO");
       localStorage.setItem(
         "rodadaSelecionadaStatus",
         response.data.status || "EM_ANDAMENTO"
       );
+
       setMensagem("Rodada iniciada.");
     } catch (error) {
-      setMensagem(error?.response?.data?.mensagem || "Erro ao iniciar rodada.");
+      console.error("Erro ao iniciar rodada:", error);
+
+      setMensagem(
+        error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
+          "Erro ao iniciar rodada."
+      );
     }
   }
 
@@ -278,15 +365,23 @@ export default function OperadorPage() {
 
     try {
       const response = await api.patch(`/rodadas/${rodadaId}/pausar`);
+
       setStatusRodada(response.data.status || "PAUSADA");
       localStorage.setItem(
         "rodadaSelecionadaStatus",
         response.data.status || "PAUSADA"
       );
+
       setAutoSorteio(false);
       setMensagem("Rodada pausada.");
     } catch (error) {
-      setMensagem(error?.response?.data?.mensagem || "Erro ao pausar rodada.");
+      console.error("Erro ao pausar rodada:", error);
+
+      setMensagem(
+        error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
+          "Erro ao pausar rodada."
+      );
     }
   }
 
@@ -298,15 +393,23 @@ export default function OperadorPage() {
 
     try {
       const response = await api.patch(`/rodadas/${rodadaId}/encerrar`);
+
       setStatusRodada(response.data.status || "FINALIZADA");
       localStorage.setItem(
         "rodadaSelecionadaStatus",
         response.data.status || "FINALIZADA"
       );
+
       setAutoSorteio(false);
       setMensagem("Rodada encerrada.");
     } catch (error) {
-      setMensagem(error?.response?.data?.mensagem || "Erro ao encerrar rodada.");
+      console.error("Erro ao encerrar rodada:", error);
+
+      setMensagem(
+        error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
+          "Erro ao encerrar rodada."
+      );
     }
   }
 
@@ -335,9 +438,31 @@ export default function OperadorPage() {
     try {
       setSorteando(true);
       setMensagem("Sorteando número...");
-      await api.post(`/rodadas/${rodadaId}/sortear`);
+
+      const response = await api.post(`/rodadas/${rodadaId}/sortear`);
+
+      console.log("Resposta do sorteio:", response.data);
+
+      const numero = extrairNumeroSorteado(response.data);
+
+      if (numero === null || numero === undefined) {
+        console.error("Resposta do sorteio sem número:", response.data);
+        setMensagem("Sorteio realizado, mas o número não veio na resposta.");
+        setSorteando(false);
+        return;
+      }
+
+      registrarNumeroSorteado(numero);
     } catch (error) {
-      setMensagem(error?.response?.data?.mensagem || "Erro ao sortear número.");
+      console.error("Erro ao sortear número:", error);
+
+      setMensagem(
+        error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
+          error?.response?.data?.erro ||
+          "Erro ao sortear número."
+      );
+
       setAutoSorteio(false);
       setSorteando(false);
     }
@@ -370,6 +495,7 @@ export default function OperadorPage() {
       setNumeroAnimado(null);
       setHistorico([]);
       setStatusRodada(response.data.status || "CRIADA");
+
       localStorage.setItem(
         "rodadaSelecionadaStatus",
         response.data.status || "CRIADA"
@@ -379,9 +505,16 @@ export default function OperadorPage() {
       setSorteando(false);
       setPremioAtual("PRIMEIRA_LINHA");
       setPremiosPagos([]);
+
       setMensagem(`Nova rodada criada: rodada ${response.data.numeroRodada}.`);
     } catch (error) {
-      setMensagem(error?.response?.data?.mensagem || "Erro ao criar nova rodada.");
+      console.error("Erro ao criar nova rodada:", error);
+
+      setMensagem(
+        error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
+          "Erro ao criar nova rodada."
+      );
     }
   }
 
@@ -410,6 +543,7 @@ export default function OperadorPage() {
     }
 
     const novosPremiosPagos = [...premiosPagos, premio];
+
     setPremiosPagos(novosPremiosPagos);
 
     const proximo = proximoPremio(premio);
@@ -471,7 +605,7 @@ export default function OperadorPage() {
         clearTimeout(timeoutAutoRef.current);
       }
     };
-  }, [autoSorteio, statusRodada, rodadaId, historico.length]);
+  }, [autoSorteio, statusRodada, rodadaId, historico.length, sorteando]);
 
   const sorteioBloqueado =
     !rodadaId ||
@@ -485,12 +619,15 @@ export default function OperadorPage() {
         <section className="operator-top">
           <div className="operator-card operator-status-card">
             <span className="operator-label">Rodada atual</span>
+
             <div className="operator-status-line">
               <strong>#{rodadaId || "--"}</strong>
+
               <span className={`status-pill status-${statusRodada.toLowerCase()}`}>
                 {statusRodada}
               </span>
             </div>
+
             <small>Sessão: {sessaoId || "--"}</small>
             <small>{mensagem}</small>
           </div>
@@ -513,6 +650,7 @@ export default function OperadorPage() {
 
           <div className="operator-card operator-prize-card">
             <span className="operator-label">Concorrendo agora</span>
+
             <strong className="operator-prize-highlight">
               {formatarPremio(premioAtual)}
             </strong>
@@ -540,7 +678,9 @@ export default function OperadorPage() {
             <button
               onClick={() => setAutoSorteio((v) => !v)}
               disabled={
-                !rodadaId || statusRodada !== "EM_ANDAMENTO" || historico.length >= 75
+                !rodadaId ||
+                statusRodada !== "EM_ANDAMENTO" ||
+                historico.length >= 75
               }
               className={autoSorteio ? "auto-on" : ""}
             >
@@ -585,6 +725,7 @@ export default function OperadorPage() {
                     onClick={() => selecionarPremioAtual(opcao.value)}
                   >
                     <span>{opcao.label}</span>
+
                     <small>
                       {premiosPagos.includes(opcao.value)
                         ? "Pago"
@@ -610,6 +751,7 @@ export default function OperadorPage() {
                     onClick={() => marcarGanhador(opcao.value)}
                   >
                     <span>{opcao.label}</span>
+
                     <small>
                       {premiosPagos.includes(opcao.value)
                         ? "Ganhador marcado"
