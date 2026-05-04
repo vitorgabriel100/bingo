@@ -66,6 +66,5 @@ com\empresa\bingo\controller\SorteioController.class
 com\empresa\bingo\dto\sessao\SessaoResponse$SessaoResponseBuilder.class
 com\empresa\bingo\entity\Sala.class
 com\empresa\bingo\service\AuditoriaService.class
-com\empresa\bingo\config\CorsConfig$1.class
 com\empresa\bingo\entity\NumeroSorteado.class
 com\empresa\bingo\BingoApplication.class
