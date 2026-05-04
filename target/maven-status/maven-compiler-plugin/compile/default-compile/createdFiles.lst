@@ -7,6 +7,7 @@ com\empresa\bingo\enums\StatusRodada.class
 com\empresa\bingo\entity\ConfiguracaoSistema.class
 com\empresa\bingo\dto\rodada\RodadaResponse.class
 com\empresa\bingo\security\SecurityConfig.class
+com\empresa\bingo\security\CorsFilter.class
 com\empresa\bingo\controller\RodadaController.class
 com\empresa\bingo\dto\auth\LoginResponse$LoginResponseBuilder.class
 com\empresa\bingo\entity\BingoSolicitacao.class
@@ -61,7 +62,6 @@ com\empresa\bingo\enums\StatusSessao.class
 com\empresa\bingo\repository\AuditoriaLogRepository.class
 com\empresa\bingo\websocket\BingoEventPublisher.class
 com\empresa\bingo\repository\PerfilRepository.class
-com\empresa\bingo\config\CorsConfig.class
 com\empresa\bingo\controller\SorteioController.class
 com\empresa\bingo\dto\sessao\SessaoResponse$SessaoResponseBuilder.class
 com\empresa\bingo\entity\Sala.class
