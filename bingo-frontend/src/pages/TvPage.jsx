@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api from "../services/api";
 import useWebSocket from "../hooks/useWebSocket";
 
@@ -18,18 +18,12 @@ export default function TvPage() {
   const [countdown, setCountdown] = useState(null);
   const [somLiberado, setSomLiberado] = useState(false);
 
-  const introAudioRef = useRef(null);
   const machineAudioRef = useRef(null);
+  const dropAudioRef = useRef(null);
   const animandoRef = useRef(false);
   const filaRef = useRef([]);
-
-  const valores = {
-    linha: "200,00",
-    bingo: "500,00",
-    acumulado: "1.000,00",
-  };
-
-  const todosNumeros = Array.from({ length: 75 }, (_, i) => i + 1);
+  const countdownRodadaRef = useRef(null);
+  const ultimoNumeroFaladoRef = useRef(null);
 
   const nomesPremio = {
     PRIMEIRA_LINHA: "Primeira Linha",
@@ -37,6 +31,16 @@ export default function TvPage() {
     DUPLA_LINHA: "Dupla Linha",
     CARTELA_CHEIA: "Cartela Cheia",
   };
+
+  const numerosGlobo = useMemo(
+    () => [
+      3, 5, 8, 12, 15, 18, 21, 22, 27, 31, 33, 37,
+      41, 44, 48, 49, 52, 56, 59, 62, 64, 67, 71, 72,
+      73, 75, 9, 14, 25, 36, 43, 54, 68, 70, 6, 11,
+      1, 4, 7, 10, 13, 16, 19, 24, 28, 32, 35, 39,
+    ],
+    []
+  );
 
   function formatarPremio(premio) {
     return nomesPremio[premio] || "Primeira Linha";
@@ -59,9 +63,12 @@ export default function TvPage() {
     for (const tentativa of tentativas) {
       try {
         const response = await tentativa();
-        if (response.data?.id) return response.data;
+
+        if (response.data?.id) {
+          return response.data;
+        }
       } catch {
-        // tenta próximo formato
+        // tenta o próximo formato
       }
     }
 
@@ -74,6 +81,7 @@ export default function TvPage() {
 
       try {
         const ativa = await api.get("/sessoes/ativa");
+
         if (ativa.data?.id) {
           setSessaoId(ativa.data.id);
           return ativa.data.id;
@@ -95,8 +103,10 @@ export default function TvPage() {
       }
 
       const novaSessao = await criarSessaoAutomatica();
+
       setSessaoId(novaSessao.id);
       setMensagem("Sessão criada automaticamente.");
+
       return novaSessao.id;
     } catch (error) {
       console.error("Erro ao carregar/criar sessão:", error);
@@ -105,7 +115,7 @@ export default function TvPage() {
     }
   }
 
-  function escolherVozFeminina() {
+  function escolherVozMasculina() {
     if (!("speechSynthesis" in window)) return null;
 
     const vozes = window.speechSynthesis.getVoices();
@@ -114,7 +124,7 @@ export default function TvPage() {
       vozes.find(
         (voz) =>
           voz.lang === "pt-BR" &&
-          /maria|francisca|helena|luciana|female|feminina|google portuguese|portuguese brazil/i.test(
+          /daniel|felipe|antonio|brasil.*male|male|masculino|google portuguese|portuguese brazil/i.test(
             voz.name
           )
       ) ||
@@ -124,9 +134,14 @@ export default function TvPage() {
     );
   }
 
-  function falar(texto) {
+  function falarTexto(texto) {
     return new Promise((resolve) => {
       if (!somLiberado || !("speechSynthesis" in window)) {
+        resolve();
+        return;
+      }
+
+      if (!texto) {
         resolve();
         return;
       }
@@ -134,13 +149,55 @@ export default function TvPage() {
       window.speechSynthesis.cancel();
 
       const fala = new SpeechSynthesisUtterance(texto);
+
       fala.lang = "pt-BR";
-      fala.rate = 0.86;
-      fala.pitch = 1.15;
+      fala.rate = 0.88;
+      fala.pitch = 0.72;
       fala.volume = 1;
 
-      const voz = escolherVozFeminina();
-      if (voz) fala.voice = voz;
+      const voz = escolherVozMasculina();
+
+      if (voz) {
+        fala.voice = voz;
+      }
+
+      fala.onend = () => resolve();
+      fala.onerror = () => resolve();
+
+      window.speechSynthesis.speak(fala);
+    });
+  }
+
+  function falarNumeroSorteado(numero) {
+    return new Promise((resolve) => {
+      if (!somLiberado || !("speechSynthesis" in window)) {
+        resolve();
+        return;
+      }
+
+      if (!numero && numero !== 0) {
+        resolve();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const numeroTexto = String(numero);
+      const digitos = numeroTexto.split("").join(" e ");
+      const texto = `Número ${numero}, ${digitos}`;
+
+      const fala = new SpeechSynthesisUtterance(texto);
+
+      fala.lang = "pt-BR";
+      fala.rate = 0.88;
+      fala.pitch = 0.72;
+      fala.volume = 1;
+
+      const voz = escolherVozMasculina();
+
+      if (voz) {
+        fala.voice = voz;
+      }
 
       fala.onend = () => resolve();
       fala.onerror = () => resolve();
@@ -176,14 +233,6 @@ export default function TvPage() {
     setSomLiberado(true);
 
     try {
-      if (introAudioRef.current) {
-        introAudioRef.current.volume = 0.01;
-        await introAudioRef.current.play();
-        introAudioRef.current.pause();
-        introAudioRef.current.currentTime = 0;
-        introAudioRef.current.volume = 1;
-      }
-
       if (machineAudioRef.current) {
         machineAudioRef.current.volume = 0.01;
         await machineAudioRef.current.play();
@@ -192,14 +241,25 @@ export default function TvPage() {
         machineAudioRef.current.volume = 1;
       }
 
+      if (dropAudioRef.current) {
+        dropAudioRef.current.volume = 0.01;
+        await dropAudioRef.current.play();
+        dropAudioRef.current.pause();
+        dropAudioRef.current.currentTime = 0;
+        dropAudioRef.current.volume = 1;
+      }
+
       if ("speechSynthesis" in window) {
         window.speechSynthesis.getVoices();
 
         const teste = new SpeechSynthesisUtterance("");
         teste.lang = "pt-BR";
 
-        const voz = escolherVozFeminina();
-        if (voz) teste.voice = voz;
+        const voz = escolherVozMasculina();
+
+        if (voz) {
+          teste.voice = voz;
+        }
 
         window.speechSynthesis.speak(teste);
         window.speechSynthesis.cancel();
@@ -209,8 +269,40 @@ export default function TvPage() {
     }
   }
 
+  async function iniciarContagemAntesDoPrimeiroNumero(idRodada) {
+    const chaveRodada = idRodada || rodadaId || "JOGO";
+
+    if (countdownRodadaRef.current === chaveRodada) {
+      return;
+    }
+
+    countdownRodadaRef.current = chaveRodada;
+
+    const sequencia = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+
+    setNumeroAtual(null);
+    setNumeroAnimado(null);
+    setMensagem("Atenção! A rodada vai começar...");
+    setFaseAnimacao("countdown");
+
+    for (const item of sequencia) {
+      setCountdown(item);
+      await esperar(1000);
+    }
+
+    setCountdown("RODADA INICIADA");
+    setMensagem("Rodada iniciada, boa sorte a todos!");
+
+    await falarTexto("Rodada iniciada, boa sorte a todos");
+
+    await esperar(700);
+
+    setCountdown(null);
+    setFaseAnimacao("idle");
+  }
+
   async function iniciarSequenciaSorteio(numero, premio = premioAtual) {
-    if (!numero) return;
+    if (!numero && numero !== 0) return;
 
     if (animandoRef.current) {
       filaRef.current.push({ numero, premio });
@@ -224,31 +316,25 @@ export default function TvPage() {
     try {
       setNumeroAnimado(null);
       setCountdown(null);
-      setMensagem("Prepare-se! O sorteio vai começar...");
-      setFaseAnimacao("countdown");
-
-      await tocarAudio(introAudioRef);
-
-      for (const item of [5, 4, 3, 2, 1]) {
-        setCountdown(item);
-        await falar(String(item));
-        await esperar(250);
-      }
-
-      setCountdown(null);
-      setMensagem("Sorteando agora...");
-      await falar("Sorteando agora");
-
+      setMensagem("Misturando bolinhas...");
       setFaseAnimacao("spinning");
+
       await tocarAudio(machineAudioRef);
 
-      await esperar(2800);
+      await esperar(3200);
+
+      setMensagem("Selecionando bolinha...");
+      setFaseAnimacao("selecting");
+
+      await esperar(850);
 
       setNumeroAnimado(numero);
-      setMensagem("Bola sorteada!");
+      setMensagem("Bolinha saindo do globo...");
       setFaseAnimacao("dropping");
 
-      await esperar(1300);
+      await tocarAudio(dropAudioRef);
+
+      await esperar(1850);
 
       pararAudio(machineAudioRef);
 
@@ -261,12 +347,16 @@ export default function TvPage() {
       setMensagem(`${premioFormatado} • Número sorteado: ${numero}`);
       setFaseAnimacao("revealed");
 
-      await falar(`${premioFormatado}. Número sorteado, ${numero}`);
+      await esperar(850);
 
-      await esperar(1200);
+      if (ultimoNumeroFaladoRef.current !== numero) {
+        ultimoNumeroFaladoRef.current = numero;
+        await falarNumeroSorteado(numero);
+      }
+
+      await esperar(500);
 
       setFaseAnimacao("idle");
-      setNumeroAnimado(null);
     } finally {
       animandoRef.current = false;
 
@@ -302,15 +392,24 @@ export default function TvPage() {
 
     try {
       const response = await api.get(`/rodadas/${idRodada}/numeros`);
-      const numerosSorteados = response.data.map((item) => item.numero);
+
+      const numerosSorteados = extrairLista(response.data)
+        .map((item) => item?.numero ?? item?.numeroSorteado ?? item)
+        .filter((numero) => numero !== null && numero !== undefined)
+        .map(Number)
+        .filter((numero) => Number.isFinite(numero));
 
       setHistorico(numerosSorteados);
 
       if (numerosSorteados.length > 0) {
-        setNumeroAtual(numerosSorteados[numerosSorteados.length - 1]);
+        const ultimo = numerosSorteados[numerosSorteados.length - 1];
+
+        setNumeroAtual(ultimo);
+        setNumeroAnimado(ultimo);
         setMensagem("Transmissão sincronizada.");
       } else {
         setNumeroAtual(null);
+        setNumeroAnimado(null);
       }
     } catch (error) {
       console.error("Erro ao carregar histórico da TV", error);
@@ -376,59 +475,159 @@ export default function TvPage() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      pararAudio(machineAudioRef);
+      pararAudio(dropAudioRef);
+
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   const handleWsMessage = useCallback(
     (event) => {
       if (!event?.type) return;
 
-      if (event.type === "ROUND_STARTED") {
-        setRodadaId(event.rodadaId);
-        setNumeroRodada(event.numeroRodada);
-        setStatusRodada("EM_ANDAMENTO");
-        setMensagem(`Rodada ${event.numeroRodada} iniciada!`);
+      if (event.type === "ROUND_CREATED") {
+        const idRodada = event.rodadaId || event.id;
+
+        if (idRodada) {
+          setRodadaId(idRodada);
+        }
+
+        if (event.numeroRodada) {
+          setNumeroRodada(event.numeroRodada);
+        }
+
+        setStatusRodada(event.status || "CRIADA");
         setHistorico([]);
         setNumeroAtual(null);
         setNumeroAnimado(null);
         setCountdown(null);
         setFaseAnimacao("idle");
+
+        countdownRodadaRef.current = null;
         filaRef.current = [];
         animandoRef.current = false;
+        ultimoNumeroFaladoRef.current = null;
+
         pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+
+        setMensagem(
+          event.numeroRodada
+            ? `Rodada ${event.numeroRodada} criada. Aguardando início...`
+            : "Nova rodada criada. Aguardando início..."
+        );
+
+        return;
+      }
+
+      if (event.type === "ROUND_STARTED" || event.type === "GAME_STARTED") {
+        const idRodada = event.rodadaId || event.id || rodadaId;
+
+        if (event.rodadaId) {
+          setRodadaId(event.rodadaId);
+        }
+
+        if (event.numeroRodada) {
+          setNumeroRodada(event.numeroRodada);
+        }
+
+        setStatusRodada("EM_ANDAMENTO");
+        setMensagem(
+          event.numeroRodada
+            ? `Rodada ${event.numeroRodada} iniciada. Aguardando primeiro sorteio...`
+            : "Rodada iniciada. Aguardando primeiro sorteio..."
+        );
+
+        setHistorico([]);
+        setNumeroAtual(null);
+        setNumeroAnimado(null);
+        setCountdown(null);
+        setFaseAnimacao("idle");
+
+        countdownRodadaRef.current = null;
+        filaRef.current = [];
+        animandoRef.current = false;
+        ultimoNumeroFaladoRef.current = null;
+
+        pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+
+        return;
       }
 
       if (event.type === "NUMBER_DRAWN") {
-        setRodadaId(event.rodadaId);
-        iniciarSequenciaSorteio(event.numero, premioAtual);
+        const numero = event.numero ?? event.number ?? event.numeroSorteado;
+        const idRodada = event.rodadaId || rodadaId;
+
+        if (event.rodadaId) {
+          setRodadaId(event.rodadaId);
+        }
+
+        async function sortearComContagem() {
+          await iniciarContagemAntesDoPrimeiroNumero(idRodada);
+          await iniciarSequenciaSorteio(numero, event.premio || premioAtual);
+        }
+
+        sortearComContagem();
+
+        return;
       }
 
       if (event.type === "ROUND_PAUSED") {
         setStatusRodada("PAUSADA");
         setMensagem("Rodada pausada.");
         pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+        return;
       }
 
       if (event.type === "ROUND_FINISHED") {
         setStatusRodada("FINALIZADA");
         setMensagem("Rodada encerrada.");
         pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+        return;
       }
 
       if (event.type === "PRIZE_UPDATED") {
         setPremioAtual(event.premio);
+        return;
+      }
+
+      if (
+        event.type === "LINE_COMPLETED" ||
+        event.type === "LINHA_CANTADA" ||
+        event.type === "BINGO" ||
+        event.type === "BINGO_CANTADO"
+      ) {
+        return;
       }
     },
-    [premioAtual, somLiberado]
+    [premioAtual, rodadaId, somLiberado]
   );
 
   useWebSocket(sessaoId ? [`/topic/tv/${sessaoId}`] : [], handleWsMessage);
 
+  const ultimasNoveBolas = historico.slice(-9).reverse();
+
   return (
-    <div className={`tv-page casino-tv fase-${faseAnimacao}`}>
-      <audio ref={introAudioRef} src="/sounds/bingo-start.mp3" preload="auto" />
+    <div className={`tv-page casino-tv cinematic-tv fase-${faseAnimacao}`}>
       <audio
         ref={machineAudioRef}
         src="/sounds/bingo-machine.mp3"
         preload="auto"
         loop
+      />
+
+      <audio
+        ref={dropAudioRef}
+        src="/sounds/ball-drop.mp3"
+        preload="auto"
       />
 
       {!somLiberado && (
@@ -437,7 +636,7 @@ export default function TvPage() {
         </button>
       )}
 
-      {faseAnimacao === "countdown" && (
+      {faseAnimacao === "countdown" && countdown !== null && (
         <div className="tv-countdown-overlay">
           <div className="tv-countdown-content">
             <span>PREPARE-SE</span>
@@ -465,15 +664,49 @@ export default function TvPage() {
         </div>
       </header>
 
-      <main className="casino-tv-main">
-        <section className="casino-machine-area">
-          <div className="casino-message">{mensagem}</div>
+      <section className="casino-top-drawn-panel cinematic-drawn-panel">
+        <div className="casino-side-title">
+          <span>ÚLTIMAS BOLAS SORTEADAS</span>
+          <strong>{historico.length}/75</strong>
+        </div>
+
+        <div className="casino-results-strip casino-results-strip-top">
+          {ultimasNoveBolas.length > 0 ? (
+            ultimasNoveBolas.map((n, index) => (
+              <span key={`${n}-${index}`}>
+                {String(n).padStart(2, "0")}
+              </span>
+            ))
+          ) : (
+            <>
+              <span>--</span>
+              <span>--</span>
+              <span>--</span>
+              <span>--</span>
+              <span>--</span>
+              <span>--</span>
+              <span>--</span>
+              <span>--</span>
+              <span>--</span>
+            </>
+          )}
+        </div>
+      </section>
+
+      <main className="casino-tv-main casino-tv-main-centered cinematic-main">
+        <section className="casino-machine-area cinematic-machine-area">
+          <div className="casino-message cinematic-message">{mensagem}</div>
 
           <div
-            className={`casino-bingo-machine ${
+            className={`casino-bingo-machine cinematic-bingo-machine ${
               faseAnimacao === "spinning" ? "spinning" : ""
-            }`}
+            } ${faseAnimacao === "selecting" ? "selecting" : ""} ${
+              faseAnimacao === "dropping" ? "dropping" : ""
+            } ${faseAnimacao === "revealed" ? "revealed" : ""}`}
           >
+            <div className="machine-aura"></div>
+            <div className="machine-shadow"></div>
+
             <div className="casino-light-column left">
               <i></i>
               <i></i>
@@ -490,8 +723,8 @@ export default function TvPage() {
               <i></i>
             </div>
 
-            <div className="casino-top-tube">
-              <div className="casino-top-ball">
+            <div className="casino-top-tube cinematic-top-tube">
+              <div className="casino-top-ball cinematic-top-ball">
                 <span>
                   {numeroAtual ? String(numeroAtual).padStart(2, "0") : "--"}
                 </span>
@@ -499,104 +732,116 @@ export default function TvPage() {
               <div className="casino-tube-glass"></div>
             </div>
 
-            <div className="casino-globe-wrap">
-              <div className="casino-globe">
-                <div className="casino-globe-shine"></div>
-                <div className="casino-globe-ring"></div>
-                <div className="casino-globe-center"></div>
-                <div className="casino-globe-arm arm-1"></div>
-                <div className="casino-globe-arm arm-2"></div>
-                <div className="casino-globe-arm arm-3"></div>
-                <div className="casino-globe-arm arm-4"></div>
+            <div className="cinematic-globe-platform">
+              <div className="cinematic-back-stand"></div>
 
-                <div className="casino-inner-balls">
-                  {[
-                    3, 5, 8, 12, 15, 18, 21, 22, 27, 31, 33, 37, 41, 44, 48,
-                    49, 52, 56, 59, 62, 64, 67, 71, 72, 73, 75, 9, 14, 25,
-                    36, 43, 54, 68, 70, 6, 11,
-                  ].map((n, index) => (
-                    <span
-                      key={`${n}-${index}`}
-                      className={`casino-inner-ball ib-${index + 1}`}
-                    >
-                      {String(n).padStart(2, "0")}
-                    </span>
-                  ))}
+              <div className="casino-globe-wrap cinematic-globe-wrap">
+                <div className="casino-globe cinematic-globe">
+                  <div className="cinematic-glass-reflection reflection-one"></div>
+                  <div className="cinematic-glass-reflection reflection-two"></div>
+                  <div className="casino-globe-shine"></div>
+                  <div className="casino-globe-ring"></div>
+
+                  <div className="cinematic-depth depth-back"></div>
+
+                  <div className="casino-inner-balls popcorn-balls balls-back">
+                    {numerosGlobo.slice(0, 16).map((n, index) => (
+                      <span
+                        key={`back-${n}-${index}`}
+                        className={`casino-inner-ball cinematic-inner-ball depth-ball ib-${
+                          index + 1
+                        }`}
+                      >
+                        {String(n).padStart(2, "0")}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="cinematic-mixer">
+                    <div className="casino-globe-center"></div>
+                    <div className="casino-globe-arm arm-1"></div>
+                    <div className="casino-globe-arm arm-2"></div>
+                    <div className="casino-globe-arm arm-3"></div>
+                    <div className="casino-globe-arm arm-4"></div>
+                    <div className="casino-globe-arm arm-5"></div>
+                    <div className="casino-globe-arm arm-6"></div>
+                  </div>
+
+                  <div className="casino-inner-balls popcorn-balls balls-mid">
+                    {numerosGlobo.slice(16, 34).map((n, index) => (
+                      <span
+                        key={`mid-${n}-${index}`}
+                        className={`casino-inner-ball cinematic-inner-ball ib-${
+                          index + 17
+                        }`}
+                      >
+                        {String(n).padStart(2, "0")}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="casino-inner-balls popcorn-balls balls-front">
+                    {numerosGlobo.slice(34).map((n, index) => (
+                      <span
+                        key={`front-${n}-${index}`}
+                        className={`casino-inner-ball cinematic-inner-ball front-ball ib-${
+                          index + 35
+                        }`}
+                      >
+                        {String(n).padStart(2, "0")}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="cinematic-depth depth-front"></div>
                 </div>
+              </div>
+
+              <div className="cinematic-front-stand"></div>
+            </div>
+
+            <div className="cinematic-exit-system">
+              <div
+                className={`cinematic-gate ${
+                  faseAnimacao === "dropping" || faseAnimacao === "revealed"
+                    ? "open"
+                    : ""
+                }`}
+              >
+                <span></span>
+              </div>
+
+              <div className="cinematic-exit-neck"></div>
+
+              <div className="casino-output-tube cinematic-output-tube">
+                <div className="cinematic-tube-highlight"></div>
+
+                {numeroAnimado !== null && (
+                  <div
+                    key={numeroAnimado}
+                    className={`casino-drawn-ball cinematic-drawn-ball ${
+                      faseAnimacao === "dropping" ? "dropping" : ""
+                    } ${faseAnimacao === "revealed" ? "revealed" : ""} ${
+                      faseAnimacao === "idle" ? "resting" : ""
+                    }`}
+                  >
+                    <span>{String(numeroAnimado).padStart(2, "0")}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="casino-output-tube">
-              {numeroAnimado !== null && (
-                <div
-                  className={`casino-drawn-ball ${
-                    faseAnimacao === "dropping" ? "dropping" : ""
-                  } ${faseAnimacao === "revealed" ? "revealed" : ""}`}
-                >
-                  <span>{String(numeroAnimado).padStart(2, "0")}</span>
-                </div>
-              )}
-            </div>
+            <div className="casino-machine-base cinematic-machine-base">
+              <div className="cinematic-base-glow"></div>
 
-            <div className="casino-machine-base">
-              <div className="casino-results-strip">
-                {historico.length > 0 ? (
-                  historico
-                    .slice()
-                    .reverse()
-                    .slice(0, 8)
-                    .reverse()
-                    .map((n, index) => (
-                      <span key={`${n}-${index}`}>
-                        {String(n).padStart(2, "0")}
-                      </span>
-                    ))
-                ) : (
-                  <>
-                    <span>--</span>
-                    <span>--</span>
-                    <span>--</span>
-                    <span>--</span>
-                    <span>--</span>
-                    <span>--</span>
-                    <span>--</span>
-                    <span>--</span>
-                  </>
-                )}
+              <div className="casino-base-label">
+                {numeroAtual
+                  ? `Número sorteado: ${String(numeroAtual).padStart(2, "0")}`
+                  : "Aguardando sorteio"}
               </div>
             </div>
           </div>
         </section>
-
-        <aside className="casino-side-panel">
-          <div className="casino-side-title">
-            <span>BOLAS SORTEADAS</span>
-            <strong>{historico.length}/75</strong>
-          </div>
-
-          <div className="casino-number-grid">
-            {todosNumeros.map((n) => (
-              <span key={n} className={historico.includes(n) ? "drawn" : ""}>
-                {String(n).padStart(2, "0")}
-              </span>
-            ))}
-          </div>
-
-          <div className="casino-values">
-            <div>
-              <span>LINHA</span>
-              <strong>R$ {valores.linha}</strong>
-            </div>
-            <div>
-              <span>BINGO</span>
-              <strong>R$ {valores.bingo}</strong>
-            </div>
-            <div>
-              <span>ACUMULADO</span>
-              <strong>R$ {valores.acumulado}</strong>
-            </div>
-          </div>
-        </aside>
       </main>
 
       <footer className="casino-tv-footer">

@@ -5376,3 +5376,2078 @@ body {
     width: 100%;
   }
 }
+
+.tv-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(255, 220, 120, 0.22), transparent 35%),
+    linear-gradient(135deg, #160018, #3b071f 45%, #090012);
+  color: #fff;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.drawn-top-panel {
+  width: min(1180px, 100%);
+  margin: 0 auto 18px;
+  padding: 14px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.drawn-top-title {
+  text-align: center;
+  font-size: clamp(18px, 2vw, 28px);
+  font-weight: 900;
+  margin-bottom: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.drawn-top-list {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.drawn-top-ball {
+  width: clamp(48px, 6vw, 78px);
+  height: clamp(48px, 6vw, 78px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 1000;
+  font-size: clamp(18px, 3vw, 34px);
+  color: #370014;
+  background:
+    radial-gradient(circle at 28% 22%, #fff 0 12%, #ffeaa7 13% 26%, #ffca28 55%, #ff8f00 100%);
+  box-shadow:
+    inset -8px -10px 18px rgba(110, 45, 0, 0.35),
+    inset 5px 5px 12px rgba(255, 255, 255, 0.65),
+    0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.tv-main-stage {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  min-height: calc(100vh - 180px);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.globe-stage {
+  position: relative;
+  width: min(680px, 92vw);
+  height: min(680px, 92vw);
+  display: grid;
+  place-items: center;
+}
+
+.bingo-machine {
+  position: relative;
+  width: 72%;
+  height: 78%;
+  display: grid;
+  place-items: center;
+}
+
+.glass-globe {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.95) 0 5%, rgba(255, 255, 255, 0.35) 8%, transparent 22%),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.16), rgba(120, 220, 255, 0.08) 48%, rgba(255, 255, 255, 0.2));
+  border: 9px solid rgba(255, 255, 255, 0.32);
+  box-shadow:
+    inset 0 0 45px rgba(255, 255, 255, 0.26),
+    inset 0 -35px 70px rgba(255, 255, 255, 0.08),
+    0 30px 90px rgba(0, 0, 0, 0.5);
+}
+
+.glass-globe::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+}
+
+.globe-light {
+  position: absolute;
+  width: 28%;
+  height: 18%;
+  top: 12%;
+  left: 18%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  filter: blur(8px);
+  transform: rotate(-24deg);
+  z-index: 4;
+}
+
+.popcorn-area {
+  position: absolute;
+  inset: 7%;
+  border-radius: 50%;
+  animation: globeSpin 3.2s linear infinite;
+}
+
+.globe-mini-ball {
+  position: absolute;
+  width: clamp(28px, 4.2vw, 46px);
+  height: clamp(28px, 4.2vw, 46px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: clamp(10px, 1.6vw, 17px);
+  font-weight: 1000;
+  color: #2d0010;
+  background:
+    radial-gradient(circle at 30% 24%, #fff 0 12%, #ffe082 13% 28%, #ffb300 58%, #fb6f00 100%);
+  box-shadow:
+    inset -5px -6px 10px rgba(95, 35, 0, 0.35),
+    inset 3px 3px 8px rgba(255, 255, 255, 0.7),
+    0 7px 12px rgba(0, 0, 0, 0.28);
+  animation-name: popcornBall;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.globe-tube {
+  position: absolute;
+  width: 15%;
+  height: 22%;
+  bottom: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #6b001f, #ffcc4d, #6b001f);
+  border-radius: 999px;
+  z-index: -1;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
+.globe-base {
+  position: absolute;
+  width: 68%;
+  height: 12%;
+  bottom: 0;
+  border-radius: 999px 999px 26px 26px;
+  background: linear-gradient(180deg, #ffcf4d, #d98200 55%, #5c0019);
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.5);
+  z-index: -2;
+}
+
+.falling-bingo-ball {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: clamp(150px, 25vw, 245px);
+  height: clamp(150px, 25vw, 245px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle at 28% 22%, #fff 0 10%, #ffe082 11% 24%, #ffc107 54%, #ff6f00 100%);
+  box-shadow:
+    inset -18px -22px 38px rgba(98, 32, 0, 0.42),
+    inset 12px 12px 22px rgba(255, 255, 255, 0.72),
+    0 34px 80px rgba(0, 0, 0, 0.58);
+  animation: ballDropFromGlobe 1.25s cubic-bezier(0.15, 0.9, 0.28, 1.18) both;
+  z-index: 10;
+}
+
+.falling-bingo-ball span {
+  font-size: clamp(64px, 11vw, 128px);
+  font-weight: 1000;
+  color: #3a0014;
+  text-shadow: 0 3px 0 rgba(255, 255, 255, 0.45);
+}
+
+.countdown-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.38);
+  z-index: 30;
+  animation: countdownFade 0.25s ease both;
+}
+
+.countdown-number {
+  font-size: clamp(110px, 22vw, 260px);
+  font-weight: 1000;
+  line-height: 1;
+  color: #fff4c2;
+  text-shadow:
+    0 0 22px rgba(255, 202, 40, 0.9),
+    0 18px 60px rgba(0, 0, 0, 0.8);
+  animation: countdownPop 0.75s ease both;
+}
+
+@keyframes globeSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes popcornBall {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  20% {
+    transform: translate(26px, -36px) rotate(90deg) scale(1.05);
+  }
+
+  42% {
+    transform: translate(-34px, 22px) rotate(170deg) scale(0.96);
+  }
+
+  63% {
+    transform: translate(38px, 30px) rotate(260deg) scale(1.08);
+  }
+
+  82% {
+    transform: translate(-22px, -26px) rotate(320deg) scale(1);
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(360deg) scale(1);
+  }
+}
+
+@keyframes ballDropFromGlobe {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -210%) scale(0.45) rotate(-180deg);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  65% {
+    transform: translate(-50%, -48%) scale(1.08) rotate(18deg);
+  }
+
+  82% {
+    transform: translate(-50%, -58%) scale(0.96) rotate(-8deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes countdownPop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+
+  40% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes countdownFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .tv-page {
+    padding: 12px;
+  }
+
+  .drawn-top-panel {
+    padding: 10px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+  }
+
+  .drawn-top-list {
+    gap: 7px;
+  }
+
+  .tv-main-stage {
+    min-height: calc(100vh - 125px);
+  }
+
+  .globe-stage {
+    width: 96vw;
+    height: 96vw;
+  }
+}
+
+.operator-content {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.operator-ball-area {
+  order: 1;
+}
+
+.operator-actions {
+  order: 2;
+}
+
+@media (max-width: 768px) {
+  .operator-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .operator-ball-area {
+    order: 1;
+    width: 100%;
+  }
+
+  .operator-actions {
+    order: 2;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .operator-actions button {
+    width: 100%;
+    min-height: 52px;
+    font-size: 16px;
+  }
+}
+
+.operator-mobile-panel {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px;
+  color: #fff;
+}
+
+.operator-mobile-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.operator-mobile-status {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.operator-mobile-status > div,
+.operator-mobile-card,
+.operator-mobile-prizes,
+.operator-mobile-center,
+.operator-secondary-actions {
+  background:
+    linear-gradient(145deg, rgba(255, 204, 77, 0.13), rgba(60, 20, 0, 0.45)),
+    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 215, 120, 0.22);
+  border-radius: 18px;
+  padding: 12px;
+  backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 35px rgba(0, 0, 0, 0.22);
+}
+
+.operator-mini-label {
+  display: block;
+  font-size: 11px;
+  opacity: 0.78;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  letter-spacing: 0.08em;
+  color: #ffe7a3;
+}
+
+.operator-mobile-status strong {
+  font-size: 16px;
+}
+
+.operator-mobile-message {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 215, 120, 0.18);
+  color: #fff1c2;
+  font-size: 14px;
+  text-align: center;
+}
+
+.operator-bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.operator-bingo-cell {
+  min-height: 34px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+  background: linear-gradient(180deg, #fff8dc, #e8d28a);
+  color: #3b2100;
+  border: 1px solid rgba(255, 236, 170, 0.55);
+  transition: 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.operator-bingo-cell.drawn {
+  background: linear-gradient(180deg, #ffc93c, #d98900 65%, #9c5200);
+  color: #2b1200;
+  border-color: rgba(255, 230, 150, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 12px rgba(255, 193, 7, 0.22);
+}
+
+.operator-bingo-cell.current {
+  background: linear-gradient(180deg, #ffffff, #ffe37a 55%, #ffb300);
+  color: #2b1200;
+  box-shadow:
+    0 0 0 2px #fff inset,
+    0 0 22px rgba(255, 221, 95, 0.75);
+}
+
+.operator-last-balls-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.operator-last-balls-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #ffd76a;
+}
+
+.operator-last-balls-row {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 6px;
+}
+
+.operator-last-balls-row span {
+  min-height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 1000;
+  background: linear-gradient(180deg, #ffdd68, #c97a00);
+  color: #2b1200;
+  border: 1px solid rgba(255, 236, 170, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 8px 16px rgba(0, 0, 0, 0.24);
+}
+
+.operator-mobile-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.operator-big-ball {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 24%, #ffffff 0 11%, #fff1a8 12% 30%, #ffc934 58%, #d97900 100%);
+  color: #2b1200;
+  box-shadow:
+    inset -14px -18px 26px rgba(83, 38, 0, 0.38),
+    inset 10px 10px 18px rgba(255, 255, 255, 0.72),
+    0 22px 42px rgba(0, 0, 0, 0.36),
+    0 0 28px rgba(255, 193, 7, 0.32);
+}
+
+.operator-big-ball span {
+  font-size: 64px;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.38);
+}
+
+.operator-big-ball.is-sorting {
+  animation: operatorPulseBall 1s ease-in-out infinite;
+}
+
+.operator-order-text {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffd76a;
+  text-shadow: 0 0 14px rgba(255, 193, 7, 0.35);
+}
+
+.operator-mobile-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.operator-action-btn {
+  min-height: 74px;
+  border: none;
+  border-radius: 14px;
+  font-size: 22px;
+  font-weight: 1000;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 14px 24px rgba(0, 0, 0, 0.28);
+}
+
+.operator-action-btn.primary {
+  background: linear-gradient(180deg, #ffe58a, #ffb300 55%, #c76b00);
+  color: #2b1200;
+}
+
+.operator-action-btn.danger {
+  background: linear-gradient(180deg, #ff8f5a, #ff3b1f 55%, #a91500);
+  color: #fff;
+}
+
+.operator-action-btn:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.operator-secondary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.operator-secondary-actions button {
+  min-height: 48px;
+  border: 1px solid rgba(255, 215, 120, 0.22);
+  border-radius: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 215, 120, 0.18), rgba(120, 58, 0, 0.45));
+  color: #fff3c4;
+}
+
+.operator-secondary-actions button.auto-on {
+  background: linear-gradient(180deg, #ffe58a, #ffb300 55%, #c76b00);
+  color: #2b1200;
+}
+
+.operator-mobile-prizes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.operator-mobile-prizes h3 {
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 1000;
+  color: #ffd76a;
+  text-shadow: 0 0 14px rgba(255, 193, 7, 0.35);
+}
+
+.operator-prize-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.operator-prize-btn {
+  min-height: 68px;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 1000;
+  padding: 10px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 12px 22px rgba(0, 0, 0, 0.24);
+}
+
+.operator-prize-btn.current-prize {
+  background: linear-gradient(180deg, #6a3900, #2a1200);
+  color: #ffd76a;
+  border: 1px solid rgba(255, 215, 120, 0.34);
+}
+
+.operator-prize-btn.current-prize.active {
+  background: linear-gradient(180deg, #fff1a8, #ffb300 58%, #c76b00);
+  color: #2b1200;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.2) inset,
+    0 0 22px rgba(255, 193, 7, 0.38);
+}
+
+.operator-prize-btn.payment-prize {
+  background: linear-gradient(180deg, #5a2f00, #240f00);
+  color: #ffe7a3;
+  border: 1px solid rgba(255, 215, 120, 0.26);
+}
+
+.operator-prize-btn.payment-prize.paid,
+.operator-prize-btn.current-prize.paid {
+  background: linear-gradient(180deg, #ff784d, #ff3217 60%, #941100);
+  color: #fff;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status-em_andamento {
+  background: rgba(255, 193, 7, 0.18);
+  color: #ffd76a;
+}
+
+.status-pausada {
+  background: rgba(255, 153, 0, 0.18);
+  color: #ffbd4a;
+}
+
+.status-finalizada {
+  background: rgba(255, 77, 31, 0.18);
+  color: #ff8f6d;
+}
+
+.status-aguardando,
+.status-criada {
+  background: rgba(255, 215, 120, 0.14);
+  color: #ffe7a3;
+}
+
+@keyframes operatorPulseBall {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.06);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .operator-mobile-panel {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .operator-mobile-status {
+    grid-template-columns: 1fr;
+  }
+
+  .operator-bingo-grid {
+    grid-template-columns: repeat(10, 1fr);
+    gap: 3px;
+  }
+
+  .operator-bingo-cell {
+    min-height: 28px;
+    font-size: 12px;
+  }
+
+  .operator-last-balls-row span {
+    min-height: 32px;
+    font-size: 12px;
+  }
+
+  .operator-big-ball {
+    width: 140px;
+    height: 140px;
+  }
+
+  .operator-big-ball span {
+    font-size: 50px;
+  }
+
+  .operator-order-text {
+    font-size: 18px;
+  }
+
+  .operator-action-btn {
+    min-height: 62px;
+    font-size: 18px;
+  }
+
+  .operator-prize-btn {
+    min-height: 58px;
+    font-size: 15px;
+  }
+}
+
+/* ============================= */
+/* TV CINEMATOGRÁFICA - BINGO */
+/* ============================= */
+
+.tv-page,
+.casino-tv,
+.cinematic-tv {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255, 213, 97, 0.22), transparent 28%),
+    radial-gradient(circle at 20% 35%, rgba(255, 123, 0, 0.14), transparent 26%),
+    radial-gradient(circle at 80% 38%, rgba(255, 218, 110, 0.12), transparent 28%),
+    linear-gradient(135deg, #160006 0%, #2a050e 42%, #070005 100%);
+  color: #fff;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.cinematic-tv::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 52px 52px;
+  opacity: 0.35;
+  mask-image: radial-gradient(circle at center, black, transparent 78%);
+}
+
+.cinematic-main {
+  min-height: calc(100vh - 245px);
+  display: grid;
+  place-items: center;
+  padding-bottom: 8px;
+}
+
+.cinematic-machine-area {
+  width: min(920px, 96vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cinematic-message {
+  position: relative;
+  z-index: 20;
+  min-width: min(620px, 92vw);
+  margin-bottom: 10px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 900;
+  color: #fff1bd;
+  background:
+    linear-gradient(180deg, rgba(255, 214, 105, 0.18), rgba(62, 16, 0, 0.56));
+  border: 1px solid rgba(255, 220, 125, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 18px 42px rgba(0,0,0,0.32);
+}
+
+.cinematic-bingo-machine {
+  position: relative;
+  width: min(690px, 95vw);
+  min-height: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  isolation: isolate;
+}
+
+.machine-aura {
+  position: absolute;
+  width: 620px;
+  height: 620px;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 202, 40, 0.24), transparent 62%);
+  filter: blur(18px);
+  z-index: -4;
+  animation: auraBreath 3.5s ease-in-out infinite;
+}
+
+.machine-shadow {
+  position: absolute;
+  width: 580px;
+  height: 90px;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  filter: blur(18px);
+  z-index: -5;
+}
+
+/* ============================= */
+/* HEADER E HISTÓRICO SUPERIOR */
+/* ============================= */
+
+.casino-tv-header {
+  width: min(1220px, 96vw);
+  margin: 16px auto 10px;
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1.2fr;
+  gap: 14px;
+  position: relative;
+  z-index: 10;
+}
+
+.casino-brand,
+.casino-status,
+.casino-prize {
+  padding: 14px 18px;
+  border-radius: 20px;
+  background:
+    linear-gradient(145deg, rgba(255, 214, 105, 0.16), rgba(54, 9, 0, 0.58));
+  border: 1px solid rgba(255, 218, 128, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.11),
+    0 14px 34px rgba(0,0,0,0.26);
+}
+
+.casino-brand span,
+.casino-status span,
+.casino-prize span,
+.casino-side-title span {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #ffdd80;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+.casino-brand strong,
+.casino-status strong,
+.casino-prize strong,
+.casino-side-title strong {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(18px, 2vw, 28px);
+  font-weight: 1000;
+  color: #fff4c8;
+}
+
+.cinematic-drawn-panel {
+  width: min(1220px, 96vw);
+  margin: 0 auto 10px;
+  padding: 12px 18px 16px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 214, 105, 0.13), rgba(43, 6, 0, 0.5));
+  border: 1px solid rgba(255, 221, 130, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    0 16px 40px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 10;
+}
+
+.casino-side-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.casino-results-strip-top {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 10px;
+}
+
+.casino-results-strip-top span {
+  min-height: clamp(46px, 5vw, 68px);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: clamp(18px, 2.6vw, 34px);
+  font-weight: 1000;
+  color: #351800;
+  background:
+    radial-gradient(circle at 30% 23%, #fff 0 10%, #fff0a8 11% 27%, #ffc72e 58%, #d77900 100%);
+  border: 1px solid rgba(255, 237, 168, 0.66);
+  box-shadow:
+    inset -7px -9px 14px rgba(89, 38, 0, 0.34),
+    inset 5px 5px 10px rgba(255,255,255,0.72),
+    0 10px 22px rgba(0,0,0,0.32);
+}
+
+/* ============================= */
+/* TOPO DA MÁQUINA */
+/* ============================= */
+
+.cinematic-top-tube {
+  position: relative;
+  z-index: 8;
+  width: 160px;
+  height: 120px;
+  margin-bottom: -16px;
+  display: grid;
+  place-items: center;
+}
+
+.cinematic-top-ball {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 24%, #fff 0 10%, #fff1b2 12% 28%, #ffc533 58%, #c76a00 100%);
+  border: 3px solid rgba(255, 239, 175, 0.65);
+  box-shadow:
+    inset -12px -15px 22px rgba(82, 35, 0, 0.38),
+    inset 8px 8px 14px rgba(255,255,255,0.68),
+    0 16px 34px rgba(0,0,0,0.34),
+    0 0 24px rgba(255, 202, 40, 0.3);
+}
+
+.cinematic-top-ball span {
+  font-size: 44px;
+  font-weight: 1000;
+  color: #351800;
+}
+
+.casino-tube-glass {
+  position: absolute;
+  width: 62px;
+  height: 72px;
+  bottom: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04), rgba(255,255,255,0.22));
+  border: 2px solid rgba(255, 236, 166, 0.25);
+  z-index: -1;
+}
+
+/* ============================= */
+/* GLOBO CINEMATOGRÁFICO */
+/* ============================= */
+
+.cinematic-globe-platform {
+  position: relative;
+  width: min(560px, 90vw);
+  height: 430px;
+  display: grid;
+  place-items: center;
+  perspective: 900px;
+}
+
+.cinematic-back-stand,
+.cinematic-front-stand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72%;
+  height: 55px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, #ffe08a, #c57400 58%, #5a2100);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    0 18px 38px rgba(0,0,0,0.36);
+}
+
+.cinematic-back-stand {
+  bottom: 32px;
+  opacity: 0.58;
+  z-index: 0;
+}
+
+.cinematic-front-stand {
+  bottom: 18px;
+  z-index: 6;
+}
+
+.cinematic-globe-wrap {
+  position: relative;
+  width: 410px;
+  height: 410px;
+  display: grid;
+  place-items: center;
+  z-index: 3;
+  transform-style: preserve-3d;
+  transform: translateZ(0);
+}
+
+/* IMPORTANTE:
+   Não animar o wrapper do globo.
+   Isso evita o globo sair do prumo. */
+.cinematic-bingo-machine.spinning .cinematic-globe-wrap,
+.cinematic-bingo-machine.selecting .cinematic-globe-wrap {
+  animation: none;
+}
+
+.cinematic-globe {
+  position: relative;
+  width: 405px;
+  height: 405px;
+  border-radius: 50%;
+  overflow: hidden;
+  transform-origin: center center;
+  will-change: transform;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255,255,255,0.86) 0 5%, rgba(255,255,255,0.35) 10%, transparent 23%),
+    radial-gradient(circle at 62% 70%, rgba(255, 206, 87, 0.12), transparent 42%),
+    radial-gradient(circle at center, rgba(255,255,255,0.1), rgba(255,218,130,0.07) 54%, rgba(65,18,0,0.25) 100%);
+  border: 9px solid rgba(255, 226, 142, 0.4);
+  box-shadow:
+    inset 0 0 42px rgba(255,255,255,0.22),
+    inset 0 -45px 80px rgba(255, 198, 55, 0.08),
+    0 28px 65px rgba(0,0,0,0.44),
+    0 0 45px rgba(255, 202, 40, 0.14);
+}
+
+/* Pulsação sutil no globo, sem sair do eixo */
+.cinematic-bingo-machine.spinning .cinematic-globe,
+.cinematic-bingo-machine.selecting .cinematic-globe {
+  animation: globeBreath 0.9s ease-in-out infinite;
+}
+
+.cinematic-globe::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.13);
+  z-index: 14;
+  pointer-events: none;
+}
+
+.cinematic-globe::after {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  background:
+    linear-gradient(115deg, transparent 0 35%, rgba(255,255,255,0.18) 43%, transparent 52% 100%);
+  transform: translateX(-60%);
+  z-index: 15;
+  pointer-events: none;
+  animation: glassSweep 5.5s ease-in-out infinite;
+}
+
+.cinematic-glass-reflection {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 16;
+  pointer-events: none;
+}
+
+.reflection-one {
+  width: 115px;
+  height: 58px;
+  top: 52px;
+  left: 70px;
+  background: rgba(255,255,255,0.32);
+  filter: blur(9px);
+  transform: rotate(-25deg);
+}
+
+.reflection-two {
+  width: 68px;
+  height: 34px;
+  top: 118px;
+  right: 70px;
+  background: rgba(255,255,255,0.14);
+  filter: blur(7px);
+  transform: rotate(20deg);
+}
+
+.casino-globe-ring {
+  position: absolute;
+  inset: 28px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 230, 160, 0.25);
+  z-index: 12;
+}
+
+.cinematic-depth {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.depth-back {
+  background:
+    radial-gradient(circle at center, transparent 0 42%, rgba(0,0,0,0.18) 76%, rgba(0,0,0,0.28) 100%);
+  z-index: 1;
+}
+
+.depth-front {
+  background:
+    radial-gradient(circle at 50% 46%, transparent 0 62%, rgba(255,255,255,0.1) 74%, transparent 100%);
+  z-index: 13;
+}
+
+/* ============================= */
+/* MISTURADOR DO GLOBO */
+/* ============================= */
+
+.cinematic-mixer {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.casino-globe-center {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle at 30% 25%, #fff4c0, #ffc533 50%, #7e3600 100%);
+  border-radius: 50%;
+  border: 3px solid rgba(255, 239, 174, 0.5);
+  box-shadow:
+    inset -5px -7px 10px rgba(71, 30, 0, 0.4),
+    0 0 22px rgba(255, 202, 40, 0.34);
+  z-index: 10;
+}
+
+.casino-globe-arm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 165px;
+  height: 9px;
+  border-radius: 999px;
+  transform-origin: left center;
+  background:
+    linear-gradient(90deg, #fff0a6, #ffb300 60%, transparent);
+  box-shadow: 0 0 10px rgba(255, 202, 40, 0.28);
+}
+
+.arm-1 { transform: rotate(0deg); }
+.arm-2 { transform: rotate(60deg); }
+.arm-3 { transform: rotate(120deg); }
+.arm-4 { transform: rotate(180deg); }
+.arm-5 { transform: rotate(240deg); }
+.arm-6 { transform: rotate(300deg); }
+
+.cinematic-bingo-machine.spinning .cinematic-mixer,
+.cinematic-bingo-machine.selecting .cinematic-mixer {
+  animation: mixerSpin 0.7s linear infinite;
+}
+
+.cinematic-bingo-machine.selecting .cinematic-mixer {
+  animation-duration: 0.42s;
+}
+
+/* ============================= */
+/* BOLINHAS INTERNAS */
+/* ============================= */
+
+.casino-inner-balls {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  transform-origin: center;
+}
+
+.balls-back {
+  z-index: 3;
+  opacity: 0.74;
+  filter: blur(0.25px);
+}
+
+.balls-mid {
+  z-index: 6;
+}
+
+.balls-front {
+  z-index: 11;
+}
+
+.cinematic-bingo-machine.spinning .balls-back {
+  animation: swirlBack 2.1s linear infinite;
+}
+
+.cinematic-bingo-machine.spinning .balls-mid {
+  animation: swirlMid 1.3s linear infinite reverse;
+}
+
+.cinematic-bingo-machine.spinning .balls-front {
+  animation: swirlFront 1.02s linear infinite;
+}
+
+.cinematic-bingo-machine.selecting .balls-back {
+  animation: swirlBack 1.4s linear infinite;
+}
+
+.cinematic-bingo-machine.selecting .balls-mid {
+  animation: swirlMid 0.82s linear infinite reverse;
+}
+
+.cinematic-bingo-machine.selecting .balls-front {
+  animation: swirlFront 0.66s linear infinite;
+}
+
+.cinematic-inner-ball {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 1000;
+  color: #351800;
+  background:
+    radial-gradient(circle at 31% 24%, #ffffff 0 10%, #fff0a7 11% 27%, #ffc533 58%, #d87900 100%);
+  border: 1px solid rgba(255, 239, 174, 0.6);
+  box-shadow:
+    inset -5px -7px 10px rgba(88, 39, 0, 0.34),
+    inset 4px 4px 8px rgba(255,255,255,0.68),
+    0 7px 14px rgba(0,0,0,0.28);
+  will-change: transform;
+}
+
+.depth-ball {
+  width: 32px;
+  height: 32px;
+  font-size: 9px;
+  opacity: 0.82;
+}
+
+.front-ball {
+  width: 50px;
+  height: 50px;
+  font-size: 14px;
+}
+
+/* posições 1 a 48 */
+.ib-1  { left: 18%; top: 13%; }
+.ib-2  { left: 34%; top: 9%; }
+.ib-3  { left: 52%; top: 12%; }
+.ib-4  { left: 66%; top: 20%; }
+.ib-5  { left: 22%; top: 28%; }
+.ib-6  { left: 40%; top: 27%; }
+.ib-7  { left: 58%; top: 31%; }
+.ib-8  { left: 72%; top: 39%; }
+.ib-9  { left: 14%; top: 46%; }
+.ib-10 { left: 32%; top: 45%; }
+.ib-11 { left: 50%; top: 49%; }
+.ib-12 { left: 66%; top: 55%; }
+.ib-13 { left: 23%; top: 67%; }
+.ib-14 { left: 42%; top: 70%; }
+.ib-15 { left: 61%; top: 72%; }
+.ib-16 { left: 75%; top: 61%; }
+
+.ib-17 { left: 12%; top: 22%; }
+.ib-18 { left: 27%; top: 17%; }
+.ib-19 { left: 45%; top: 18%; }
+.ib-20 { left: 63%; top: 15%; }
+.ib-21 { left: 75%; top: 27%; }
+.ib-22 { left: 19%; top: 37%; }
+.ib-23 { left: 36%; top: 35%; }
+.ib-24 { left: 52%; top: 36%; }
+.ib-25 { left: 68%; top: 42%; }
+.ib-26 { left: 10%; top: 56%; }
+.ib-27 { left: 27%; top: 57%; }
+.ib-28 { left: 44%; top: 58%; }
+.ib-29 { left: 60%; top: 62%; }
+.ib-30 { left: 74%; top: 69%; }
+.ib-31 { left: 21%; top: 77%; }
+.ib-32 { left: 38%; top: 78%; }
+.ib-33 { left: 55%; top: 79%; }
+.ib-34 { left: 69%; top: 77%; }
+
+.ib-35 { left: 16%; top: 18%; }
+.ib-36 { left: 34%; top: 22%; }
+.ib-37 { left: 54%; top: 20%; }
+.ib-38 { left: 70%; top: 30%; }
+.ib-39 { left: 20%; top: 42%; }
+.ib-40 { left: 39%; top: 41%; }
+.ib-41 { left: 57%; top: 44%; }
+.ib-42 { left: 73%; top: 52%; }
+.ib-43 { left: 14%; top: 62%; }
+.ib-44 { left: 31%; top: 66%; }
+.ib-45 { left: 49%; top: 65%; }
+.ib-46 { left: 65%; top: 68%; }
+.ib-47 { left: 24%; top: 79%; }
+.ib-48 { left: 55%; top: 80%; }
+
+/* movimentos individuais */
+.cinematic-bingo-machine.spinning .cinematic-inner-ball,
+.cinematic-bingo-machine.selecting .cinematic-inner-ball {
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.cinematic-bingo-machine.spinning .ib-1,
+.cinematic-bingo-machine.spinning .ib-7,
+.cinematic-bingo-machine.spinning .ib-13,
+.cinematic-bingo-machine.spinning .ib-19,
+.cinematic-bingo-machine.spinning .ib-25,
+.cinematic-bingo-machine.spinning .ib-31,
+.cinematic-bingo-machine.spinning .ib-37,
+.cinematic-bingo-machine.spinning .ib-43 {
+  animation-name: ballChaosOne;
+  animation-duration: 0.86s;
+}
+
+.cinematic-bingo-machine.spinning .ib-2,
+.cinematic-bingo-machine.spinning .ib-8,
+.cinematic-bingo-machine.spinning .ib-14,
+.cinematic-bingo-machine.spinning .ib-20,
+.cinematic-bingo-machine.spinning .ib-26,
+.cinematic-bingo-machine.spinning .ib-32,
+.cinematic-bingo-machine.spinning .ib-38,
+.cinematic-bingo-machine.spinning .ib-44 {
+  animation-name: ballChaosTwo;
+  animation-duration: 1.02s;
+}
+
+.cinematic-bingo-machine.spinning .ib-3,
+.cinematic-bingo-machine.spinning .ib-9,
+.cinematic-bingo-machine.spinning .ib-15,
+.cinematic-bingo-machine.spinning .ib-21,
+.cinematic-bingo-machine.spinning .ib-27,
+.cinematic-bingo-machine.spinning .ib-33,
+.cinematic-bingo-machine.spinning .ib-39,
+.cinematic-bingo-machine.spinning .ib-45 {
+  animation-name: ballChaosThree;
+  animation-duration: 0.93s;
+}
+
+.cinematic-bingo-machine.spinning .ib-4,
+.cinematic-bingo-machine.spinning .ib-10,
+.cinematic-bingo-machine.spinning .ib-16,
+.cinematic-bingo-machine.spinning .ib-22,
+.cinematic-bingo-machine.spinning .ib-28,
+.cinematic-bingo-machine.spinning .ib-34,
+.cinematic-bingo-machine.spinning .ib-40,
+.cinematic-bingo-machine.spinning .ib-46 {
+  animation-name: ballChaosFour;
+  animation-duration: 1.14s;
+}
+
+.cinematic-bingo-machine.spinning .ib-5,
+.cinematic-bingo-machine.spinning .ib-11,
+.cinematic-bingo-machine.spinning .ib-17,
+.cinematic-bingo-machine.spinning .ib-23,
+.cinematic-bingo-machine.spinning .ib-29,
+.cinematic-bingo-machine.spinning .ib-35,
+.cinematic-bingo-machine.spinning .ib-41,
+.cinematic-bingo-machine.spinning .ib-47 {
+  animation-name: ballChaosFive;
+  animation-duration: 0.78s;
+}
+
+.cinematic-bingo-machine.spinning .ib-6,
+.cinematic-bingo-machine.spinning .ib-12,
+.cinematic-bingo-machine.spinning .ib-18,
+.cinematic-bingo-machine.spinning .ib-24,
+.cinematic-bingo-machine.spinning .ib-30,
+.cinematic-bingo-machine.spinning .ib-36,
+.cinematic-bingo-machine.spinning .ib-42,
+.cinematic-bingo-machine.spinning .ib-48 {
+  animation-name: ballChaosSix;
+  animation-duration: 1.08s;
+}
+
+.cinematic-bingo-machine.selecting .cinematic-inner-ball {
+  animation-duration: 0.55s !important;
+}
+
+/* ============================= */
+/* SAÍDA DA BOLINHA */
+/* ============================= */
+
+.cinematic-exit-system {
+  position: relative;
+  z-index: 14;
+  width: 250px;
+  height: 188px;
+  margin-top: -18px;
+}
+
+.cinematic-gate {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 78px;
+  height: 24px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, #fff0a5, #ffb300 55%, #814000);
+  border: 2px solid rgba(255, 239, 175, 0.48);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    0 8px 16px rgba(0,0,0,0.34);
+  z-index: 4;
+  transform-origin: center;
+}
+
+.cinematic-gate span {
+  position: absolute;
+  inset: 5px 12px;
+  border-radius: 999px;
+  background: rgba(64, 23, 0, 0.5);
+}
+
+.cinematic-gate.open {
+  animation: gateOpenVideo 0.48s ease forwards;
+}
+
+.cinematic-exit-neck {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 88px;
+  height: 42px;
+  transform: translateX(-50%);
+  border-radius: 0 0 45px 45px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,213,97,0.08), rgba(255,255,255,0.2));
+  border: 3px solid rgba(255, 226, 142, 0.24);
+  border-top: none;
+  z-index: 2;
+}
+
+.cinematic-output-tube {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  width: 96px;
+  height: 132px;
+  transform: translateX(-50%);
+  border-radius: 0 0 52px 52px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.05) 44%, rgba(255,255,255,0.2));
+  border: 3px solid rgba(255, 226, 142, 0.26);
+  overflow: visible;
+  box-shadow:
+    inset 0 0 18px rgba(255,255,255,0.11),
+    0 16px 28px rgba(0,0,0,0.28);
+}
+
+.cinematic-tube-highlight {
+  position: absolute;
+  width: 18px;
+  height: 92%;
+  top: 4%;
+  left: 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.22);
+  filter: blur(2px);
+}
+
+.cinematic-drawn-ball {
+  position: absolute;
+  left: 50%;
+  top: -86px;
+  width: 98px;
+  height: 98px;
+  transform: translateX(-50%) scale(0.55);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 31% 24%, #fff 0 10%, #fff0a7 11% 27%, #ffc533 58%, #d87900 100%);
+  border: 2px solid rgba(255, 239, 174, 0.72);
+  box-shadow:
+    inset -10px -13px 18px rgba(88, 39, 0, 0.38),
+    inset 7px 7px 12px rgba(255,255,255,0.72),
+    0 18px 30px rgba(0,0,0,0.36),
+    0 0 22px rgba(255, 202, 40, 0.36);
+  will-change: top, transform, opacity;
+  z-index: 6;
+}
+
+.cinematic-drawn-ball span {
+  font-size: 38px;
+  font-weight: 1000;
+  color: #351800;
+  text-shadow: 0 2px 0 rgba(255,255,255,0.38);
+}
+
+.cinematic-drawn-ball.dropping {
+  animation: cinematicBallDrop 1.65s cubic-bezier(0.13, 0.92, 0.2, 1.04) forwards;
+}
+
+.cinematic-drawn-ball.revealed,
+.cinematic-drawn-ball.resting {
+  opacity: 1;
+  top: 54px;
+  transform: translateX(-50%) scale(1);
+}
+
+/* ============================= */
+/* BASE */
+/* ============================= */
+
+.cinematic-machine-base {
+  position: relative;
+  z-index: 8;
+  width: min(480px, 82vw);
+  min-height: 88px;
+  margin-top: -6px;
+  border-radius: 34px 34px 22px 22px;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, #ffd760 0%, #c46c00 52%, #521d00 100%);
+  border: 2px solid rgba(255, 230, 160, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.42),
+    inset 0 -18px 24px rgba(64,20,0,0.32),
+    0 24px 44px rgba(0,0,0,0.38);
+}
+
+.cinematic-base-glow {
+  position: absolute;
+  inset: 7px;
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.15), transparent 50%);
+  pointer-events: none;
+}
+
+.casino-base-label {
+  position: relative;
+  z-index: 2;
+  padding: 10px 20px;
+  border-radius: 999px;
+  color: #fff2c4;
+  background: rgba(52, 17, 0, 0.48);
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 1000;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* ============================= */
+/* LUZES LATERAIS */
+/* ============================= */
+
+.casino-light-column {
+  position: absolute;
+  top: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 2;
+}
+
+.casino-light-column.left {
+  left: 20px;
+}
+
+.casino-light-column.right {
+  right: 20px;
+}
+
+.casino-light-column i {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 25%, #fff, #ffe082 40%, #ff9800 100%);
+  box-shadow:
+    0 0 14px rgba(255, 193, 7, 0.8),
+    inset -3px -4px 6px rgba(72, 30, 0, 0.3);
+  animation: bulbFlicker 1.2s ease-in-out infinite;
+}
+
+.casino-light-column i:nth-child(2) { animation-delay: 0.16s; }
+.casino-light-column i:nth-child(3) { animation-delay: 0.31s; }
+.casino-light-column i:nth-child(4) { animation-delay: 0.47s; }
+.casino-light-column i:nth-child(5) { animation-delay: 0.62s; }
+
+/* ============================= */
+/* BOTÃO DE SOM E COUNTDOWN */
+/* ============================= */
+
+.tv-enable-sound {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 100;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 22px;
+  font-size: 16px;
+  font-weight: 1000;
+  color: #351800;
+  cursor: pointer;
+  background:
+    linear-gradient(180deg, #fff0a8, #ffbf24 58%, #c96c00);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    0 16px 36px rgba(0,0,0,0.35);
+}
+
+.tv-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+}
+
+.tv-countdown-content {
+  text-align: center;
+  color: #fff4c6;
+}
+
+.tv-countdown-content span {
+  display: block;
+  font-size: clamp(24px, 4vw, 54px);
+  font-weight: 1000;
+  letter-spacing: 0.18em;
+}
+
+.tv-countdown-content strong {
+  display: block;
+  font-size: clamp(120px, 20vw, 280px);
+  font-weight: 1000;
+  line-height: 0.95;
+  color: #ffd75d;
+  text-shadow:
+    0 0 20px rgba(255, 202, 40, 0.9),
+    0 22px 70px rgba(0,0,0,0.85);
+  animation: countdownPunch 0.9s ease both;
+}
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
+
+.casino-tv-footer {
+  width: min(1220px, 96vw);
+  margin: 0 auto 12px;
+  text-align: center;
+  color: rgba(255, 241, 190, 0.72);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/* ============================= */
+/* ANIMAÇÕES */
+/* ============================= */
+
+@keyframes auraBreath {
+  0%, 100% {
+    opacity: 0.52;
+    transform: translateX(-50%) scale(0.96);
+  }
+
+  50% {
+    opacity: 0.92;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+@keyframes globeBreath {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.008);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes glassSweep {
+  0%, 35% {
+    transform: translateX(-70%) rotate(0deg);
+  }
+
+  65%, 100% {
+    transform: translateX(70%) rotate(0deg);
+  }
+}
+
+@keyframes mixerSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes swirlBack {
+  from {
+    transform: rotate(0deg) scale(0.92);
+  }
+
+  to {
+    transform: rotate(360deg) scale(0.92);
+  }
+}
+
+@keyframes swirlMid {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes swirlFront {
+  from {
+    transform: rotate(0deg) scale(1.04);
+  }
+
+  to {
+    transform: rotate(360deg) scale(1.04);
+  }
+}
+
+@keyframes ballChaosOne {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  25% { transform: translate(16px, -28px) rotate(80deg) scale(1.06); }
+  52% { transform: translate(-18px, 8px) rotate(180deg) scale(0.94); }
+  78% { transform: translate(12px, 22px) rotate(290deg) scale(1.05); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+}
+
+@keyframes ballChaosTwo {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  22% { transform: translate(-18px, -22px) rotate(-75deg) scale(1.05); }
+  48% { transform: translate(14px, 14px) rotate(-190deg) scale(0.95); }
+  76% { transform: translate(-10px, 26px) rotate(-280deg) scale(1.04); }
+  100% { transform: translate(0, 0) rotate(-360deg) scale(1); }
+}
+
+@keyframes ballChaosThree {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  30% { transform: translate(22px, -14px) rotate(100deg) scale(1.08); }
+  54% { transform: translate(-14px, 18px) rotate(210deg) scale(0.94); }
+  82% { transform: translate(18px, 20px) rotate(315deg) scale(1.03); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+}
+
+@keyframes ballChaosFour {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  28% { transform: translate(-24px, -16px) rotate(-90deg) scale(1.06); }
+  50% { transform: translate(16px, -8px) rotate(-175deg) scale(0.95); }
+  80% { transform: translate(10px, 26px) rotate(-300deg) scale(1.05); }
+  100% { transform: translate(0, 0) rotate(-360deg) scale(1); }
+}
+
+@keyframes ballChaosFive {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  24% { transform: translate(12px, -30px) rotate(95deg) scale(1.08); }
+  52% { transform: translate(-22px, 8px) rotate(205deg) scale(0.93); }
+  84% { transform: translate(18px, 18px) rotate(320deg) scale(1.04); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+}
+
+@keyframes ballChaosSix {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  26% { transform: translate(-14px, -26px) rotate(-88deg) scale(1.06); }
+  49% { transform: translate(22px, 10px) rotate(-190deg) scale(0.95); }
+  78% { transform: translate(-18px, 22px) rotate(-300deg) scale(1.04); }
+  100% { transform: translate(0, 0) rotate(-360deg) scale(1); }
+}
+
+@keyframes gateOpenVideo {
+  0% {
+    transform: translateX(-50%) rotateX(0deg);
+  }
+
+  100% {
+    transform: translateX(-50%) rotateX(72deg);
+  }
+}
+
+@keyframes cinematicBallDrop {
+  0% {
+    opacity: 0;
+    top: -92px;
+    transform: translateX(-50%) scale(0.48) rotate(-160deg);
+    filter: blur(1px);
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  24% {
+    top: -28px;
+    transform: translateX(-50%) scale(0.72) rotate(-90deg);
+    filter: blur(0.8px);
+  }
+
+  46% {
+    top: 22px;
+    transform: translateX(-50%) scale(0.94) rotate(-28deg);
+    filter: blur(0.35px);
+  }
+
+  68% {
+    top: 62px;
+    transform: translateX(-50%) scale(1.08) rotate(12deg);
+    filter: blur(0);
+  }
+
+  82% {
+    top: 42px;
+    transform: translateX(-50%) scale(0.96) rotate(-8deg);
+  }
+
+  92% {
+    top: 57px;
+    transform: translateX(-50%) scale(1.02) rotate(4deg);
+  }
+
+  100% {
+    opacity: 1;
+    top: 54px;
+    transform: translateX(-50%) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes bulbFlicker {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes countdownPunch {
+  0% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+
+  42% {
+    opacity: 1;
+    transform: scale(1.14);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================= */
+/* RESPONSIVO TV */
+/* ============================= */
+
+@media (max-width: 900px) {
+  .casino-tv-header {
+    grid-template-columns: 1fr;
+  }
+
+  .cinematic-main {
+    min-height: auto;
+  }
+
+  .cinematic-bingo-machine {
+    min-height: 590px;
+  }
+
+  .cinematic-globe-platform {
+    width: 420px;
+    height: 370px;
+  }
+
+  .cinematic-globe-wrap,
+  .cinematic-globe {
+    width: 335px;
+    height: 335px;
+  }
+
+  .cinematic-inner-ball {
+    width: 34px;
+    height: 34px;
+    font-size: 10px;
+  }
+
+  .front-ball {
+    width: 40px;
+    height: 40px;
+    font-size: 12px;
+  }
+
+  .depth-ball {
+    width: 27px;
+    height: 27px;
+    font-size: 8px;
+  }
+
+  .casino-light-column {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .cinematic-tv {
+    overflow: auto;
+  }
+
+  .cinematic-drawn-panel {
+    padding: 10px;
+  }
+
+  .casino-results-strip-top {
+    gap: 6px;
+  }
+
+  .casino-results-strip-top span {
+    min-height: 38px;
+    font-size: 16px;
+  }
+
+  .cinematic-message {
+    font-size: 15px;
+    padding: 10px 14px;
+  }
+
+  .cinematic-bingo-machine {
+    min-height: 520px;
+  }
+
+  .cinematic-globe-platform {
+    width: 330px;
+    height: 305px;
+  }
+
+  .cinematic-globe-wrap,
+  .cinematic-globe {
+    width: 275px;
+    height: 275px;
+  }
+
+  .cinematic-inner-ball {
+    width: 28px;
+    height: 28px;
+    font-size: 8px;
+  }
+
+  .front-ball {
+    width: 34px;
+    height: 34px;
+    font-size: 10px;
+  }
+
+  .depth-ball {
+    width: 22px;
+    height: 22px;
+    font-size: 7px;
+  }
+
+  .cinematic-top-ball {
+    width: 82px;
+    height: 82px;
+  }
+
+  .cinematic-top-ball span {
+    font-size: 32px;
+  }
+
+  .cinematic-exit-system {
+    transform: scale(0.84);
+    margin-top: -34px;
+  }
+
+  .cinematic-machine-base {
+    margin-top: -24px;
+  }
+
+  .casino-base-label {
+    font-size: 14px;
+  }
+
+  .tv-enable-sound {
+    right: 12px;
+    bottom: 12px;
+    padding: 11px 16px;
+    font-size: 14px;
+  }
+}

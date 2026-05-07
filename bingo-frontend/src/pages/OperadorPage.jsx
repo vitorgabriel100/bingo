@@ -22,19 +22,27 @@ export default function OperadorPage() {
   const [premiosPagos, setPremiosPagos] = useState([]);
 
   const timeoutAutoRef = useRef(null);
+  const numerosRegistradosRef = useRef(new Set());
+
   const numeros = Array.from({ length: 75 }, (_, i) => i + 1);
   const INTERVALO_AUTO_MS = 10000;
 
   const opcoesPremio = [
-    { value: "PRIMEIRA_LINHA", label: "Primeira Linha" },
-    { value: "SEGUNDA_LINHA", label: "Segunda Linha" },
-    { value: "DUPLA_LINHA", label: "Dupla Linha" },
-    { value: "CARTELA_CHEIA", label: "Cartela Cheia" },
+    { value: "PRIMEIRA_LINHA", label: "Linha" },
+    { value: "SEGUNDA_LINHA", label: "Acumulado" },
+    { value: "DUPLA_LINHA", label: "Duplo Bingo" },
+    { value: "CARTELA_CHEIA", label: "Bingo" },
   ];
 
   function formatarPremio(premio) {
-    const item = opcoesPremio.find((p) => p.value === premio);
-    return item ? item.label : premio;
+    const mapa = {
+      PRIMEIRA_LINHA: "Linha",
+      SEGUNDA_LINHA: "Acumulado",
+      DUPLA_LINHA: "Duplo Bingo",
+      CARTELA_CHEIA: "Bingo",
+    };
+
+    return mapa[premio] || premio;
   }
 
   function proximoPremio(premio) {
@@ -90,6 +98,13 @@ export default function OperadorPage() {
       return;
     }
 
+    if (numerosRegistradosRef.current.has(numeroNormalizado)) {
+      setSorteando(false);
+      return;
+    }
+
+    numerosRegistradosRef.current.add(numeroNormalizado);
+
     iniciarAnimacaoBolinha(numeroNormalizado);
 
     setHistorico((prev) => {
@@ -110,10 +125,7 @@ export default function OperadorPage() {
     for (const tentativa of tentativas) {
       try {
         const response = await tentativa();
-
-        if (response.data?.id) {
-          return response.data;
-        }
+        if (response.data?.id) return response.data;
       } catch {
         // tenta o próximo formato
       }
@@ -134,7 +146,7 @@ export default function OperadorPage() {
           return ativa.data.id;
         }
       } catch {
-        // se não tiver sessão ativa, segue para listagem/criação
+        // continua
       }
 
       const response = await api.get("/sessoes");
@@ -155,10 +167,8 @@ export default function OperadorPage() {
       }
 
       const novaSessao = await criarSessaoAutomatica();
-
       setSessaoId(novaSessao.id);
       setMensagem("Sessão criada automaticamente.");
-
       return novaSessao.id;
     } catch (error) {
       console.error("Erro ao carregar/criar sessão:", error);
@@ -166,7 +176,7 @@ export default function OperadorPage() {
       setMensagem(
         error?.response?.data?.mensagem ||
           error?.response?.data?.message ||
-          "Erro ao carregar ou criar sessão. Verifique os endpoints de sessão."
+          "Erro ao carregar ou criar sessão."
       );
 
       return null;
@@ -210,6 +220,8 @@ export default function OperadorPage() {
         .map(Number)
         .filter((numero) => Number.isFinite(numero));
 
+      numerosRegistradosRef.current = new Set(numerosSorteados);
+
       setHistorico(numerosSorteados);
 
       const ultimoNumero =
@@ -227,8 +239,6 @@ export default function OperadorPage() {
 
   const handleWsMessage = useCallback((event) => {
     if (!event?.type) return;
-
-    console.log("Evento WS Operador:", event);
 
     if (event.type === "NUMBER_DRAWN") {
       const numero = extrairNumeroSorteado(event);
@@ -248,12 +258,16 @@ export default function OperadorPage() {
 
       setStatusRodada(event.status || "CRIADA");
       localStorage.setItem("rodadaSelecionadaStatus", event.status || "CRIADA");
-
       setMensagem(`Rodada ${event.numeroRodada || event.rodadaId} criada.`);
       return;
     }
 
     if (event.type === "ROUND_STARTED") {
+      if (event.rodadaId) {
+        setRodadaId(event.rodadaId);
+        localStorage.setItem("rodadaSelecionadaId", event.rodadaId);
+      }
+
       setStatusRodada("EM_ANDAMENTO");
       localStorage.setItem("rodadaSelecionadaStatus", "EM_ANDAMENTO");
       setMensagem("Rodada iniciada.");
@@ -440,13 +454,9 @@ export default function OperadorPage() {
       setMensagem("Sorteando número...");
 
       const response = await api.post(`/rodadas/${rodadaId}/sortear`);
-
-      console.log("Resposta do sorteio:", response.data);
-
       const numero = extrairNumeroSorteado(response.data);
 
       if (numero === null || numero === undefined) {
-        console.error("Resposta do sorteio sem número:", response.data);
         setMensagem("Sorteio realizado, mas o número não veio na resposta.");
         setSorteando(false);
         return;
@@ -490,6 +500,8 @@ export default function OperadorPage() {
 
       setRodadaId(response.data.id);
       localStorage.setItem("rodadaSelecionadaId", response.data.id);
+
+      numerosRegistradosRef.current = new Set();
 
       setNumeroAtual(null);
       setNumeroAnimado(null);
@@ -543,7 +555,6 @@ export default function OperadorPage() {
     }
 
     const novosPremiosPagos = [...premiosPagos, premio];
-
     setPremiosPagos(novosPremiosPagos);
 
     const proximo = proximoPremio(premio);
@@ -564,7 +575,9 @@ export default function OperadorPage() {
         )}.`
       );
     } else {
-      setMensagem(`${formatarPremio(premio)} pago. Todos os prêmios foram marcados.`);
+      setMensagem(
+        `${formatarPremio(premio)} pago. Todos os prêmios foram marcados.`
+      );
     }
   }
 
@@ -607,195 +620,187 @@ export default function OperadorPage() {
     };
   }, [autoSorteio, statusRodada, rodadaId, historico.length, sorteando]);
 
+  useEffect(() => {
+    return () => {
+      if (timeoutAutoRef.current) {
+        clearTimeout(timeoutAutoRef.current);
+      }
+    };
+  }, []);
+
   const sorteioBloqueado =
     !rodadaId ||
     statusRodada !== "EM_ANDAMENTO" ||
     historico.length >= 75 ||
     sorteando;
 
+  const ultimosNove = historico.slice(-9).reverse();
+  const ordemAtual = historico.length;
+
   return (
     <Layout title="Operador">
-      <div className="operator-simple-page">
-        <section className="operator-top">
-          <div className="operator-card operator-status-card">
-            <span className="operator-label">Rodada atual</span>
+      <div className="operator-mobile-panel">
+        <section className="operator-mobile-header">
+          <div className="operator-mobile-status">
+            <div>
+              <span className="operator-mini-label">Sessão</span>
+              <strong>{sessaoId || "--"}</strong>
+            </div>
 
-            <div className="operator-status-line">
+            <div>
+              <span className="operator-mini-label">Rodada</span>
               <strong>#{rodadaId || "--"}</strong>
+            </div>
 
-              <span className={`status-pill status-${statusRodada.toLowerCase()}`}>
+            <div>
+              <span className="operator-mini-label">Status</span>
+              <strong className={`status-pill status-${statusRodada.toLowerCase()}`}>
                 {statusRodada}
-              </span>
+              </strong>
             </div>
-
-            <small>Sessão: {sessaoId || "--"}</small>
-            <small>{mensagem}</small>
           </div>
 
-          <div className="operator-card operator-current-card">
-            <span className="operator-label">Número sorteado</span>
-
-            <div className={`operator-current-ball ${sorteando ? "is-sorting" : ""}`}>
-              <span>
-                {numeroAnimado !== null && numeroAnimado !== undefined
-                  ? String(numeroAnimado).padStart(2, "0")
-                  : numeroAtual !== null && numeroAtual !== undefined
-                  ? String(numeroAtual).padStart(2, "0")
-                  : "--"}
-              </span>
-            </div>
-
-            <p>{historico.length}/75 números sorteados</p>
-          </div>
-
-          <div className="operator-card operator-prize-card">
-            <span className="operator-label">Concorrendo agora</span>
-
-            <strong className="operator-prize-highlight">
-              {formatarPremio(premioAtual)}
-            </strong>
-
-            <button
-              className="draw-button"
-              onClick={sortearNumero}
-              disabled={sorteioBloqueado}
-            >
-              {sorteando ? "SORTEANDO..." : "SORTEAR"}
-            </button>
-          </div>
+          <div className="operator-mobile-message">{mensagem}</div>
         </section>
 
-        <section className="operator-card operator-controls-card">
-          <div className="controls">
-            <button onClick={iniciarRodada} disabled={!rodadaId}>
-              Iniciar
-            </button>
-
-            <button onClick={pausarRodada} disabled={!rodadaId}>
-              Pausar
-            </button>
-
-            <button
-              onClick={() => setAutoSorteio((v) => !v)}
-              disabled={
-                !rodadaId ||
-                statusRodada !== "EM_ANDAMENTO" ||
-                historico.length >= 75
-              }
-              className={autoSorteio ? "auto-on" : ""}
-            >
-              Auto: {autoSorteio ? "ON" : "OFF"}
-            </button>
-
-            <button className="danger" onClick={encerrarRodada} disabled={!rodadaId}>
-              Encerrar
-            </button>
-
-            <button onClick={novaRodada}>Nova Rodada</button>
-
-            <button onClick={() => navigate("/historico-rodadas")}>
-              Histórico
-            </button>
-          </div>
-        </section>
-
-        <section className="operator-middle">
-          <section className="operator-card prize-panel-simple">
-            <div className="prize-header">
-              <div>
-                <span>Painel de Prêmios</span>
-                <h2>Controle do Bingo</h2>
-              </div>
-
-              <button className="reset-prizes" onClick={desfazerPremios}>
-                Reiniciar prêmios
-              </button>
-            </div>
-
-            <div className="prize-section">
-              <h3>Concorrendo a:</h3>
-
-              <div className="prize-grid">
-                {opcoesPremio.map((opcao) => (
-                  <button
-                    key={opcao.value}
-                    className={`prize-button dispute ${
-                      premioAtual === opcao.value ? "active" : ""
-                    } ${premiosPagos.includes(opcao.value) ? "paid" : ""}`}
-                    onClick={() => selecionarPremioAtual(opcao.value)}
-                  >
-                    <span>{opcao.label}</span>
-
-                    <small>
-                      {premiosPagos.includes(opcao.value)
-                        ? "Pago"
-                        : premioAtual === opcao.value
-                        ? "Valendo agora"
-                        : "Selecionar"}
-                    </small>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="prize-section">
-              <h3>Marcar ganhador / pagamento:</h3>
-
-              <div className="prize-grid">
-                {opcoesPremio.map((opcao) => (
-                  <button
-                    key={opcao.value}
-                    className={`prize-button payment ${
-                      premiosPagos.includes(opcao.value) ? "paid" : ""
-                    }`}
-                    onClick={() => marcarGanhador(opcao.value)}
-                  >
-                    <span>{opcao.label}</span>
-
-                    <small>
-                      {premiosPagos.includes(opcao.value)
-                        ? "Ganhador marcado"
-                        : "Marcar pagamento"}
-                    </small>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="operator-card operator-history-simple">
-            <h3>Últimos números</h3>
-
-            <div className="history-list">
-              {historico.length > 0 ? (
-                historico
-                  .slice()
-                  .reverse()
-                  .slice(0, 15)
-                  .map((n, index) => (
-                    <span key={`${n}-${index}`}>{String(n).padStart(2, "0")}</span>
-                  ))
-              ) : (
-                <p>Nenhum número sorteado ainda.</p>
-              )}
-            </div>
-          </section>
-        </section>
-
-        <section className="operator-card operator-grid-simple">
-          <div className="grid-header">
-            <h3>Números do bingo</h3>
-            <span>{historico.length} marcados</span>
-          </div>
-
-          <div className="operator-grid">
+        <section className="operator-mobile-card">
+          <div className="operator-bingo-grid">
             {numeros.map((numero) => (
               <div
                 key={numero}
-                className={historico.includes(numero) ? "grid-item drawn" : "grid-item"}
+                className={`operator-bingo-cell ${
+                  historico.includes(numero) ? "drawn" : ""
+                } ${
+                  numeroAtual === numero ? "current" : ""
+                }`}
               >
-                {String(numero).padStart(2, "0")}
+                {numero}
               </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="operator-mobile-card operator-last-balls-card">
+          <div className="operator-last-balls-header">
+            <span>ATUAL</span>
+            <span>ÚLTIMAS BOLAS</span>
+          </div>
+
+          <div className="operator-last-balls-row">
+            {ultimosNove.length > 0 ? (
+              ultimosNove.map((n, index) => (
+                <span key={`${n}-${index}`}>{String(n).padStart(2, "0")}</span>
+              ))
+            ) : (
+              <>
+                <span>--</span>
+                <span>--</span>
+                <span>--</span>
+                <span>--</span>
+                <span>--</span>
+                <span>--</span>
+                <span>--</span>
+                <span>--</span>
+                <span>--</span>
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className="operator-mobile-center">
+          <div className={`operator-big-ball ${sorteando ? "is-sorting" : ""}`}>
+            <span>
+              {numeroAnimado !== null && numeroAnimado !== undefined
+                ? String(numeroAnimado).padStart(2, "0")
+                : numeroAtual !== null && numeroAtual !== undefined
+                ? String(numeroAtual).padStart(2, "0")
+                : "--"}
+            </span>
+          </div>
+
+          <div className="operator-order-text">
+            Ordem: <strong>{ordemAtual}</strong>
+          </div>
+        </section>
+
+        <section className="operator-mobile-actions">
+          <button
+            className="operator-action-btn primary"
+            onClick={sortearNumero}
+            disabled={sorteioBloqueado}
+          >
+            {sorteando ? "SORTEANDO..." : "SORTEAR"}
+          </button>
+
+          <button
+            className="operator-action-btn danger"
+            onClick={encerrarRodada}
+            disabled={!rodadaId}
+          >
+            ENCERRAR
+          </button>
+        </section>
+
+        <section className="operator-mobile-actions operator-secondary-actions">
+          <button onClick={iniciarRodada} disabled={!rodadaId}>
+            Iniciar
+          </button>
+
+          <button onClick={pausarRodada} disabled={!rodadaId}>
+            Pausar
+          </button>
+
+          <button
+            onClick={() => setAutoSorteio((v) => !v)}
+            disabled={
+              !rodadaId ||
+              statusRodada !== "EM_ANDAMENTO" ||
+              historico.length >= 75
+            }
+            className={autoSorteio ? "auto-on" : ""}
+          >
+            Auto: {autoSorteio ? "ON" : "OFF"}
+          </button>
+
+          <button onClick={novaRodada}>Nova Rodada</button>
+          <button onClick={() => navigate("/historico-rodadas")}>Histórico</button>
+          <button onClick={desfazerPremios}>Reiniciar prêmios</button>
+        </section>
+
+        <section className="operator-mobile-prizes">
+          <h3>CONCORRENDO A:</h3>
+
+          <div className="operator-prize-grid">
+            {opcoesPremio.map((opcao) => (
+              <button
+                key={opcao.value}
+                className={`operator-prize-btn current-prize ${
+                  premioAtual === opcao.value ? "active" : ""
+                } ${premiosPagos.includes(opcao.value) ? "paid" : ""}`}
+                onClick={() => selecionarPremioAtual(opcao.value)}
+              >
+                {opcao.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="operator-mobile-prizes">
+          <h3>MARCAR GANHADOR/PAGAMENTO:</h3>
+
+          <div className="operator-prize-grid">
+            {opcoesPremio.map((opcao) => (
+              <button
+                key={opcao.value}
+                className={`operator-prize-btn payment-prize ${
+                  premiosPagos.includes(opcao.value) ? "paid" : ""
+                }`}
+                onClick={() => marcarGanhador(opcao.value)}
+              >
+                {premiosPagos.includes(opcao.value)
+                  ? `${opcao.label} ✓`
+                  : opcao.label}
+              </button>
             ))}
           </div>
         </section>
