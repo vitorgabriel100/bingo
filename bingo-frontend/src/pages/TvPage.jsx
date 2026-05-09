@@ -115,7 +115,7 @@ export default function TvPage() {
     }
   }
 
-  function escolherVozMasculina() {
+  function escolherVozFeminina() {
     if (!("speechSynthesis" in window)) return null;
 
     const vozes = window.speechSynthesis.getVoices();
@@ -124,7 +124,7 @@ export default function TvPage() {
       vozes.find(
         (voz) =>
           voz.lang === "pt-BR" &&
-          /daniel|felipe|antonio|brasil.*male|male|masculino|google portuguese|portuguese brazil/i.test(
+          /maria|luciana|helena|female|feminina|mulher|google português|google portuguese|portuguese brazil/i.test(
             voz.name
           )
       ) ||
@@ -151,11 +151,11 @@ export default function TvPage() {
       const fala = new SpeechSynthesisUtterance(texto);
 
       fala.lang = "pt-BR";
-      fala.rate = 0.88;
-      fala.pitch = 0.72;
+      fala.rate = 0.9;
+      fala.pitch = 1.08;
       fala.volume = 1;
 
-      const voz = escolherVozMasculina();
+      const voz = escolherVozFeminina();
 
       if (voz) {
         fala.voice = voz;
@@ -183,17 +183,20 @@ export default function TvPage() {
       window.speechSynthesis.cancel();
 
       const numeroTexto = String(numero);
-      const digitos = numeroTexto.split("").join(" e ");
-      const texto = `Número ${numero}, ${digitos}`;
+
+      // Antes estava com "join(' e ')".
+      // Agora fica: 15, 1, 5
+      const digitos = numeroTexto.split("").join(", ");
+      const texto = `${numeroTexto}, ${digitos}`;
 
       const fala = new SpeechSynthesisUtterance(texto);
 
       fala.lang = "pt-BR";
-      fala.rate = 0.88;
-      fala.pitch = 0.72;
+      fala.rate = 0.9;
+      fala.pitch = 1.08;
       fala.volume = 1;
 
-      const voz = escolherVozMasculina();
+      const voz = escolherVozFeminina();
 
       if (voz) {
         fala.voice = voz;
@@ -255,7 +258,7 @@ export default function TvPage() {
         const teste = new SpeechSynthesisUtterance("");
         teste.lang = "pt-BR";
 
-        const voz = escolherVozMasculina();
+        const voz = escolherVozFeminina();
 
         if (voz) {
           teste.voice = voz;
@@ -269,7 +272,7 @@ export default function TvPage() {
     }
   }
 
-  async function iniciarContagemAntesDoPrimeiroNumero(idRodada) {
+  async function iniciarContagemRodada(idRodada) {
     const chaveRodada = idRodada || rodadaId || "JOGO";
 
     if (countdownRodadaRef.current === chaveRodada) {
@@ -282,23 +285,17 @@ export default function TvPage() {
 
     setNumeroAtual(null);
     setNumeroAnimado(null);
-    setMensagem("Atenção! A rodada vai começar...");
+    setMensagem("Rodada iniciada, boa sorte a todos!");
     setFaseAnimacao("countdown");
 
     for (const item of sequencia) {
       setCountdown(item);
-      await esperar(1000);
+      await esperar(1300);
     }
-
-    setCountdown("RODADA INICIADA");
-    setMensagem("Rodada iniciada, boa sorte a todos!");
-
-    await falarTexto("Rodada iniciada, boa sorte a todos");
-
-    await esperar(700);
 
     setCountdown(null);
     setFaseAnimacao("idle");
+    setMensagem("Rodada pronta para o sorteio.");
   }
 
   async function iniciarSequenciaSorteio(numero, premio = premioAtual) {
@@ -314,30 +311,11 @@ export default function TvPage() {
     const premioFormatado = formatarPremio(premio);
 
     try {
-      setNumeroAnimado(null);
       setCountdown(null);
-      setMensagem("Misturando bolinhas...");
-      setFaseAnimacao("spinning");
 
-      await tocarAudio(machineAudioRef);
-
-      await esperar(3200);
-
-      setMensagem("Selecionando bolinha...");
-      setFaseAnimacao("selecting");
-
-      await esperar(850);
-
+      // Aqui está o ajuste principal:
+      // Não espera mais 3 segundos misturando antes de mostrar a bolinha.
       setNumeroAnimado(numero);
-      setMensagem("Bolinha saindo do globo...");
-      setFaseAnimacao("dropping");
-
-      await tocarAudio(dropAudioRef);
-
-      await esperar(1850);
-
-      pararAudio(machineAudioRef);
-
       setNumeroAtual(numero);
 
       setHistorico((prev) =>
@@ -345,16 +323,21 @@ export default function TvPage() {
       );
 
       setMensagem(`${premioFormatado} • Número sorteado: ${numero}`);
-      setFaseAnimacao("revealed");
+      setFaseAnimacao("dropping");
 
-      await esperar(850);
+      tocarAudio(dropAudioRef);
+      pararAudio(machineAudioRef);
+
+      await esperar(450);
+
+      setFaseAnimacao("revealed");
 
       if (ultimoNumeroFaladoRef.current !== numero) {
         ultimoNumeroFaladoRef.current = numero;
         await falarNumeroSorteado(numero);
       }
 
-      await esperar(500);
+      await esperar(350);
 
       setFaseAnimacao("idle");
     } finally {
@@ -537,11 +520,7 @@ export default function TvPage() {
         }
 
         setStatusRodada("EM_ANDAMENTO");
-        setMensagem(
-          event.numeroRodada
-            ? `Rodada ${event.numeroRodada} iniciada. Aguardando primeiro sorteio...`
-            : "Rodada iniciada. Aguardando primeiro sorteio..."
-        );
+        setMensagem("Rodada iniciada, boa sorte a todos!");
 
         setHistorico([]);
         setNumeroAtual(null);
@@ -557,23 +536,19 @@ export default function TvPage() {
         pararAudio(machineAudioRef);
         pararAudio(dropAudioRef);
 
+        iniciarContagemRodada(idRodada);
+
         return;
       }
 
       if (event.type === "NUMBER_DRAWN") {
         const numero = event.numero ?? event.number ?? event.numeroSorteado;
-        const idRodada = event.rodadaId || rodadaId;
 
         if (event.rodadaId) {
           setRodadaId(event.rodadaId);
         }
 
-        async function sortearComContagem() {
-          await iniciarContagemAntesDoPrimeiroNumero(idRodada);
-          await iniciarSequenciaSorteio(numero, event.premio || premioAtual);
-        }
-
-        sortearComContagem();
+        iniciarSequenciaSorteio(numero, event.premio || premioAtual);
 
         return;
       }
@@ -639,7 +614,6 @@ export default function TvPage() {
       {faseAnimacao === "countdown" && countdown !== null && (
         <div className="tv-countdown-overlay">
           <div className="tv-countdown-content">
-            <span>PREPARE-SE</span>
             <strong>{countdown}</strong>
           </div>
         </div>
@@ -736,7 +710,7 @@ export default function TvPage() {
               <div className="cinematic-back-stand"></div>
 
               <div className="casino-globe-wrap cinematic-globe-wrap">
-                <div className="casino-globe cinematic-globe">
+                <div className="casino-globe cinematic-globe spinning-always">
                   <div className="cinematic-glass-reflection reflection-one"></div>
                   <div className="cinematic-glass-reflection reflection-two"></div>
                   <div className="casino-globe-shine"></div>
@@ -757,7 +731,7 @@ export default function TvPage() {
                     ))}
                   </div>
 
-                  <div className="cinematic-mixer">
+                  <div className="cinematic-mixer mixer-always">
                     <div className="casino-globe-center"></div>
                     <div className="casino-globe-arm arm-1"></div>
                     <div className="casino-globe-arm arm-2"></div>
