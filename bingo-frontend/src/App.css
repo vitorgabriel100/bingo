@@ -8914,3 +8914,1171 @@ body {
     font-size: 14px;
   }
 }
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #050505;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ============================= */
+/* TV BINGO - BASE */
+/* ============================= */
+
+.bingo-tv-gold {
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 72% 42%, rgba(255, 174, 35, 0.22), transparent 34%),
+    radial-gradient(circle at 28% 36%, rgba(255, 204, 55, 0.08), transparent 38%),
+    linear-gradient(135deg, #020202 0%, #0b0702 45%, #110800 100%);
+  position: relative;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.bingo-tv-gold::before,
+.bingo-tv-gold::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  width: 62px;
+  height: 100vh;
+  border-left: 2px solid rgba(255, 193, 43, 0.22);
+  border-right: 2px solid rgba(255, 193, 43, 0.22);
+  background:
+    radial-gradient(circle, #ffe08a 0 8px, rgba(255, 189, 40, 0.45) 9px, transparent 16px) 50% 8% / 100% 130px repeat-y,
+    linear-gradient(180deg, rgba(255, 185, 33, 0.12), transparent 40%, rgba(255, 185, 33, 0.12));
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bingo-tv-gold::before {
+  left: 0;
+}
+
+.bingo-tv-gold::after {
+  right: 0;
+}
+
+/* ============================= */
+/* LAYOUT */
+/* ============================= */
+
+.gold-tv-layout {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 28px;
+  padding: 46px 82px 28px;
+  align-items: center;
+}
+
+.gold-left-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ============================= */
+/* PAINEL DOS NÚMEROS */
+/* ============================= */
+
+.gold-number-board {
+  width: 100%;
+  border: 1px solid rgba(255, 207, 73, 0.7);
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.94), rgba(21, 15, 5, 0.94)),
+    radial-gradient(circle at center, rgba(255, 202, 55, 0.08), transparent 60%);
+  box-shadow:
+    inset 0 0 22px rgba(255, 208, 60, 0.12),
+    0 0 26px rgba(255, 181, 29, 0.13);
+}
+
+.gold-board-row {
+  display: grid;
+  grid-template-columns: 58px repeat(15, minmax(0, 1fr));
+  min-height: clamp(50px, 7vh, 74px);
+}
+
+.gold-board-letter,
+.gold-board-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 210, 91, 0.34);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.gold-board-letter {
+  font-size: clamp(30px, 3vw, 48px);
+  color: #ffd21f;
+  background:
+    linear-gradient(180deg, rgba(27, 20, 5, 0.95), rgba(0, 0, 0, 0.95));
+  text-shadow: 0 0 15px rgba(255, 205, 25, 0.75);
+}
+
+.gold-board-cell {
+  position: relative;
+  color: #f8f8f8;
+  font-size: clamp(22px, 2.35vw, 42px);
+  background:
+    linear-gradient(180deg, rgba(20, 20, 20, 0.96), rgba(2, 2, 2, 0.96));
+  text-shadow: 0 2px 3px #000;
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.04);
+}
+
+.gold-board-cell.drawn {
+  color: #111;
+  background:
+    radial-gradient(circle at 35% 28%, #fff3a7, transparent 28%),
+    linear-gradient(180deg, #ffd92e, #d99500);
+  text-shadow: none;
+  box-shadow:
+    inset 0 0 14px rgba(255, 255, 255, 0.65),
+    0 0 18px rgba(255, 204, 42, 0.5);
+}
+
+.gold-board-cell.current {
+  color: #fff;
+  background:
+    radial-gradient(circle at 35% 25%, #ffb1a8, transparent 25%),
+    linear-gradient(180deg, #ff241b, #aa0000);
+  animation: goldCurrentPulse 0.7s infinite alternate;
+}
+
+@keyframes goldCurrentPulse {
+  from {
+    transform: scale(1);
+    box-shadow:
+      inset 0 0 14px rgba(255, 255, 255, 0.35),
+      0 0 14px rgba(255, 0, 0, 0.65);
+  }
+
+  to {
+    transform: scale(1.08);
+    box-shadow:
+      inset 0 0 18px rgba(255, 255, 255, 0.55),
+      0 0 30px rgba(255, 218, 55, 0.95);
+  }
+}
+
+/* ============================= */
+/* CARDS */
+/* ============================= */
+
+.gold-info-card,
+.gold-message-card {
+  border: 1px solid rgba(255, 193, 43, 0.78);
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.91), rgba(10, 8, 4, 0.88));
+  box-shadow:
+    inset 0 0 20px rgba(255, 186, 28, 0.08),
+    0 0 18px rgba(255, 183, 30, 0.1);
+  border-radius: 8px;
+}
+
+.gold-info-label {
+  color: #fff;
+  font-size: clamp(17px, 1.55vw, 31px);
+  font-weight: 950;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px #000;
+}
+
+.gold-last-card {
+  padding: 20px 26px;
+}
+
+.gold-last-balls {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 18px;
+}
+
+.gold-small-ball {
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #151006;
+  font-size: clamp(24px, 3vw, 48px);
+  font-weight: 950;
+  background:
+    radial-gradient(circle at 35% 25%, #fff8c6, transparent 26%),
+    radial-gradient(circle at 65% 78%, #a96e00, transparent 24%),
+    linear-gradient(145deg, #ffec8a, #d69a12 55%, #fff0a8);
+  border: 4px solid #3a2600;
+  box-shadow:
+    inset 0 0 0 4px rgba(255, 247, 181, 0.65),
+    0 0 18px rgba(255, 196, 43, 0.34);
+}
+
+.gold-small-ball.active {
+  animation: goldBallPop 0.8s infinite alternate;
+}
+
+.gold-small-ball.empty {
+  opacity: 0.45;
+}
+
+@keyframes goldBallPop {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.08);
+    box-shadow:
+      inset 0 0 0 4px rgba(255, 247, 181, 0.8),
+      0 0 28px rgba(255, 215, 69, 0.85);
+  }
+}
+
+.gold-prize-card,
+.gold-current-card {
+  min-height: 92px;
+  padding: 14px 28px;
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.gold-prize-card strong {
+  color: #ffd21f;
+  font-size: clamp(30px, 4vw, 64px);
+  font-weight: 950;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow:
+    0 0 14px rgba(255, 205, 31, 0.72),
+    0 3px 4px #000;
+}
+
+.gold-current-card strong {
+  color: #f5f5f5;
+  font-size: clamp(34px, 5vw, 78px);
+  font-weight: 950;
+  text-align: center;
+  text-shadow: 0 3px 5px #000;
+}
+
+.gold-current-card em {
+  color: #ffd21f;
+  font-style: normal;
+  text-shadow: 0 0 18px rgba(255, 207, 45, 0.95);
+}
+
+.gold-message-card {
+  min-height: 64px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f5f5f5;
+  font-size: clamp(22px, 2.6vw, 42px);
+  font-weight: 950;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(255, 200, 45, 0.45);
+}
+
+/* ============================= */
+/* BOLINHEIRA */
+/* ============================= */
+
+.gold-right-panel {
+  min-height: 720px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+}
+
+.gold-cage-stage {
+  position: relative;
+  width: min(100%, 720px);
+  height: 760px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
+}
+
+.gold-cage-light {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 198, 54, 0.33), transparent 40%),
+    radial-gradient(circle at 50% 88%, rgba(255, 171, 28, 0.24), transparent 28%);
+  filter: blur(7px);
+  pointer-events: none;
+}
+
+.gold-cage-machine {
+  position: relative;
+  width: 650px;
+  height: 720px;
+}
+
+.gold-cage-support {
+  position: absolute;
+  top: 285px;
+  width: 18px;
+  height: 365px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, #4b2a00, #fff2ad 22%, #b8780d 48%, #fff0a6 70%, #3b2200);
+  box-shadow:
+    inset 0 0 7px rgba(255, 255, 255, 0.55),
+    0 0 18px rgba(255, 196, 55, 0.45);
+  z-index: 2;
+}
+
+.gold-cage-support.left {
+  left: 42px;
+}
+
+.gold-cage-support.right {
+  right: 42px;
+}
+
+.gold-crank {
+  position: absolute;
+  top: 285px;
+  right: -16px;
+  width: 135px;
+  height: 82px;
+  border-top: 8px solid #d69516;
+  border-right: 8px solid #d69516;
+  border-bottom: 8px solid #d69516;
+  border-radius: 0 26px 26px 0;
+  z-index: 30;
+  filter: drop-shadow(0 0 10px rgba(255, 205, 77, 0.42));
+}
+
+.gold-crank span {
+  position: absolute;
+  right: -56px;
+  top: 42px;
+  width: 76px;
+  height: 30px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, #fff1aa, #cf8d16 55%, #2d1900);
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.45),
+    0 0 16px rgba(255, 196, 62, 0.55);
+}
+
+.gold-cage-globe {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  width: 510px;
+  height: 510px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 35% 24%, rgba(255, 255, 255, 0.22), transparent 17%),
+    radial-gradient(circle at 50% 62%, rgba(255, 177, 32, 0.15), transparent 52%),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.22) 72%);
+  box-shadow:
+    inset 0 0 44px rgba(255, 244, 180, 0.2),
+    inset 0 -42px 60px rgba(0, 0, 0, 0.55),
+    0 0 42px rgba(255, 188, 43, 0.35);
+  z-index: 10;
+  animation: cageSoftSpin 0.75s ease-in-out infinite;
+}
+
+@keyframes cageSoftSpin {
+  0% {
+    transform: translateX(-50%) rotate(-0.7deg);
+  }
+
+  50% {
+    transform: translateX(-50%) rotate(0.7deg);
+  }
+
+  100% {
+    transform: translateX(-50%) rotate(-0.7deg);
+  }
+}
+
+.gold-cage-rim.horizontal {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 104%;
+  height: 52px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 9px solid rgba(255, 200, 57, 0.98);
+  background: rgba(255, 196, 55, 0.04);
+  box-shadow:
+    inset 0 0 9px rgba(255, 255, 255, 0.72),
+    0 0 18px rgba(255, 194, 43, 0.65);
+  z-index: 26;
+}
+
+.gold-cage-rim.top {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 150px;
+  height: 38px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 8px solid rgba(255, 207, 86, 0.95);
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.65),
+    0 0 14px rgba(255, 194, 43, 0.55);
+  z-index: 28;
+}
+
+.gold-cage-rim.bottom {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  width: 205px;
+  height: 48px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 8px solid rgba(255, 192, 49, 0.95);
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.55),
+    0 0 16px rgba(255, 194, 43, 0.55);
+  z-index: 28;
+}
+
+.gold-cage-rod {
+  --angle: calc(var(--rod) * 8.2deg);
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 6px;
+  height: 486px;
+  transform-origin: center center;
+  transform: translateX(-50%) rotateY(var(--angle));
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, #4b2a00 0%, #fff3ad 28%, #ba7b10 52%, #fff2a9 78%, #3b2100 100%);
+  box-shadow:
+    0 0 8px rgba(255, 222, 116, 0.75),
+    inset 0 0 3px rgba(255, 255, 255, 0.9);
+  z-index: 24;
+  animation: rodSoftFlash 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes rodSoftFlash {
+  from {
+    filter: brightness(0.92);
+    opacity: 0.92;
+  }
+
+  to {
+    filter: brightness(1.35);
+    opacity: 1;
+  }
+}
+
+.gold-cage-shine {
+  position: absolute;
+  top: 50px;
+  left: 70px;
+  width: 125px;
+  height: 340px;
+  border-radius: 50%;
+  border-left: 20px solid rgba(255, 255, 255, 0.14);
+  filter: blur(1px);
+  z-index: 35;
+  pointer-events: none;
+}
+
+/* ============================= */
+/* BOLAS PREMIUM DENTRO DO GLOBO */
+/* ============================= */
+
+.gold-cage-balls {
+  position: absolute;
+  left: 50%;
+  top: 90px;
+  width: 430px;
+  height: 340px;
+  transform: translateX(-50%);
+  z-index: 16;
+  overflow: visible;
+}
+
+.gold-cage-balls::before {
+  content: "";
+  position: absolute;
+  inset: 25px 15px 5px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 55%, transparent 0 42%, rgba(0, 0, 0, 0.22) 67%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 13;
+}
+
+.gold-cage-balls::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 22px;
+  width: 150px;
+  height: 330px;
+  border-radius: 50%;
+  border-left: 18px solid rgba(255, 255, 255, 0.12);
+  filter: blur(1px);
+  pointer-events: none;
+  z-index: 99;
+}
+
+.gold-cage-ball {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 58px !important;
+  height: 58px !important;
+  margin-left: -29px !important;
+  margin-top: -29px !important;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1d1200;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  background:
+    radial-gradient(circle at 30% 23%, rgba(255, 255, 255, 0.92) 0 10%, transparent 11%),
+    radial-gradient(circle at 38% 34%, #fff1b3 0 18%, #f2c55f 40%, #d79a2a 68%, #9f6306 100%);
+  border: 2px solid rgba(70, 42, 0, 0.78);
+  box-shadow:
+    inset -10px -12px 16px rgba(105, 62, 0, 0.36),
+    inset 9px 9px 14px rgba(255, 246, 190, 0.48),
+    0 7px 12px rgba(0, 0, 0, 0.3);
+  backface-visibility: hidden;
+  transform-style: flat;
+  will-change: transform, opacity, filter;
+  animation: premiumBallSpiral var(--speed, 1.55s) ease-in-out infinite !important;
+  animation-delay: var(--delay, 0s) !important;
+  z-index: var(--z, 10);
+}
+
+.gold-cage-ball::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 13px;
+  width: 14px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.46);
+  filter: blur(1px);
+}
+
+@keyframes premiumBallSpiral {
+  0% {
+    transform: translate(var(--x1), var(--y1)) scale(var(--s1));
+    opacity: var(--o1);
+    filter: brightness(var(--b1));
+    z-index: var(--z1);
+  }
+
+  16% {
+    transform: translate(var(--x2), var(--y2)) scale(var(--s2));
+    opacity: var(--o2);
+    filter: brightness(var(--b2));
+    z-index: var(--z2);
+  }
+
+  34% {
+    transform: translate(var(--x3), var(--y3)) scale(var(--s3));
+    opacity: var(--o3);
+    filter: brightness(var(--b3));
+    z-index: var(--z3);
+  }
+
+  52% {
+    transform: translate(var(--x4), var(--y4)) scale(var(--s4));
+    opacity: var(--o4);
+    filter: brightness(var(--b4));
+    z-index: var(--z4);
+  }
+
+  72% {
+    transform: translate(var(--x5), var(--y5)) scale(var(--s5));
+    opacity: var(--o5);
+    filter: brightness(var(--b5));
+    z-index: var(--z5);
+  }
+
+  100% {
+    transform: translate(var(--x1), var(--y1)) scale(var(--s1));
+    opacity: var(--o1);
+    filter: brightness(var(--b1));
+    z-index: var(--z1);
+  }
+}
+
+/* ============================= */
+/* TRAJETÓRIAS DAS BOLAS */
+/* ============================= */
+
+.ball-1 {
+  --speed: 1.28s; --delay: 0s;
+  --x1: -160px; --y1: 118px; --s1: 1.18; --o1: 1; --b1: 1.1; --z1: 34;
+  --x2: -80px; --y2: 18px; --s2: 1.08; --o2: .98; --b2: 1; --z2: 20;
+  --x3: 55px; --y3: -35px; --s3: .86; --o3: .68; --b3: .8; --z3: 7;
+  --x4: 160px; --y4: 65px; --s4: 1.06; --o4: .96; --b4: 1; --z4: 18;
+  --x5: -20px; --y5: 150px; --s5: 1.2; --o5: 1; --b5: 1.13; --z5: 36;
+}
+
+.ball-2 {
+  --speed: 1.34s; --delay: -.08s;
+  --x1: -110px; --y1: 145px; --s1: 1.16; --o1: 1; --b1: 1.1; --z1: 36;
+  --x2: 20px; --y2: 38px; --s2: 1.1; --o2: .98; --b2: 1; --z2: 22;
+  --x3: 140px; --y3: -22px; --s3: .88; --o3: .68; --b3: .8; --z3: 7;
+  --x4: 90px; --y4: 110px; --s4: 1.08; --o4: .96; --b4: 1; --z4: 20;
+  --x5: -145px; --y5: 78px; --s5: 1.18; --o5: 1; --b5: 1.12; --z5: 35;
+}
+
+.ball-3 {
+  --speed: 1.42s; --delay: -.16s;
+  --x1: -50px; --y1: 128px; --s1: 1.15; --o1: 1; --b1: 1.09; --z1: 35;
+  --x2: 92px; --y2: 20px; --s2: 1.1; --o2: .98; --b2: 1; --z2: 22;
+  --x3: 165px; --y3: 115px; --s3: 1.03; --o3: .92; --b3: .95; --z3: 17;
+  --x4: -25px; --y4: -45px; --s4: .82; --o4: .64; --b4: .78; --z4: 6;
+  --x5: -135px; --y5: 150px; --s5: 1.2; --o5: 1; --b5: 1.12; --z5: 36;
+}
+
+.ball-4 {
+  --speed: 1.36s; --delay: -.24s;
+  --x1: 25px; --y1: 152px; --s1: 1.18; --o1: 1; --b1: 1.12; --z1: 37;
+  --x2: 150px; --y2: 42px; --s2: 1.09; --o2: .98; --b2: 1; --z2: 22;
+  --x3: 70px; --y3: -38px; --s3: .84; --o3: .66; --b3: .78; --z3: 6;
+  --x4: -145px; --y4: 70px; --s4: 1.05; --o4: .94; --b4: .96; --z4: 18;
+  --x5: 95px; --y5: 130px; --s5: 1.16; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-5 {
+  --speed: 1.3s; --delay: -.32s;
+  --x1: 95px; --y1: 126px; --s1: 1.16; --o1: 1; --b1: 1.1; --z1: 35;
+  --x2: 165px; --y2: 78px; --s2: 1.08; --o2: .96; --b2: 1; --z2: 20;
+  --x3: -60px; --y3: -28px; --s3: .84; --o3: .66; --b3: .78; --z3: 6;
+  --x4: -135px; --y4: 108px; --s4: 1.08; --o4: .98; --b4: 1.02; --z4: 22;
+  --x5: 30px; --y5: 154px; --s5: 1.18; --o5: 1; --b5: 1.12; --z5: 36;
+}
+
+.ball-6 {
+  --speed: 1.48s; --delay: -.4s;
+  --x1: 158px; --y1: 145px; --s1: 1.14; --o1: 1; --b1: 1.08; --z1: 34;
+  --x2: 60px; --y2: 25px; --s2: 1.12; --o2: .98; --b2: 1; --z2: 24;
+  --x3: -155px; --y3: 112px; --s3: 1.05; --o3: .92; --b3: .95; --z3: 18;
+  --x4: 10px; --y4: -42px; --s4: .82; --o4: .64; --b4: .78; --z4: 6;
+  --x5: 120px; --y5: 92px; --s5: 1.12; --o5: .98; --b5: 1.08; --z5: 28;
+}
+
+.ball-7 {
+  --speed: 1.38s; --delay: -.04s;
+  --x1: -170px; --y1: 42px; --s1: .98; --o1: .9; --b1: .94; --z1: 15;
+  --x2: -42px; --y2: -35px; --s2: .82; --o2: .62; --b2: .78; --z2: 5;
+  --x3: 120px; --y3: 52px; --s3: .98; --o3: .9; --b3: .94; --z3: 15;
+  --x4: -108px; --y4: 118px; --s4: 1.12; --o4: 1; --b4: 1.08; --z4: 30;
+  --x5: 35px; --y5: 155px; --s5: 1.15; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-8 {
+  --speed: 1.46s; --delay: -.12s;
+  --x1: -98px; --y1: 62px; --s1: 1; --o1: .92; --b1: .96; --z1: 16;
+  --x2: 45px; --y2: -42px; --s2: .82; --o2: .64; --b2: .78; --z2: 5;
+  --x3: 165px; --y3: 80px; --s3: 1; --o3: .92; --b3: .96; --z3: 16;
+  --x4: -35px; --y4: 132px; --s4: 1.14; --o4: 1; --b4: 1.1; --z4: 32;
+  --x5: -150px; --y5: 96px; --s5: 1.1; --o5: .98; --b5: 1.04; --z5: 28;
+}
+
+.ball-9 {
+  --speed: 1.32s; --delay: -.2s;
+  --x1: -18px; --y1: 42px; --s1: .98; --o1: .92; --b1: .96; --z1: 15;
+  --x2: 112px; --y2: -28px; --s2: .84; --o2: .66; --b2: .8; --z2: 6;
+  --x3: 65px; --y3: 116px; --s3: 1.1; --o3: 1; --b3: 1.08; --z3: 30;
+  --x4: -155px; --y4: 82px; --s4: 1.02; --o4: .95; --b4: .98; --z4: 18;
+  --x5: 0px; --y5: 155px; --s5: 1.15; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-10 {
+  --speed: 1.4s; --delay: -.28s;
+  --x1: 45px; --y1: 65px; --s1: 1; --o1: .94; --b1: .96; --z1: 16;
+  --x2: 155px; --y2: 12px; --s2: .92; --o2: .82; --b2: .88; --z2: 10;
+  --x3: -85px; --y3: -30px; --s3: .82; --o3: .64; --b3: .78; --z3: 5;
+  --x4: 95px; --y4: 122px; --s4: 1.12; --o4: 1; --b4: 1.1; --z4: 32;
+  --x5: -110px; --y5: 145px; --s5: 1.14; --o5: 1; --b5: 1.08; --z5: 34;
+}
+
+.ball-11 {
+  --speed: 1.5s; --delay: -.36s;
+  --x1: 115px; --y1: 38px; --s1: .98; --o1: .92; --b1: .95; --z1: 15;
+  --x2: 35px; --y2: -42px; --s2: .82; --o2: .64; --b2: .78; --z2: 5;
+  --x3: -165px; --y3: 75px; --s3: 1; --o3: .94; --b3: .96; --z3: 16;
+  --x4: 150px; --y4: 102px; --s4: 1.08; --o4: .98; --b4: 1.04; --z4: 26;
+  --x5: 65px; --y5: 150px; --s5: 1.15; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-12 {
+  --speed: 1.36s; --delay: -.44s;
+  --x1: 165px; --y1: 75px; --s1: 1; --o1: .94; --b1: .96; --z1: 16;
+  --x2: -75px; --y2: -30px; --s2: .82; --o2: .64; --b2: .78; --z2: 5;
+  --x3: -110px; --y3: 122px; --s3: 1.1; --o3: 1; --b3: 1.08; --z3: 30;
+  --x4: 30px; --y4: 112px; --s4: 1.08; --o4: .98; --b4: 1.05; --z4: 25;
+  --x5: 120px; --y5: 148px; --s5: 1.14; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-13 {
+  --speed: 1.46s; --delay: -.02s;
+  --x1: -150px; --y1: -22px; --s1: .82; --o1: .62; --b1: .78; --z1: 5;
+  --x2: -20px; --y2: -90px; --s2: .78; --o2: .56; --b2: .72; --z2: 4;
+  --x3: 130px; --y3: -8px; --s3: .84; --o3: .66; --b3: .8; --z3: 6;
+  --x4: -85px; --y4: 55px; --s4: .96; --o4: .88; --b4: .92; --z4: 14;
+  --x5: 45px; --y5: 132px; --s5: 1.12; --o5: 1; --b5: 1.08; --z5: 32;
+}
+
+.ball-14 {
+  --speed: 1.52s; --delay: -.1s;
+  --x1: -82px; --y1: -2px; --s1: .84; --o1: .66; --b1: .8; --z1: 6;
+  --x2: 68px; --y2: -92px; --s2: .78; --o2: .56; --b2: .72; --z2: 4;
+  --x3: 160px; --y3: 28px; --s3: .86; --o3: .7; --b3: .82; --z3: 8;
+  --x4: -18px; --y4: 58px; --s4: .98; --o4: .9; --b4: .94; --z4: 16;
+  --x5: -130px; --y5: 138px; --s5: 1.12; --o5: 1; --b5: 1.08; --z5: 32;
+}
+
+.ball-15 {
+  --speed: 1.34s; --delay: -.18s;
+  --x1: 0px; --y1: -25px; --s1: .82; --o1: .62; --b1: .78; --z1: 5;
+  --x2: 138px; --y2: -72px; --s2: .8; --o2: .6; --b2: .74; --z2: 4;
+  --x3: -68px; --y3: 18px; --s3: .88; --o3: .74; --b3: .84; --z3: 8;
+  --x4: 95px; --y4: 65px; --s4: 1; --o4: .92; --b4: .96; --z4: 18;
+  --x5: -20px; --y5: 145px; --s5: 1.14; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-16 {
+  --speed: 1.44s; --delay: -.26s;
+  --x1: 90px; --y1: -8px; --s1: .84; --o1: .66; --b1: .8; --z1: 6;
+  --x2: -116px; --y2: -85px; --s2: .78; --o2: .56; --b2: .72; --z2: 4;
+  --x3: -148px; --y3: 45px; --s3: .9; --o3: .78; --b3: .86; --z3: 10;
+  --x4: 158px; --y4: 35px; --s4: .96; --o4: .88; --b4: .94; --z4: 15;
+  --x5: 20px; --y5: 138px; --s5: 1.12; --o5: 1; --b5: 1.08; --z5: 32;
+}
+
+.ball-17 {
+  --speed: 1.38s; --delay: -.34s;
+  --x1: 155px; --y1: -22px; --s1: .82; --o1: .62; --b1: .78; --z1: 5;
+  --x2: -28px; --y2: -95px; --s2: .78; --o2: .56; --b2: .72; --z2: 4;
+  --x3: -125px; --y3: 0px; --s3: .86; --o3: .7; --b3: .82; --z3: 8;
+  --x4: 48px; --y4: 78px; --s4: 1.02; --o4: .94; --b4: .98; --z4: 20;
+  --x5: 145px; --y5: 135px; --s5: 1.12; --o5: 1; --b5: 1.08; --z5: 32;
+}
+
+.ball-18 {
+  --speed: 1.54s; --delay: -.42s;
+  --x1: -176px; --y1: 10px; --s1: .9; --o1: .8; --b1: .88; --z1: 10;
+  --x2: -98px; --y2: -70px; --s2: .82; --o2: .64; --b2: .78; --z2: 5;
+  --x3: 88px; --y3: 18px; --s3: .92; --o3: .82; --b3: .9; --z3: 12;
+  --x4: -38px; --y4: 135px; --s4: 1.13; --o4: 1; --b4: 1.1; --z4: 34;
+  --x5: 160px; --y5: 95px; --s5: 1.05; --o5: .94; --b5: .98; --z5: 20;
+}
+
+.ball-19 {
+  --speed: 1.42s; --delay: -.5s;
+  --x1: -130px; --y1: 90px; --s1: .95; --o1: .88; --b1: .92; --z1: 14;
+  --x2: 8px; --y2: -58px; --s2: .84; --o2: .66; --b2: .8; --z2: 5;
+  --x3: 148px; --y3: 44px; --s3: .94; --o3: .86; --b3: .92; --z3: 12;
+  --x4: -92px; --y4: 145px; --s4: 1.14; --o4: 1; --b4: 1.1; --z4: 34;
+  --x5: 20px; --y5: 62px; --s5: 1; --o5: .92; --b5: .96; --z5: 18;
+}
+
+.ball-20 {
+  --speed: 1.5s; --delay: -.58s;
+  --x1: -38px; --y1: 82px; --s1: .94; --o1: .86; --b1: .9; --z1: 12;
+  --x2: 112px; --y2: -48px; --s2: .82; --o2: .64; --b2: .78; --z2: 5;
+  --x3: -162px; --y3: 30px; --s3: .94; --o3: .86; --b3: .92; --z3: 12;
+  --x4: 78px; --y4: 142px; --s4: 1.14; --o4: 1; --b4: 1.1; --z4: 34;
+  --x5: 152px; --y5: 88px; --s5: 1.04; --o5: .94; --b5: .98; --z5: 20;
+}
+
+.ball-21 {
+  --speed: 1.32s; --delay: -.66s;
+  --x1: 68px; --y1: 84px; --s1: .95; --o1: .88; --b1: .92; --z1: 14;
+  --x2: 158px; --y2: -24px; --s2: .84; --o2: .66; --b2: .8; --z2: 5;
+  --x3: -92px; --y3: 34px; --s3: .94; --o3: .86; --b3: .92; --z3: 12;
+  --x4: 138px; --y4: 132px; --s4: 1.14; --o4: 1; --b4: 1.1; --z4: 34;
+  --x5: -132px; --y5: 80px; --s5: 1.04; --o5: .94; --b5: .98; --z5: 20;
+}
+
+.ball-22 {
+  --speed: 1.46s; --delay: -.74s;
+  --x1: 158px; --y1: 102px; --s1: .94; --o1: .86; --b1: .9; --z1: 12;
+  --x2: -148px; --y2: -34px; --s2: .82; --o2: .64; --b2: .78; --z2: 5;
+  --x3: -18px; --y3: 58px; --s3: .94; --o3: .86; --b3: .92; --z3: 12;
+  --x4: 12px; --y4: 150px; --s4: 1.14; --o4: 1; --b4: 1.1; --z4: 34;
+  --x5: 120px; --y5: 35px; --s5: .98; --o5: .9; --b5: .92; --z5: 15;
+}
+
+.ball-23 {
+  --speed: 1.31s; --delay: -.15s;
+  --x1: -28px; --y1: 120px; --s1: 1.08; --o1: 1; --b1: 1.08; --z1: 28;
+  --x2: 118px; --y2: -10px; --s2: .84; --o2: .64; --b2: .78; --z2: 5;
+  --x3: -142px; --y3: 14px; --s3: .9; --o3: .78; --b3: .86; --z3: 10;
+  --x4: 72px; --y4: 154px; --s4: 1.15; --o4: 1; --b4: 1.1; --z4: 35;
+  --x5: 158px; --y5: 85px; --s5: 1.04; --o5: .94; --b5: .98; --z5: 20;
+}
+
+.ball-24 {
+  --speed: 1.39s; --delay: -.23s;
+  --x1: 20px; --y1: 118px; --s1: 1.08; --o1: 1; --b1: 1.08; --z1: 28;
+  --x2: -135px; --y2: -10px; --s2: .84; --o2: .64; --b2: .78; --z2: 5;
+  --x3: 145px; --y3: 18px; --s3: .9; --o3: .78; --b3: .86; --z3: 10;
+  --x4: -75px; --y4: 154px; --s4: 1.15; --o4: 1; --b4: 1.1; --z4: 35;
+  --x5: -160px; --y5: 82px; --s5: 1.04; --o5: .94; --b5: .98; --z5: 20;
+}
+
+.ball-25 {
+  --speed: 1.47s; --delay: -.31s;
+  --x1: -92px; --y1: 98px; --s1: 1; --o1: .95; --b1: .96; --z1: 18;
+  --x2: 96px; --y2: -25px; --s2: .84; --o2: .64; --b2: .78; --z2: 5;
+  --x3: 5px; --y3: 118px; --s3: 1.1; --o3: 1; --b3: 1.08; --z3: 30;
+  --x4: -150px; --y4: 48px; --s4: .96; --o4: .88; --b4: .92; --z4: 14;
+  --x5: 105px; --y5: 148px; --s5: 1.14; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-26 {
+  --speed: 1.35s; --delay: -.39s;
+  --x1: 110px; --y1: 94px; --s1: 1; --o1: .95; --b1: .96; --z1: 18;
+  --x2: -88px; --y2: -18px; --s2: .84; --o2: .64; --b2: .78; --z2: 5;
+  --x3: -25px; --y3: 120px; --s3: 1.1; --o3: 1; --b3: 1.08; --z3: 30;
+  --x4: 148px; --y4: 52px; --s4: .96; --o4: .88; --b4: .92; --z4: 14;
+  --x5: -105px; --y5: 148px; --s5: 1.14; --o5: 1; --b5: 1.1; --z5: 34;
+}
+
+.ball-27 {
+  --speed: 1.43s; --delay: -.47s;
+  --x1: -120px; --y1: 15px; --s1: .9; --o1: .82; --b1: .88; --z1: 10;
+  --x2: 120px; --y2: -70px; --s2: .8; --o2: .6; --b2: .74; --z2: 4;
+  --x3: 70px; --y3: 40px; --s3: .92; --o3: .84; --b3: .9; --z3: 12;
+  --x4: -70px; --y4: 135px; --s4: 1.13; --o4: 1; --b4: 1.1; --z4: 34;
+  --x5: 155px; --y5: 118px; --s5: 1.08; --o5: .96; --b5: 1; --z5: 22;
+}
+
+.ball-28 {
+  --speed: 1.49s; --delay: -.55s;
+  --x1: 125px; --y1: 18px; --s1: .9; --o1: .82; --b1: .88; --z1: 10;
+  --x2: -120px; --y2: -72px; --s2: .8; --o2: .6; --b2: .74; --z2: 4;
+  --x3: -75px; --y3: 42px; --s3: .92; --o3: .84; --b3: .9; --z3: 12;
+  --x4: 72px; --y4: 138px; --s4: 1.13; --o4: 1; --b4: 1.1; --z4: 34;
+  --x5: -155px; --y5: 115px; --s5: 1.08; --o5: .96; --b5: 1; --z5: 22;
+}
+
+.ball-29,
+.ball-30,
+.ball-31,
+.ball-32,
+.ball-33,
+.ball-34,
+.ball-35,
+.ball-36,
+.ball-37,
+.ball-38,
+.ball-39,
+.ball-40,
+.ball-41,
+.ball-42 {
+  --speed: 1.4s;
+  --x1: -40px; --y1: 125px; --s1: 1.05; --o1: .96; --b1: 1; --z1: 22;
+  --x2: 125px; --y2: -35px; --s2: .82; --o2: .64; --b2: .78; --z2: 5;
+  --x3: -155px; --y3: 35px; --s3: .9; --o3: .78; --b3: .86; --z3: 10;
+  --x4: 90px; --y4: 152px; --s4: 1.15; --o4: 1; --b4: 1.1; --z4: 35;
+  --x5: 10px; --y5: 20px; --s5: .96; --o5: .88; --b5: .92; --z5: 14;
+}
+
+.ball-29 { --delay: -.04s; }
+.ball-30 { --delay: -.12s; }
+.ball-31 { --delay: -.2s; }
+.ball-32 { --delay: -.28s; }
+.ball-33 { --delay: -.36s; }
+.ball-34 { --delay: -.44s; }
+.ball-35 { --delay: -.52s; }
+.ball-36 { --delay: -.6s; }
+.ball-37 { --delay: -.68s; }
+.ball-38 { --delay: -.76s; }
+.ball-39 { --delay: -.84s; }
+.ball-40 { --delay: -.92s; }
+.ball-41 { --delay: -1s; }
+.ball-42 { --delay: -1.08s; }
+
+/* ============================= */
+/* TUBO DE QUEDA */
+/* ============================= */
+
+.gold-drop-neck {
+  position: absolute;
+  top: 515px;
+  left: 50%;
+  width: 120px;
+  height: 190px;
+  transform: translateX(-50%);
+  border-radius: 20px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.09), rgba(255, 216, 95, 0.24), rgba(255, 255, 255, 0.07));
+  border: 2px solid rgba(255, 209, 92, 0.62);
+  box-shadow:
+    inset 0 0 18px rgba(255, 255, 255, 0.14),
+    0 0 25px rgba(255, 188, 42, 0.28);
+  z-index: 8;
+}
+
+.gold-drop-window {
+  position: absolute;
+  top: 25px;
+  left: 50%;
+  width: 84px;
+  height: 50px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 3px solid rgba(255, 211, 88, 0.68);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.gold-drop-ball {
+  position: absolute;
+  left: 50%;
+  bottom: 15px;
+  width: 94px;
+  height: 94px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1c1000;
+  font-size: 42px;
+  font-weight: 950;
+  background:
+    radial-gradient(circle at 35% 22%, #fff8c9, transparent 28%),
+    radial-gradient(circle at 70% 78%, #ad7208, transparent 28%),
+    linear-gradient(145deg, #fff0a6, #d79c19 58%, #fff4bc);
+  border: 5px solid #3d2700;
+  box-shadow:
+    inset 0 0 0 5px rgba(255, 247, 183, 0.72),
+    0 0 35px rgba(255, 200, 55, 0.82);
+  z-index: 20;
+}
+
+.gold-drop-ball.dropping {
+  animation: dropGoldBallFast 0.58s cubic-bezier(0.18, 1.25, 0.26, 1) both;
+}
+
+.gold-drop-ball.revealed {
+  animation: revealGoldBall 0.75s ease-in-out infinite alternate;
+}
+
+@keyframes dropGoldBallFast {
+  0% {
+    transform: translateX(-50%) translateY(-260px) scale(0.55) rotate(-240deg);
+    opacity: 0;
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  78% {
+    transform: translateX(-50%) translateY(8px) scale(1.05) rotate(18deg);
+  }
+
+  100% {
+    transform: translateX(-50%) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes revealGoldBall {
+  from {
+    transform: translateX(-50%) scale(1);
+  }
+
+  to {
+    transform: translateX(-50%) scale(1.06);
+    box-shadow:
+      inset 0 0 0 5px rgba(255, 247, 183, 0.84),
+      0 0 48px rgba(255, 214, 80, 1);
+  }
+}
+
+/* ============================= */
+/* BASE */
+/* ============================= */
+
+.gold-stage-base {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 590px;
+  height: 90px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, rgba(255, 218, 102, 0.22), transparent 55%),
+    linear-gradient(180deg, #3b280c, #080808 65%, #000);
+  border: 2px solid rgba(255, 191, 50, 0.62);
+  box-shadow:
+    inset 0 8px 16px rgba(255, 219, 109, 0.16),
+    0 0 30px rgba(255, 188, 42, 0.3);
+  z-index: 1;
+}
+
+/* ============================= */
+/* BOTÃO DE SOM */
+/* ============================= */
+
+.tv-enable-sound {
+  position: fixed;
+  z-index: 50;
+  top: 18px;
+  right: 18px;
+  border: 1px solid rgba(255, 211, 80, 0.85);
+  background:
+    linear-gradient(180deg, #ffdb6b, #b97900);
+  color: #160c00;
+  font-weight: 950;
+  font-size: 16px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(255, 200, 65, 0.45);
+}
+
+/* ============================= */
+/* COUNTDOWN */
+/* ============================= */
+
+.tv-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.tv-countdown-content {
+  width: min(44vw, 440px);
+  height: min(44vw, 440px);
+  border-radius: 50%;
+  border: 10px solid #ffd54a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 35% 22%, #fff2a4, transparent 24%),
+    linear-gradient(145deg, #d59612, #4b2b00);
+  box-shadow:
+    inset 0 0 40px rgba(255, 255, 255, 0.28),
+    0 0 70px rgba(255, 211, 74, 0.82);
+  animation: countdownPop 1.2s ease-in-out infinite;
+}
+
+.tv-countdown-content strong {
+  color: #fff;
+  font-size: min(20vw, 210px);
+  font-weight: 950;
+  text-shadow: 0 6px 12px #000;
+}
+
+@keyframes countdownPop {
+  0% {
+    transform: scale(0.92);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
+
+  100% {
+    transform: scale(0.92);
+  }
+}
+
+/* ============================= */
+/* RESPONSIVO */
+/* ============================= */
+
+@media (max-width: 1200px) {
+  .gold-tv-layout {
+    grid-template-columns: 1fr;
+    padding: 34px 72px;
+  }
+
+  .gold-right-panel {
+    min-height: 620px;
+  }
+
+  .gold-cage-stage {
+    transform: scale(0.82);
+    transform-origin: top center;
+    height: 620px;
+  }
+}
+
+@media (max-width: 800px) {
+  .gold-tv-layout {
+    padding: 28px 18px;
+  }
+
+  .gold-board-row {
+    grid-template-columns: 42px repeat(15, minmax(0, 1fr));
+    min-height: 42px;
+  }
+
+  .gold-board-cell {
+    font-size: 18px;
+  }
+
+  .gold-board-letter {
+    font-size: 28px;
+  }
+
+  .gold-last-balls {
+    gap: 8px;
+  }
+
+  .gold-prize-card,
+  .gold-current-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .gold-right-panel {
+    display: none;
+  }
+}

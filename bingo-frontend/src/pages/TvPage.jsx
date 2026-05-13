@@ -32,6 +32,16 @@ export default function TvPage() {
     CARTELA_CHEIA: "Cartela Cheia",
   };
 
+  const letrasBingo = ["B", "I", "N", "G", "O"];
+
+  const numerosPainel = [
+    Array.from({ length: 15 }, (_, i) => i + 1),
+    Array.from({ length: 15 }, (_, i) => i + 16),
+    Array.from({ length: 15 }, (_, i) => i + 31),
+    Array.from({ length: 15 }, (_, i) => i + 46),
+    Array.from({ length: 15 }, (_, i) => i + 61),
+  ];
+
   const numerosGlobo = useMemo(
     () => [
       3, 5, 8, 12, 15, 18, 21, 22, 27, 31, 33, 37,
@@ -42,8 +52,21 @@ export default function TvPage() {
     []
   );
 
+  const ultimasSeisBolas = historico.slice(-6).reverse();
+
   function formatarPremio(premio) {
-    return nomesPremio[premio] || "Primeira Linha";
+    return nomesPremio[premio] || premio || "Primeira Linha";
+  }
+
+  function letraDoNumero(numero) {
+    const n = Number(numero);
+
+    if (n <= 15) return "B";
+    if (n <= 30) return "I";
+    if (n <= 45) return "N";
+    if (n <= 60) return "G";
+
+    return "O";
   }
 
   function extrairLista(data) {
@@ -134,40 +157,6 @@ export default function TvPage() {
     );
   }
 
-  function falarTexto(texto) {
-    return new Promise((resolve) => {
-      if (!somLiberado || !("speechSynthesis" in window)) {
-        resolve();
-        return;
-      }
-
-      if (!texto) {
-        resolve();
-        return;
-      }
-
-      window.speechSynthesis.cancel();
-
-      const fala = new SpeechSynthesisUtterance(texto);
-
-      fala.lang = "pt-BR";
-      fala.rate = 0.9;
-      fala.pitch = 1.08;
-      fala.volume = 1;
-
-      const voz = escolherVozFeminina();
-
-      if (voz) {
-        fala.voice = voz;
-      }
-
-      fala.onend = () => resolve();
-      fala.onerror = () => resolve();
-
-      window.speechSynthesis.speak(fala);
-    });
-  }
-
   function falarNumeroSorteado(numero) {
     return new Promise((resolve) => {
       if (!somLiberado || !("speechSynthesis" in window)) {
@@ -182,18 +171,14 @@ export default function TvPage() {
 
       window.speechSynthesis.cancel();
 
-      const numeroTexto = String(numero);
-
-      // Antes estava com "join(' e ')".
-      // Agora fica: 15, 1, 5
-      const digitos = numeroTexto.split("").join(", ");
-      const texto = `${numeroTexto}, ${digitos}`;
+      const letra = letraDoNumero(numero);
+      const texto = `${letra} ${numero}. Repito, ${letra} ${numero}.`;
 
       const fala = new SpeechSynthesisUtterance(texto);
 
       fala.lang = "pt-BR";
-      fala.rate = 0.9;
-      fala.pitch = 1.08;
+      fala.rate = 0.86;
+      fala.pitch = 1.05;
       fala.volume = 1;
 
       const voz = escolherVozFeminina();
@@ -301,8 +286,10 @@ export default function TvPage() {
   async function iniciarSequenciaSorteio(numero, premio = premioAtual) {
     if (!numero && numero !== 0) return;
 
+    const numeroNormalizado = Number(numero);
+
     if (animandoRef.current) {
-      filaRef.current.push({ numero, premio });
+      filaRef.current.push({ numero: numeroNormalizado, premio });
       return;
     }
 
@@ -313,28 +300,26 @@ export default function TvPage() {
     try {
       setCountdown(null);
 
-      // Aqui está o ajuste principal:
-      // Não espera mais 3 segundos misturando antes de mostrar a bolinha.
-      setNumeroAnimado(numero);
-      setNumeroAtual(numero);
+      setNumeroAnimado(numeroNormalizado);
+      setNumeroAtual(numeroNormalizado);
 
       setHistorico((prev) =>
-        prev.includes(numero) ? prev : [...prev, numero]
+        prev.includes(numeroNormalizado) ? prev : [...prev, numeroNormalizado]
       );
 
-      setMensagem(`${premioFormatado} • Número sorteado: ${numero}`);
+      setMensagem(`${premioFormatado} • ${letraDoNumero(numeroNormalizado)} ${numeroNormalizado}`);
       setFaseAnimacao("dropping");
 
       tocarAudio(dropAudioRef);
       pararAudio(machineAudioRef);
 
-      await esperar(450);
+      await esperar(650);
 
       setFaseAnimacao("revealed");
 
-      if (ultimoNumeroFaladoRef.current !== numero) {
-        ultimoNumeroFaladoRef.current = numero;
-        await falarNumeroSorteado(numero);
+      if (ultimoNumeroFaladoRef.current !== numeroNormalizado) {
+        ultimoNumeroFaladoRef.current = numeroNormalizado;
+        await falarNumeroSorteado(numeroNormalizado);
       }
 
       await esperar(350);
@@ -361,6 +346,7 @@ export default function TvPage() {
         setRodadaId(response.data.id);
         setStatusRodada(response.data.status || "AGUARDANDO");
         setNumeroRodada(response.data.numeroRodada);
+        setPremioAtual(response.data.premio || response.data.premioAtual || "PRIMEIRA_LINHA");
         setMensagem(`Transmitindo rodada ${response.data.numeroRodada}`);
       } else {
         setMensagem("Nenhuma rodada ativa no momento.");
@@ -484,6 +470,10 @@ export default function TvPage() {
           setNumeroRodada(event.numeroRodada);
         }
 
+        if (event.premio) {
+          setPremioAtual(event.premio);
+        }
+
         setStatusRodada(event.status || "CRIADA");
         setHistorico([]);
         setNumeroAtual(null);
@@ -519,6 +509,10 @@ export default function TvPage() {
           setNumeroRodada(event.numeroRodada);
         }
 
+        if (event.premio) {
+          setPremioAtual(event.premio);
+        }
+
         setStatusRodada("EM_ANDAMENTO");
         setMensagem("Rodada iniciada, boa sorte a todos!");
 
@@ -548,6 +542,10 @@ export default function TvPage() {
           setRodadaId(event.rodadaId);
         }
 
+        if (event.premio) {
+          setPremioAtual(event.premio);
+        }
+
         iniciarSequenciaSorteio(numero, event.premio || premioAtual);
 
         return;
@@ -571,15 +569,7 @@ export default function TvPage() {
 
       if (event.type === "PRIZE_UPDATED") {
         setPremioAtual(event.premio);
-        return;
-      }
-
-      if (
-        event.type === "LINE_COMPLETED" ||
-        event.type === "LINHA_CANTADA" ||
-        event.type === "BINGO" ||
-        event.type === "BINGO_CANTADO"
-      ) {
+        localStorage.setItem("premioAtualOperador", event.premio);
         return;
       }
     },
@@ -588,10 +578,8 @@ export default function TvPage() {
 
   useWebSocket(sessaoId ? [`/topic/tv/${sessaoId}`] : [], handleWsMessage);
 
-  const ultimasNoveBolas = historico.slice(-9).reverse();
-
   return (
-    <div className={`tv-page casino-tv cinematic-tv fase-${faseAnimacao}`}>
+    <div className={`tv-page bingo-tv-gold fase-${faseAnimacao}`}>
       <audio
         ref={machineAudioRef}
         src="/sounds/bingo-machine.mp3"
@@ -619,208 +607,143 @@ export default function TvPage() {
         </div>
       )}
 
-      <header className="casino-tv-header">
-        <div className="casino-brand">
-          <span>BINGO BENEFICENTE</span>
-          <strong>
-            {numeroRodada ? `RODADA ${numeroRodada}` : "TRANSMISSÃO AO VIVO"}
-          </strong>
-        </div>
+      <main className="gold-tv-layout">
+        <section className="gold-left-panel">
+          <div className="gold-number-board">
+            {numerosPainel.map((linha, linhaIndex) => (
+              <div className="gold-board-row" key={letrasBingo[linhaIndex]}>
+                <div className="gold-board-letter">{letrasBingo[linhaIndex]}</div>
 
-        <div className="casino-status">
-          <span>STATUS</span>
-          <strong>{statusRodada}</strong>
-        </div>
+                {linha.map((numero) => {
+                  const sorteado = historico.includes(numero);
+                  const atual = numeroAtual === numero;
 
-        <div className="casino-prize">
-          <span>CONCORRENDO AGORA</span>
-          <strong>{formatarPremio(premioAtual)}</strong>
-        </div>
-      </header>
-
-      <section className="casino-top-drawn-panel cinematic-drawn-panel">
-        <div className="casino-side-title">
-          <span>ÚLTIMAS BOLAS SORTEADAS</span>
-          <strong>{historico.length}/75</strong>
-        </div>
-
-        <div className="casino-results-strip casino-results-strip-top">
-          {ultimasNoveBolas.length > 0 ? (
-            ultimasNoveBolas.map((n, index) => (
-              <span key={`${n}-${index}`}>
-                {String(n).padStart(2, "0")}
-              </span>
-            ))
-          ) : (
-            <>
-              <span>--</span>
-              <span>--</span>
-              <span>--</span>
-              <span>--</span>
-              <span>--</span>
-              <span>--</span>
-              <span>--</span>
-              <span>--</span>
-              <span>--</span>
-            </>
-          )}
-        </div>
-      </section>
-
-      <main className="casino-tv-main casino-tv-main-centered cinematic-main">
-        <section className="casino-machine-area cinematic-machine-area">
-          <div className="casino-message cinematic-message">{mensagem}</div>
-
-          <div
-            className={`casino-bingo-machine cinematic-bingo-machine ${
-              faseAnimacao === "spinning" ? "spinning" : ""
-            } ${faseAnimacao === "selecting" ? "selecting" : ""} ${
-              faseAnimacao === "dropping" ? "dropping" : ""
-            } ${faseAnimacao === "revealed" ? "revealed" : ""}`}
-          >
-            <div className="machine-aura"></div>
-            <div className="machine-shadow"></div>
-
-            <div className="casino-light-column left">
-              <i></i>
-              <i></i>
-              <i></i>
-              <i></i>
-              <i></i>
-            </div>
-
-            <div className="casino-light-column right">
-              <i></i>
-              <i></i>
-              <i></i>
-              <i></i>
-              <i></i>
-            </div>
-
-            <div className="casino-top-tube cinematic-top-tube">
-              <div className="casino-top-ball cinematic-top-ball">
-                <span>
-                  {numeroAtual ? String(numeroAtual).padStart(2, "0") : "--"}
-                </span>
+                  return (
+                    <div
+                      key={numero}
+                      className={`gold-board-cell ${sorteado ? "drawn" : ""} ${
+                        atual ? "current" : ""
+                      }`}
+                    >
+                      {numero}
+                    </div>
+                  );
+                })}
               </div>
-              <div className="casino-tube-glass"></div>
+            ))}
+          </div>
+
+          <div className="gold-info-card gold-last-card">
+            <span className="gold-info-label">ÚLTIMAS 6 BOLAS</span>
+
+            <div className="gold-last-balls">
+              {ultimasSeisBolas.length > 0 ? (
+                ultimasSeisBolas.map((numero, index) => (
+                  <div
+                    className={`gold-small-ball ${
+                      numero === numeroAtual ? "active" : ""
+                    }`}
+                    key={`${numero}-${index}`}
+                  >
+                    {String(numero).padStart(2, "0")}
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
+                </>
+              )}
             </div>
+          </div>
 
-            <div className="cinematic-globe-platform">
-              <div className="cinematic-back-stand"></div>
+          <div className="gold-info-card gold-prize-card">
+            <span className="gold-info-label">PRÊMIO DA RODADA</span>
+            <strong>{formatarPremio(premioAtual)}</strong>
+          </div>
 
-              <div className="casino-globe-wrap cinematic-globe-wrap">
-                <div className="casino-globe cinematic-globe spinning-always">
-                  <div className="cinematic-glass-reflection reflection-one"></div>
-                  <div className="cinematic-glass-reflection reflection-two"></div>
-                  <div className="casino-globe-shine"></div>
-                  <div className="casino-globe-ring"></div>
+          <div className="gold-info-card gold-current-card">
+            <span className="gold-info-label">NÚMERO ATUAL</span>
+            <strong>
+              {numeroAtual ? (
+                <>
+                  <em>{letraDoNumero(numeroAtual)}</em>{" "}
+                  {String(numeroAtual).padStart(2, "0")}
+                </>
+              ) : (
+                "--"
+              )}
+            </strong>
+          </div>
 
-                  <div className="cinematic-depth depth-back"></div>
+          <div className="gold-message-card">
+            {mensagem || "Boa sorte a todos!"}
+          </div>
+        </section>
 
-                  <div className="casino-inner-balls popcorn-balls balls-back">
-                    {numerosGlobo.slice(0, 16).map((n, index) => (
-                      <span
-                        key={`back-${n}-${index}`}
-                        className={`casino-inner-ball cinematic-inner-ball depth-ball ib-${
-                          index + 1
-                        }`}
-                      >
-                        {String(n).padStart(2, "0")}
-                      </span>
-                    ))}
-                  </div>
+        <section className="gold-right-panel">
+          <div className="gold-cage-stage">
+            <div className="gold-cage-light"></div>
 
-                  <div className="cinematic-mixer mixer-always">
-                    <div className="casino-globe-center"></div>
-                    <div className="casino-globe-arm arm-1"></div>
-                    <div className="casino-globe-arm arm-2"></div>
-                    <div className="casino-globe-arm arm-3"></div>
-                    <div className="casino-globe-arm arm-4"></div>
-                    <div className="casino-globe-arm arm-5"></div>
-                    <div className="casino-globe-arm arm-6"></div>
-                  </div>
+            <div className="gold-cage-machine">
+              <div className="gold-cage-support left"></div>
+              <div className="gold-cage-support right"></div>
 
-                  <div className="casino-inner-balls popcorn-balls balls-mid">
-                    {numerosGlobo.slice(16, 34).map((n, index) => (
-                      <span
-                        key={`mid-${n}-${index}`}
-                        className={`casino-inner-ball cinematic-inner-ball ib-${
-                          index + 17
-                        }`}
-                      >
-                        {String(n).padStart(2, "0")}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="casino-inner-balls popcorn-balls balls-front">
-                    {numerosGlobo.slice(34).map((n, index) => (
-                      <span
-                        key={`front-${n}-${index}`}
-                        className={`casino-inner-ball cinematic-inner-ball front-ball ib-${
-                          index + 35
-                        }`}
-                      >
-                        {String(n).padStart(2, "0")}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="cinematic-depth depth-front"></div>
-                </div>
-              </div>
-
-              <div className="cinematic-front-stand"></div>
-            </div>
-
-            <div className="cinematic-exit-system">
-              <div
-                className={`cinematic-gate ${
-                  faseAnimacao === "dropping" || faseAnimacao === "revealed"
-                    ? "open"
-                    : ""
-                }`}
-              >
+              <div className="gold-crank">
                 <span></span>
               </div>
 
-              <div className="cinematic-exit-neck"></div>
+              <div className="gold-cage-globe">
+                <div className="gold-cage-rim horizontal"></div>
+                <div className="gold-cage-rim top"></div>
+                <div className="gold-cage-rim bottom"></div>
 
-              <div className="casino-output-tube cinematic-output-tube">
-                <div className="cinematic-tube-highlight"></div>
+                {Array.from({ length: 22 }).map((_, index) => (
+                  <span
+                    key={`rod-${index}`}
+                    className="gold-cage-rod"
+                    style={{ "--rod": index }}
+                  ></span>
+                ))}
+
+                <div className="gold-cage-balls">
+                  {numerosGlobo.slice(0, 28).map((numero, index) => (
+                    <span
+                      key={`${numero}-${index}`}
+                      className={`gold-cage-ball ball-${index + 1}`}
+                    >
+                      {numero}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="gold-cage-shine"></div>
+              </div>
+
+              <div className="gold-drop-neck">
+                <div className="gold-drop-window"></div>
 
                 {numeroAnimado !== null && (
                   <div
                     key={numeroAnimado}
-                    className={`casino-drawn-ball cinematic-drawn-ball ${
+                    className={`gold-drop-ball ${
                       faseAnimacao === "dropping" ? "dropping" : ""
-                    } ${faseAnimacao === "revealed" ? "revealed" : ""} ${
-                      faseAnimacao === "idle" ? "resting" : ""
-                    }`}
+                    } ${faseAnimacao === "revealed" ? "revealed" : ""}`}
                   >
-                    <span>{String(numeroAnimado).padStart(2, "0")}</span>
+                    {String(numeroAnimado).padStart(2, "0")}
                   </div>
                 )}
               </div>
-            </div>
 
-            <div className="casino-machine-base cinematic-machine-base">
-              <div className="cinematic-base-glow"></div>
-
-              <div className="casino-base-label">
-                {numeroAtual
-                  ? `Número sorteado: ${String(numeroAtual).padStart(2, "0")}`
-                  : "Aguardando sorteio"}
-              </div>
+              <div className="gold-stage-base"></div>
             </div>
           </div>
         </section>
       </main>
-
-      <footer className="casino-tv-footer">
-        Cartela manual • Bingo tradicional 1 a 75
-      </footer>
     </div>
   );
 }
