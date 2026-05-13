@@ -55,6 +55,23 @@ export default function OperadorPage() {
     return proximo ? proximo.value : premio;
   }
 
+  function statusFinalizado(status) {
+    return ["FINALIZADA", "FINALIZADO", "ENCERRADA", "ENCERRADO"].includes(
+      String(status || "").toUpperCase()
+    );
+  }
+
+  function limparRodadaSelecionada() {
+    localStorage.removeItem("rodadaSelecionadaId");
+    localStorage.removeItem("rodadaSelecionadaStatus");
+
+    setRodadaId(null);
+    setStatusRodada("AGUARDANDO");
+    setSorteioLiberado(false);
+    setAutoSorteio(false);
+    setSorteando(false);
+  }
+
   function liberarSorteioAposContagem() {
     if (timeoutLiberarSorteioRef.current) {
       clearTimeout(timeoutLiberarSorteioRef.current);
@@ -207,10 +224,21 @@ export default function OperadorPage() {
       const response = await api.get(`/rodadas/sessao/${idSessao}/ativa`);
 
       if (response.data?.id) {
-        setRodadaId(response.data.id);
-        setStatusRodada(response.data.status || "AGUARDANDO");
-
         const status = response.data.status || "AGUARDANDO";
+
+        if (statusFinalizado(status)) {
+          localStorage.removeItem("rodadaSelecionadaId");
+          localStorage.removeItem("rodadaSelecionadaStatus");
+
+          setRodadaId(null);
+          setStatusRodada("AGUARDANDO");
+          setSorteioLiberado(false);
+          setMensagem("Nenhuma rodada ativa. Crie uma nova rodada.");
+          return;
+        }
+
+        setRodadaId(response.data.id);
+        setStatusRodada(status);
 
         localStorage.setItem("rodadaSelecionadaId", response.data.id);
         localStorage.setItem("rodadaSelecionadaStatus", status);
@@ -223,9 +251,11 @@ export default function OperadorPage() {
 
         setMensagem(`Rodada ${response.data.numeroRodada} carregada.`);
       } else {
+        limparRodadaSelecionada();
         setMensagem("Nenhuma rodada ativa. Crie uma nova rodada.");
       }
     } catch {
+      limparRodadaSelecionada();
       setMensagem("Nenhuma rodada ativa. Crie uma nova rodada.");
     }
   }
@@ -317,11 +347,14 @@ export default function OperadorPage() {
     }
 
     if (event.type === "ROUND_FINISHED") {
-      setStatusRodada("FINALIZADA");
-      localStorage.setItem("rodadaSelecionadaStatus", "FINALIZADA");
+      localStorage.removeItem("rodadaSelecionadaId");
+      localStorage.removeItem("rodadaSelecionadaStatus");
 
+      setStatusRodada("FINALIZADA");
+      setRodadaId(null);
       setAutoSorteio(false);
       setSorteioLiberado(false);
+      setSorteando(false);
       setMensagem("Rodada encerrada.");
     }
   }, []);
@@ -353,23 +386,10 @@ export default function OperadorPage() {
 
       if (!idSessao) return;
 
-      const rodadaSalva = localStorage.getItem("rodadaSelecionadaId");
-      const statusSalvo = localStorage.getItem("rodadaSelecionadaStatus");
+      localStorage.removeItem("rodadaSelecionadaId");
+      localStorage.removeItem("rodadaSelecionadaStatus");
 
-      if (rodadaSalva) {
-        setRodadaId(Number(rodadaSalva));
-        setStatusRodada(statusSalvo || "AGUARDANDO");
-
-        if (statusSalvo === "EM_ANDAMENTO") {
-          setSorteioLiberado(true);
-        } else {
-          setSorteioLiberado(false);
-        }
-
-        setMensagem("Rodada carregada do histórico.");
-      } else {
-        await carregarRodadaAtiva(idSessao);
-      }
+      await carregarRodadaAtiva(idSessao);
     }
 
     iniciarTela();
@@ -393,6 +413,12 @@ export default function OperadorPage() {
       return;
     }
 
+    if (statusFinalizado(statusRodada)) {
+      setMensagem("Essa rodada já foi encerrada. Crie uma nova rodada.");
+      limparRodadaSelecionada();
+      return;
+    }
+
     try {
       setAutoSorteio(false);
       setSorteioLiberado(false);
@@ -408,10 +434,13 @@ export default function OperadorPage() {
       liberarSorteioAposContagem();
     } catch (error) {
       console.error("Erro ao iniciar rodada:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Resposta do backend:", error.response?.data);
 
       setMensagem(
         error?.response?.data?.mensagem ||
           error?.response?.data?.message ||
+          error?.response?.data?.erro ||
           "Erro ao iniciar rodada."
       );
     }
@@ -420,6 +449,12 @@ export default function OperadorPage() {
   async function pausarRodada() {
     if (!rodadaId) {
       setMensagem("Nenhuma rodada selecionada.");
+      return;
+    }
+
+    if (statusFinalizado(statusRodada)) {
+      setMensagem("Essa rodada já está encerrada.");
+      limparRodadaSelecionada();
       return;
     }
 
@@ -437,10 +472,13 @@ export default function OperadorPage() {
       setMensagem("Rodada pausada.");
     } catch (error) {
       console.error("Erro ao pausar rodada:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Resposta do backend:", error.response?.data);
 
       setMensagem(
         error?.response?.data?.mensagem ||
           error?.response?.data?.message ||
+          error?.response?.data?.erro ||
           "Erro ao pausar rodada."
       );
     }
@@ -452,32 +490,59 @@ export default function OperadorPage() {
       return;
     }
 
+    if (statusFinalizado(statusRodada)) {
+      setMensagem("Essa rodada já está encerrada.");
+      limparRodadaSelecionada();
+      return;
+    }
+
     try {
+      setAutoSorteio(false);
+      setSorteioLiberado(false);
+      setSorteando(false);
+      setMensagem("Encerrando rodada...");
+
       const response = await api.patch(`/rodadas/${rodadaId}/encerrar`);
 
-      setStatusRodada(response.data.status || "FINALIZADA");
-      localStorage.setItem(
-        "rodadaSelecionadaStatus",
-        response.data.status || "FINALIZADA"
-      );
+      console.log("Rodada encerrada:", response.data);
+
+      const novoStatus = response.data?.status || "FINALIZADA";
+
+      setStatusRodada(novoStatus);
+
+      localStorage.removeItem("rodadaSelecionadaId");
+      localStorage.removeItem("rodadaSelecionadaStatus");
 
       setAutoSorteio(false);
       setSorteioLiberado(false);
-      setMensagem("Rodada encerrada.");
+      setSorteando(false);
+      setRodadaId(null);
+      setMensagem("Rodada encerrada com sucesso.");
     } catch (error) {
       console.error("Erro ao encerrar rodada:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Resposta do backend:", error.response?.data);
 
-      setMensagem(
+      const mensagemErro =
         error?.response?.data?.mensagem ||
-          error?.response?.data?.message ||
-          "Erro ao encerrar rodada."
-      );
+        error?.response?.data?.message ||
+        error?.response?.data?.erro ||
+        error?.response?.data ||
+        "Erro ao encerrar rodada.";
+
+      setMensagem(`Erro ao encerrar rodada: ${mensagemErro}`);
     }
   }
 
   async function sortearNumero() {
     if (!rodadaId) {
       setMensagem("Crie ou selecione uma rodada antes de sortear.");
+      return;
+    }
+
+    if (statusFinalizado(statusRodada)) {
+      setMensagem("Essa rodada já foi encerrada. Crie uma nova rodada.");
+      limparRodadaSelecionada();
       return;
     }
 
@@ -517,6 +582,8 @@ export default function OperadorPage() {
       registrarNumeroSorteado(numero);
     } catch (error) {
       console.error("Erro ao sortear número:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Resposta do backend:", error.response?.data);
 
       setMensagem(
         error?.response?.data?.mensagem ||
@@ -552,6 +619,10 @@ export default function OperadorPage() {
         clearTimeout(timeoutLiberarSorteioRef.current);
       }
 
+      if (timeoutAutoRef.current) {
+        clearTimeout(timeoutAutoRef.current);
+      }
+
       const response = await api.post(`/rodadas/sessao/${idSessao}`);
 
       setRodadaId(response.data.id);
@@ -578,10 +649,13 @@ export default function OperadorPage() {
       setMensagem(`Nova rodada criada: rodada ${response.data.numeroRodada}.`);
     } catch (error) {
       console.error("Erro ao criar nova rodada:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Resposta do backend:", error.response?.data);
 
       setMensagem(
         error?.response?.data?.mensagem ||
           error?.response?.data?.message ||
+          error?.response?.data?.erro ||
           "Erro ao criar nova rodada."
       );
     }
@@ -698,8 +772,11 @@ export default function OperadorPage() {
     };
   }, []);
 
+  const rodadaEstaFinalizada = statusFinalizado(statusRodada);
+
   const sorteioBloqueado =
     !rodadaId ||
+    rodadaEstaFinalizada ||
     statusRodada !== "EM_ANDAMENTO" ||
     !sorteioLiberado ||
     historico.length >= 75 ||
@@ -812,7 +889,7 @@ export default function OperadorPage() {
           <button
             className="operator-action-btn danger"
             onClick={encerrarRodada}
-            disabled={!rodadaId}
+            disabled={!rodadaId || rodadaEstaFinalizada}
           >
             ENCERRAR
           </button>
@@ -821,12 +898,19 @@ export default function OperadorPage() {
         <section className="operator-mobile-actions operator-secondary-actions">
           <button
             onClick={iniciarRodada}
-            disabled={!rodadaId || statusRodada === "EM_ANDAMENTO"}
+            disabled={
+              !rodadaId ||
+              statusRodada === "EM_ANDAMENTO" ||
+              rodadaEstaFinalizada
+            }
           >
             Iniciar
           </button>
 
-          <button onClick={pausarRodada} disabled={!rodadaId}>
+          <button
+            onClick={pausarRodada}
+            disabled={!rodadaId || rodadaEstaFinalizada}
+          >
             Pausar
           </button>
 
@@ -834,6 +918,7 @@ export default function OperadorPage() {
             onClick={() => setAutoSorteio((v) => !v)}
             disabled={
               !rodadaId ||
+              rodadaEstaFinalizada ||
               statusRodada !== "EM_ANDAMENTO" ||
               !sorteioLiberado ||
               historico.length >= 75
