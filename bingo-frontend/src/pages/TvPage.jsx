@@ -12,24 +12,26 @@ export default function TvPage() {
   const [mensagem, setMensagem] = useState("Preparando transmissão...");
   const [statusRodada, setStatusRodada] = useState("AGUARDANDO");
   const [numeroRodada, setNumeroRodada] = useState(null);
-  const [premioAtual, setPremioAtual] = useState("PRIMEIRA_LINHA");
 
+  const [premioAtual, setPremioAtual] = useState("PRIMEIRA_LINHA");
   const [faseAnimacao, setFaseAnimacao] = useState("idle");
   const [countdown, setCountdown] = useState(null);
   const [somLiberado, setSomLiberado] = useState(false);
 
   const machineAudioRef = useRef(null);
   const dropAudioRef = useRef(null);
+  const voiceAudioRef = useRef(null);
+
   const animandoRef = useRef(false);
   const filaRef = useRef([]);
   const countdownRodadaRef = useRef(null);
   const ultimoNumeroFaladoRef = useRef(null);
 
   const nomesPremio = {
-    PRIMEIRA_LINHA: "Primeira Linha",
-    SEGUNDA_LINHA: "Segunda Linha",
-    DUPLA_LINHA: "Dupla Linha",
-    CARTELA_CHEIA: "Cartela Cheia",
+    PRIMEIRA_LINHA: "Linha",
+    SEGUNDA_LINHA: "Acumulado",
+    DUPLA_LINHA: "Duplo Bingo",
+    CARTELA_CHEIA: "Bingo",
   };
 
   const letrasBingo = ["B", "I", "N", "G", "O"];
@@ -55,7 +57,7 @@ export default function TvPage() {
   const ultimasSeisBolas = historico.slice(-6).reverse();
 
   function formatarPremio(premio) {
-    return nomesPremio[premio] || premio || "Primeira Linha";
+    return nomesPremio[premio] || premio || "Linha";
   }
 
   function letraDoNumero(numero) {
@@ -76,122 +78,73 @@ export default function TvPage() {
     return [];
   }
 
-  async function criarSessaoAutomatica() {
-    const tentativas = [
-      () => api.post("/sessoes", { nome: "Sessão Principal" }),
-      () => api.post("/sessoes", { descricao: "Sessão Principal" }),
-      () => api.post("/sessoes"),
-    ];
-
-    for (const tentativa of tentativas) {
-      try {
-        const response = await tentativa();
-
-        if (response.data?.id) {
-          return response.data;
-        }
-      } catch {
-        // tenta o próximo formato
-      }
-    }
-
-    throw new Error("Não foi possível criar sessão automaticamente.");
-  }
-
-  async function carregarOuCriarSessao() {
-    try {
-      setMensagem("Buscando sessão...");
-
-      try {
-        const ativa = await api.get("/sessoes/ativa");
-
-        if (ativa.data?.id) {
-          setSessaoId(ativa.data.id);
-          return ativa.data.id;
-        }
-      } catch {
-        // endpoint pode não existir
-      }
-
-      const response = await api.get("/sessoes");
-      const sessoes = extrairLista(response.data);
-
-      if (sessoes.length > 0) {
-        const sessao =
-          sessoes.find((s) => s.status === "ATIVA" || s.ativa === true) ||
-          sessoes[0];
-
-        setSessaoId(sessao.id);
-        return sessao.id;
-      }
-
-      const novaSessao = await criarSessaoAutomatica();
-
-      setSessaoId(novaSessao.id);
-      setMensagem("Sessão criada automaticamente.");
-
-      return novaSessao.id;
-    } catch (error) {
-      console.error("Erro ao carregar/criar sessão:", error);
-      setMensagem("Erro ao carregar ou criar sessão.");
-      return null;
-    }
-  }
-
-  function escolherVozFeminina() {
-    if (!("speechSynthesis" in window)) return null;
-
-    const vozes = window.speechSynthesis.getVoices();
+  function extrairNumeroSorteado(data) {
+    if (typeof data === "number") return data;
 
     return (
-      vozes.find(
-        (voz) =>
-          voz.lang === "pt-BR" &&
-          /maria|luciana|helena|female|feminina|mulher|google português|google portuguese|portuguese brazil/i.test(
-            voz.name
-          )
-      ) ||
-      vozes.find((voz) => voz.lang === "pt-BR") ||
-      vozes.find((voz) => voz.lang?.startsWith("pt")) ||
+      data?.numero ??
+      data?.numeroSorteado ??
+      data?.valor ??
+      data?.bola ??
+      data?.numeroAtual ??
+      data?.number ??
+      data?.data?.numero ??
+      data?.data?.numeroSorteado ??
       null
     );
   }
 
-  function falarNumeroSorteado(numero) {
+  function caminhoAudioNumero(numero) {
+    const letra = letraDoNumero(numero).toLowerCase();
+    return `/sounds/bingo-voices/${letra}-${numero}.mp3`;
+  }
+
+  function tocarAudioArquivo(src) {
     return new Promise((resolve) => {
-      if (!somLiberado || !("speechSynthesis" in window)) {
+      if (!somLiberado) {
         resolve();
         return;
       }
 
-      if (!numero && numero !== 0) {
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.pause();
+        voiceAudioRef.current.currentTime = 0;
+      }
+
+      console.log("Tentando tocar áudio:", src);
+
+      const audio = new Audio(src);
+      audio.volume = 1;
+      audio.playbackRate = 0.65;
+      audio.preload = "auto";
+
+      voiceAudioRef.current = audio;
+
+      audio.onended = () => resolve();
+
+      audio.onerror = () => {
+        console.error("Erro ao encontrar/tocar áudio:", src);
         resolve();
-        return;
-      }
+      };
 
-      window.speechSynthesis.cancel();
-
-      const letra = letraDoNumero(numero);
-      const texto = `${letra} ${numero}. Repito, ${letra} ${numero}.`;
-
-      const fala = new SpeechSynthesisUtterance(texto);
-
-      fala.lang = "pt-BR";
-      fala.rate = 0.86;
-      fala.pitch = 1.05;
-      fala.volume = 1;
-
-      const voz = escolherVozFeminina();
-
-      if (voz) {
-        fala.voice = voz;
-      }
-
-      fala.onend = () => resolve();
-      fala.onerror = () => resolve();
-
-      window.speechSynthesis.speak(fala);
+      audio
+        .play()
+        .then(() => {
+          console.log("Áudio tocando:", src);
+        })
+        .catch((error) => {
+          console.error("Erro ao tocar áudio:", error);
+          resolve();
+        });
     });
+  }
+
+  async function falarNumeroSorteado(numero) {
+    if (!somLiberado) return;
+    if (!numero && numero !== 0) return;
+
+    const src = caminhoAudioNumero(numero);
+    await tocarAudioArquivo(src);
   }
 
   function esperar(ms) {
@@ -237,102 +190,84 @@ export default function TvPage() {
         dropAudioRef.current.volume = 1;
       }
 
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.getVoices();
-
-        const teste = new SpeechSynthesisUtterance("");
-        teste.lang = "pt-BR";
-
-        const voz = escolherVozFeminina();
-
-        if (voz) {
-          teste.voice = voz;
-        }
-
-        window.speechSynthesis.speak(teste);
-        window.speechSynthesis.cancel();
-      }
+      const teste = new Audio("/sounds/bingo-voices/b-1.mp3");
+      teste.volume = 0.01;
+      await teste.play();
+      teste.pause();
+      teste.currentTime = 0;
     } catch {
       console.warn("Som será liberado após nova interação do usuário.");
     }
   }
 
-  async function iniciarContagemRodada(idRodada) {
-    const chaveRodada = idRodada || rodadaId || "JOGO";
+  async function criarSessaoAutomatica() {
+    const tentativas = [
+      () => api.post("/sessoes", { nome: "Sessão Principal" }),
+      () => api.post("/sessoes", { descricao: "Sessão Principal" }),
+      () => api.post("/sessoes"),
+    ];
 
-    if (countdownRodadaRef.current === chaveRodada) {
-      return;
+    for (const tentativa of tentativas) {
+      try {
+        const response = await tentativa();
+
+        if (response.data?.id) {
+          return response.data;
+        }
+      } catch {
+        // tenta o próximo formato
+      }
     }
 
-    countdownRodadaRef.current = chaveRodada;
-
-    const sequencia = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-
-    setNumeroAtual(null);
-    setNumeroAnimado(null);
-    setMensagem("Rodada iniciada, boa sorte a todos!");
-    setFaseAnimacao("countdown");
-
-    for (const item of sequencia) {
-      setCountdown(item);
-      await esperar(1300);
-    }
-
-    setCountdown(null);
-    setFaseAnimacao("idle");
-    setMensagem("Rodada pronta para o sorteio.");
+    throw new Error("Não foi possível criar sessão automaticamente.");
   }
 
-  async function iniciarSequenciaSorteio(numero, premio = premioAtual) {
-    if (!numero && numero !== 0) return;
-
-    const numeroNormalizado = Number(numero);
-
-    if (animandoRef.current) {
-      filaRef.current.push({ numero: numeroNormalizado, premio });
-      return;
-    }
-
-    animandoRef.current = true;
-
-    const premioFormatado = formatarPremio(premio);
-
+  async function carregarOuCriarSessao() {
     try {
-      setCountdown(null);
+      setMensagem("Buscando sessão...");
 
-      setNumeroAnimado(numeroNormalizado);
-      setNumeroAtual(numeroNormalizado);
+      try {
+        const ativa = await api.get("/sessoes/ativa");
 
-      setHistorico((prev) =>
-        prev.includes(numeroNormalizado) ? prev : [...prev, numeroNormalizado]
+        if (ativa.data?.id) {
+          setSessaoId(ativa.data.id);
+          return ativa.data.id;
+        }
+      } catch {
+        // continua
+      }
+
+      const response = await api.get("/sessoes");
+      const sessoes = extrairLista(response.data);
+
+      if (sessoes.length > 0) {
+        const sessao =
+          sessoes.find(
+            (s) =>
+              s.status === "ATIVA" ||
+              s.status === "EM_ANDAMENTO" ||
+              s.status === "AGENDADA" ||
+              s.ativa === true
+          ) || sessoes[0];
+
+        setSessaoId(sessao.id);
+        return sessao.id;
+      }
+
+      const novaSessao = await criarSessaoAutomatica();
+
+      setSessaoId(novaSessao.id);
+      setMensagem("Sessão criada automaticamente.");
+
+      return novaSessao.id;
+    } catch (error) {
+      console.error("Erro ao carregar/criar sessão:", error);
+      setMensagem(
+        error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
+          "Erro ao carregar ou criar sessão."
       );
-
-      setMensagem(`${premioFormatado} • ${letraDoNumero(numeroNormalizado)} ${numeroNormalizado}`);
-      setFaseAnimacao("dropping");
-
-      tocarAudio(dropAudioRef);
-      pararAudio(machineAudioRef);
-
-      await esperar(650);
-
-      setFaseAnimacao("revealed");
-
-      if (ultimoNumeroFaladoRef.current !== numeroNormalizado) {
-        ultimoNumeroFaladoRef.current = numeroNormalizado;
-        await falarNumeroSorteado(numeroNormalizado);
-      }
-
-      await esperar(350);
-
-      setFaseAnimacao("idle");
-    } finally {
-      animandoRef.current = false;
-
-      const proximo = filaRef.current.shift();
-
-      if (proximo) {
-        iniciarSequenciaSorteio(proximo.numero, proximo.premio);
-      }
+      return null;
     }
   }
 
@@ -346,8 +281,19 @@ export default function TvPage() {
         setRodadaId(response.data.id);
         setStatusRodada(response.data.status || "AGUARDANDO");
         setNumeroRodada(response.data.numeroRodada);
-        setPremioAtual(response.data.premio || response.data.premioAtual || "PRIMEIRA_LINHA");
-        setMensagem(`Transmitindo rodada ${response.data.numeroRodada}`);
+
+        const premioSalvo = localStorage.getItem("premioAtualOperador");
+
+        setPremioAtual(
+          premioSalvo ||
+            response.data.premio ||
+            response.data.premioAtual ||
+            "PRIMEIRA_LINHA"
+        );
+
+        setMensagem(
+          `Transmitindo rodada ${response.data.numeroRodada || response.data.id}`
+        );
       } else {
         setMensagem("Nenhuma rodada ativa no momento.");
       }
@@ -386,6 +332,224 @@ export default function TvPage() {
     }
   }
 
+  async function iniciarContagemRodada(idRodada) {
+    const chaveRodada = idRodada || rodadaId || "JOGO";
+
+    if (countdownRodadaRef.current === chaveRodada) {
+      return;
+    }
+
+    countdownRodadaRef.current = chaveRodada;
+
+    const sequencia = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+
+    setNumeroAtual(null);
+    setNumeroAnimado(null);
+    setMensagem("Rodada iniciada, boa sorte a todos!");
+    setFaseAnimacao("countdown");
+
+    for (const item of sequencia) {
+      setCountdown(item);
+      await esperar(1300);
+    }
+
+    setCountdown(null);
+    setFaseAnimacao("idle");
+    setMensagem("Rodada pronta para o sorteio.");
+  }
+
+  async function iniciarSequenciaSorteio(numero, premio = premioAtual) {
+    if (!numero && numero !== 0) return;
+
+    const numeroNormalizado = Number(numero);
+
+    if (!Number.isFinite(numeroNormalizado)) return;
+
+    if (animandoRef.current) {
+      filaRef.current.push({ numero: numeroNormalizado, premio });
+      return;
+    }
+
+    animandoRef.current = true;
+
+    const premioFormatado = formatarPremio(premio);
+
+    try {
+      setCountdown(null);
+
+      setNumeroAnimado(numeroNormalizado);
+      setNumeroAtual(numeroNormalizado);
+
+      setHistorico((prev) =>
+        prev.includes(numeroNormalizado) ? prev : [...prev, numeroNormalizado]
+      );
+
+      setMensagem(
+        `${premioFormatado} • ${letraDoNumero(numeroNormalizado)} ${String(
+          numeroNormalizado
+        ).padStart(2, "0")}`
+      );
+
+      setFaseAnimacao("dropping");
+
+      await tocarAudio(dropAudioRef);
+      pararAudio(machineAudioRef);
+
+      await esperar(650);
+
+      setFaseAnimacao("revealed");
+
+      if (ultimoNumeroFaladoRef.current !== numeroNormalizado) {
+        ultimoNumeroFaladoRef.current = numeroNormalizado;
+        await falarNumeroSorteado(numeroNormalizado);
+      }
+
+      await esperar(350);
+
+      setFaseAnimacao("idle");
+    } finally {
+      animandoRef.current = false;
+
+      const proximo = filaRef.current.shift();
+
+      if (proximo) {
+        iniciarSequenciaSorteio(proximo.numero, proximo.premio);
+      }
+    }
+  }
+
+  const handleWsMessage = useCallback(
+    (event) => {
+      if (!event?.type) return;
+
+      if (event.type === "NUMBER_DRAWN") {
+        const numero = extrairNumeroSorteado(event);
+        iniciarSequenciaSorteio(numero, premioAtual);
+        return;
+      }
+
+      if (event.type === "ROUND_CREATED") {
+        const idRodada = event.rodadaId || event.id;
+
+        if (idRodada) {
+          setRodadaId(idRodada);
+        }
+
+        if (event.numeroRodada) {
+          setNumeroRodada(event.numeroRodada);
+        }
+
+        const premioSalvo = localStorage.getItem("premioAtualOperador");
+
+        setPremioAtual(premioSalvo || "PRIMEIRA_LINHA");
+        setStatusRodada(event.status || "CRIADA");
+        setHistorico([]);
+        setNumeroAtual(null);
+        setNumeroAnimado(null);
+        setCountdown(null);
+        setFaseAnimacao("idle");
+
+        countdownRodadaRef.current = null;
+        filaRef.current = [];
+        animandoRef.current = false;
+        ultimoNumeroFaladoRef.current = null;
+
+        pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+
+        if (voiceAudioRef.current) {
+          voiceAudioRef.current.pause();
+          voiceAudioRef.current.currentTime = 0;
+        }
+
+        setMensagem(
+          event.numeroRodada
+            ? `Rodada ${event.numeroRodada} criada. Aguardando início...`
+            : "Nova rodada criada. Aguardando início..."
+        );
+
+        return;
+      }
+
+      if (event.type === "ROUND_STARTED" || event.type === "GAME_STARTED") {
+        const idRodada = event.rodadaId || event.id || rodadaId;
+
+        if (idRodada) {
+          setRodadaId(idRodada);
+        }
+
+        if (event.numeroRodada) {
+          setNumeroRodada(event.numeroRodada);
+        }
+
+        const premioSalvo = localStorage.getItem("premioAtualOperador");
+
+        if (premioSalvo) {
+          setPremioAtual(premioSalvo);
+        }
+
+        setStatusRodada("EM_ANDAMENTO");
+        setMensagem("Rodada iniciada, boa sorte a todos!");
+
+        setHistorico([]);
+        setNumeroAtual(null);
+        setNumeroAnimado(null);
+        setCountdown(null);
+        setFaseAnimacao("idle");
+
+        countdownRodadaRef.current = null;
+        filaRef.current = [];
+        animandoRef.current = false;
+        ultimoNumeroFaladoRef.current = null;
+
+        pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+
+        if (voiceAudioRef.current) {
+          voiceAudioRef.current.pause();
+          voiceAudioRef.current.currentTime = 0;
+        }
+
+        iniciarContagemRodada(idRodada);
+
+        return;
+      }
+
+      if (event.type === "ROUND_PAUSED") {
+        setStatusRodada("PAUSADA");
+        setMensagem("Rodada pausada.");
+        pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+
+        if (voiceAudioRef.current) {
+          voiceAudioRef.current.pause();
+          voiceAudioRef.current.currentTime = 0;
+        }
+
+        return;
+      }
+
+      if (event.type === "ROUND_FINISHED") {
+        setStatusRodada("FINALIZADA");
+        setMensagem("Rodada encerrada.");
+        pararAudio(machineAudioRef);
+        pararAudio(dropAudioRef);
+
+        if (voiceAudioRef.current) {
+          voiceAudioRef.current.pause();
+          voiceAudioRef.current.currentTime = 0;
+        }
+      }
+    },
+    [premioAtual, rodadaId, somLiberado]
+  );
+
+  useWebSocket({
+    sessaoId,
+    rodadaId,
+    onMessage: handleWsMessage,
+  });
+
   useEffect(() => {
     async function iniciarTv() {
       const premioSalvo = localStorage.getItem("premioAtualOperador");
@@ -409,20 +573,6 @@ export default function TvPage() {
   }, [rodadaId]);
 
   useEffect(() => {
-    if (!("speechSynthesis" in window)) return;
-
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.getVoices();
-    };
-
-    window.speechSynthesis.getVoices();
-
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []);
-
-  useEffect(() => {
     function atualizarPremio(event) {
       if (event.detail) {
         setPremioAtual(event.detail);
@@ -435,10 +585,19 @@ export default function TvPage() {
       }
     }
 
+    const intervaloPremio = setInterval(() => {
+      const premioSalvo = localStorage.getItem("premioAtualOperador");
+
+      if (premioSalvo) {
+        setPremioAtual((atual) => (atual === premioSalvo ? atual : premioSalvo));
+      }
+    }, 700);
+
     window.addEventListener("premioAtualizado", atualizarPremio);
     window.addEventListener("storage", atualizarPremioPorStorage);
 
     return () => {
+      clearInterval(intervaloPremio);
       window.removeEventListener("premioAtualizado", atualizarPremio);
       window.removeEventListener("storage", atualizarPremioPorStorage);
     };
@@ -449,134 +608,12 @@ export default function TvPage() {
       pararAudio(machineAudioRef);
       pararAudio(dropAudioRef);
 
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.pause();
+        voiceAudioRef.current.currentTime = 0;
       }
     };
   }, []);
-
-  const handleWsMessage = useCallback(
-    (event) => {
-      if (!event?.type) return;
-
-      if (event.type === "ROUND_CREATED") {
-        const idRodada = event.rodadaId || event.id;
-
-        if (idRodada) {
-          setRodadaId(idRodada);
-        }
-
-        if (event.numeroRodada) {
-          setNumeroRodada(event.numeroRodada);
-        }
-
-        if (event.premio) {
-          setPremioAtual(event.premio);
-        }
-
-        setStatusRodada(event.status || "CRIADA");
-        setHistorico([]);
-        setNumeroAtual(null);
-        setNumeroAnimado(null);
-        setCountdown(null);
-        setFaseAnimacao("idle");
-
-        countdownRodadaRef.current = null;
-        filaRef.current = [];
-        animandoRef.current = false;
-        ultimoNumeroFaladoRef.current = null;
-
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
-
-        setMensagem(
-          event.numeroRodada
-            ? `Rodada ${event.numeroRodada} criada. Aguardando início...`
-            : "Nova rodada criada. Aguardando início..."
-        );
-
-        return;
-      }
-
-      if (event.type === "ROUND_STARTED" || event.type === "GAME_STARTED") {
-        const idRodada = event.rodadaId || event.id || rodadaId;
-
-        if (event.rodadaId) {
-          setRodadaId(event.rodadaId);
-        }
-
-        if (event.numeroRodada) {
-          setNumeroRodada(event.numeroRodada);
-        }
-
-        if (event.premio) {
-          setPremioAtual(event.premio);
-        }
-
-        setStatusRodada("EM_ANDAMENTO");
-        setMensagem("Rodada iniciada, boa sorte a todos!");
-
-        setHistorico([]);
-        setNumeroAtual(null);
-        setNumeroAnimado(null);
-        setCountdown(null);
-        setFaseAnimacao("idle");
-
-        countdownRodadaRef.current = null;
-        filaRef.current = [];
-        animandoRef.current = false;
-        ultimoNumeroFaladoRef.current = null;
-
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
-
-        iniciarContagemRodada(idRodada);
-
-        return;
-      }
-
-      if (event.type === "NUMBER_DRAWN") {
-        const numero = event.numero ?? event.number ?? event.numeroSorteado;
-
-        if (event.rodadaId) {
-          setRodadaId(event.rodadaId);
-        }
-
-        if (event.premio) {
-          setPremioAtual(event.premio);
-        }
-
-        iniciarSequenciaSorteio(numero, event.premio || premioAtual);
-
-        return;
-      }
-
-      if (event.type === "ROUND_PAUSED") {
-        setStatusRodada("PAUSADA");
-        setMensagem("Rodada pausada.");
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
-        return;
-      }
-
-      if (event.type === "ROUND_FINISHED") {
-        setStatusRodada("FINALIZADA");
-        setMensagem("Rodada encerrada.");
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
-        return;
-      }
-
-      if (event.type === "PRIZE_UPDATED") {
-        setPremioAtual(event.premio);
-        localStorage.setItem("premioAtualOperador", event.premio);
-        return;
-      }
-    },
-    [premioAtual, rodadaId, somLiberado]
-  );
-
-  useWebSocket(sessaoId ? [`/topic/tv/${sessaoId}`] : [], handleWsMessage);
 
   return (
     <div className={`tv-page bingo-tv-gold fase-${faseAnimacao}`}>
@@ -587,11 +624,7 @@ export default function TvPage() {
         loop
       />
 
-      <audio
-        ref={dropAudioRef}
-        src="/sounds/ball-drop.mp3"
-        preload="auto"
-      />
+      <audio ref={dropAudioRef} src="/sounds/ball-drop.mp3" preload="auto" />
 
       {!somLiberado && (
         <button className="tv-enable-sound" onClick={liberarSom}>
