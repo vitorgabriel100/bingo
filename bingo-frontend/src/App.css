@@ -13574,3 +13574,540 @@ body,
     transform: scale(0.76) !important;
   }
 }
+
+/* ============================= */
+/* ÚLTIMAS BOLAS CANTADAS */
+/* ============================= */
+
+.last-drawn-panel,
+.ultimas-bolas-panel,
+.ultimas-bolas,
+.last-balls-panel {
+  position: fixed;
+  right: 4.5vw;
+  bottom: 3.2vh;
+  width: min(520px, 31vw);
+  min-height: 86px;
+  padding: 10px 16px 14px;
+  border: 2px solid rgba(255, 204, 54, 0.95);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 220, 90, 0.18), transparent 45%),
+    linear-gradient(180deg, rgba(20, 16, 7, 0.94), rgba(3, 4, 10, 0.96));
+  box-shadow:
+    0 0 22px rgba(255, 190, 40, 0.25),
+    inset 0 0 18px rgba(255, 210, 80, 0.08);
+  z-index: 30;
+}
+
+.last-drawn-title,
+.ultimas-bolas-title,
+.last-balls-title {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: clamp(11px, 0.8vw, 15px);
+  font-weight: 900;
+  color: #fff7cf;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  text-shadow: 0 0 8px rgba(255, 210, 70, 0.7);
+}
+
+.last-drawn-list,
+.ultimas-bolas-list,
+.last-balls-list {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(8px, 0.7vw, 14px);
+  flex-wrap: nowrap;
+}
+
+.last-drawn-ball,
+.ultimas-bolas-list .ball,
+.last-balls-list .ball,
+.last-ball,
+.mini-ball {
+  width: clamp(42px, 3.2vw, 64px) !important;
+  height: clamp(42px, 3.2vw, 64px) !important;
+  min-width: clamp(42px, 3.2vw, 64px) !important;
+  min-height: clamp(42px, 3.2vw, 64px) !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  border: 2px solid rgba(255, 238, 155, 0.95);
+
+  background:
+    radial-gradient(circle at 32% 25%, #fff5b3 0%, #ffd455 20%, #b77900 58%, #4b2a00 100%);
+
+  color: #1b1000;
+  font-size: clamp(18px, 1.6vw, 30px) !important;
+  font-weight: 1000;
+  line-height: 1;
+
+  box-shadow:
+    inset -7px -9px 14px rgba(0, 0, 0, 0.45),
+    inset 5px 5px 10px rgba(255, 255, 255, 0.45),
+    0 0 14px rgba(255, 204, 64, 0.55);
+
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+.last-drawn-ball span,
+.last-ball span,
+.mini-ball span {
+  font-size: inherit !important;
+  font-weight: 1000;
+}
+
+
+/* ============================= */
+/* BOLINHA SORTEADA - CAI UMA VEZ */
+/* ============================= */
+
+.bingo-ball.drop-once {
+  animation: bingoBallDropOnce 0.9s cubic-bezier(0.18, 0.85, 0.25, 1) both !important;
+  animation-iteration-count: 1 !important;
+}
+
+@keyframes bingoBallDropOnce {
+  0% {
+    opacity: 0;
+    transform: translateY(-180px) scale(0.72) rotate(-18deg);
+    filter: blur(5px);
+  }
+
+  65% {
+    opacity: 1;
+    transform: translateY(0) scale(1.06) rotate(4deg);
+    filter: blur(0);
+  }
+
+  82% {
+    transform: translateY(0) scale(0.98) rotate(-2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+.impact-light.show {
+  animation: impactFlashOnce 0.7s ease-out both !important;
+  animation-iteration-count: 1 !important;
+}
+
+@keyframes impactFlashOnce {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  35% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* ===================================================== */
+/* CORREÇÃO DA BOLINHA DA BOLINHEIRA - CAI UMA VEZ */
+/* ===================================================== */
+
+.bingo-video-exit-tube {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 5.5% !important;
+  transform: translateX(-50%) !important;
+
+  width: clamp(92px, 7vw, 132px) !important;
+  height: clamp(118px, 8vw, 160px) !important;
+
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+
+  overflow: visible !important;
+  z-index: 20 !important;
+}
+
+/* Esconde a bolinha antiga, caso ainda exista no CSS anterior */
+.bingo-video-output-ball,
+.bingo-video-output-ball.dropping,
+.bingo-video-output-ball.revealed,
+.fase-dropping .bingo-video-output-ball,
+.fase-revealed .bingo-video-output-ball,
+.fase-idle .bingo-video-output-ball {
+  display: none !important;
+  animation: none !important;
+}
+
+/* ===================================================== */
+/* BOLINHA DA SAÍDA DA BOLINHEIRA - ESTILO REFERÊNCIA */
+/* ===================================================== */
+
+.bingo-fixed-current-ball,
+.bingo-fixed-falling-ball {
+  position: relative !important;
+
+  width: clamp(68px, 4.2vw, 90px) !important;
+  height: clamp(68px, 4.2vw, 90px) !important;
+  min-width: clamp(68px, 4.2vw, 90px) !important;
+  min-height: clamp(68px, 4.2vw, 90px) !important;
+  max-width: clamp(68px, 4.2vw, 90px) !important;
+  max-height: clamp(68px, 4.2vw, 90px) !important;
+
+  aspect-ratio: 1 / 1 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+
+  border-radius: 50% !important;
+  overflow: hidden !important;
+
+  border: 3px solid #e6c85f !important;
+
+  background:
+    radial-gradient(circle at 30% 24%, #f1df88 0%, #d4ae42 28%, #a96f24 64%, #7c4818 100%) !important;
+
+  color: #040712 !important;
+
+  font-size: clamp(26px, 1.75vw, 38px) !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+
+  box-shadow:
+    inset -8px -10px 14px rgba(75, 43, 8, 0.36),
+    inset 6px 6px 11px rgba(255, 239, 176, 0.32),
+    0 0 10px rgba(230, 200, 95, 0.28),
+    0 0 22px rgba(230, 200, 95, 0.18) !important;
+
+  text-shadow: none !important;
+}
+
+.bingo-fixed-current-ball::before,
+.bingo-fixed-falling-ball::before {
+  content: "";
+  position: absolute !important;
+  inset: 17% !important;
+
+  border-radius: 50% !important;
+
+  background:
+    radial-gradient(circle at 35% 28%, #ffffff 0%, #fbfaf6 58%, #e7e1d6 100%) !important;
+
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.1) !important;
+
+  z-index: 1 !important;
+}
+
+.bingo-fixed-current-ball::after,
+.bingo-fixed-falling-ball::after {
+  content: "";
+  position: absolute !important;
+  inset: 0 !important;
+
+  border-radius: 50% !important;
+
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.45) 0%, transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 46%) !important;
+
+  z-index: 3 !important;
+  pointer-events: none !important;
+}
+
+.bingo-fixed-current-ball span,
+.bingo-fixed-falling-ball span {
+  position: relative !important;
+  z-index: 2 !important;
+
+  display: block !important;
+
+  color: #040712 !important;
+  font-size: inherit !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
+
+  text-shadow: none !important;
+}
+
+.bingo-fixed-current-ball {
+  z-index: 22 !important;
+  animation: none !important;
+  transform: translate3d(0, 0, 0) scale(1) rotate(0deg) !important;
+}
+
+.bingo-fixed-falling-ball {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 0 !important;
+  z-index: 25 !important;
+
+  transform: translate3d(-50%, -130px, 0) scale(0.74) rotate(-12deg) !important;
+  opacity: 0 !important;
+
+  animation: bingoFixedFallOnce 0.72s cubic-bezier(0.18, 0.9, 0.25, 1) forwards !important;
+  animation-iteration-count: 1 !important;
+}
+
+@keyframes bingoFixedFallOnce {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -130px, 0) scale(0.74) rotate(-12deg);
+    filter: blur(4px);
+  }
+
+  65% {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0) scale(1.04) rotate(3deg);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+
+/* ===================================================== */
+/* ÚLTIMAS 6 BOLAS CANTADAS - CAIXA MAIOR E MAIS LARGA */
+/* ===================================================== */
+
+.gold-right-panel {
+  align-items: stretch !important;
+}
+
+.gold-right-panel .gold-globe-last-card {
+  position: relative !important;
+
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 178px !important;
+
+  margin: 14px 0 0 !important;
+  padding: 16px 28px 24px !important;
+
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+
+  border-radius: 20px !important;
+  border: 2px solid rgba(255, 200, 55, 0.95) !important;
+
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 220, 90, 0.16), transparent 44%),
+    linear-gradient(180deg, rgba(26, 23, 15, 0.98), rgba(4, 6, 14, 0.98)) !important;
+
+  box-shadow:
+    0 0 22px rgba(255, 198, 42, 0.3),
+    inset 0 0 20px rgba(255, 220, 90, 0.08) !important;
+}
+
+.gold-right-panel .gold-globe-last-card .gold-info-label {
+  display: block !important;
+  width: 100% !important;
+
+  margin-bottom: 18px !important;
+
+  text-align: center !important;
+  font-size: clamp(16px, 1vw, 22px) !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.5px !important;
+
+  color: #fff7d0 !important;
+
+  text-shadow:
+    0 0 8px rgba(255, 215, 80, 0.85),
+    0 2px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+.gold-right-panel .gold-globe-last-card .gold-last-balls {
+  width: 100% !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  align-items: center !important;
+  justify-items: center !important;
+
+  gap: clamp(12px, 0.9vw, 20px) !important;
+
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+
+  transform: none !important;
+  scale: 1 !important;
+  perspective: none !important;
+}
+
+
+/* ===================================================== */
+/* ÚLTIMAS BOLAS - ESTILO DA IMAGEM */
+/* aro dourado fosco + centro branco + número preto */
+/* ===================================================== */
+
+.gold-right-panel .gold-globe-last-card .gold-last-balls .gold-small-ball {
+  position: relative !important;
+
+  width: clamp(76px, 4.6vw, 100px) !important;
+  height: clamp(76px, 4.6vw, 100px) !important;
+  min-width: clamp(76px, 4.6vw, 100px) !important;
+  min-height: clamp(76px, 4.6vw, 100px) !important;
+  max-width: clamp(76px, 4.6vw, 100px) !important;
+  max-height: clamp(76px, 4.6vw, 100px) !important;
+
+  aspect-ratio: 1 / 1 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+
+  border-radius: 50% !important;
+  overflow: hidden !important;
+
+  border: 3px solid #e6c85f !important;
+
+  background:
+    radial-gradient(circle at 30% 24%, #f1df88 0%, #d4ae42 28%, #a96f24 64%, #7c4818 100%) !important;
+
+  color: #040712 !important;
+
+  font-size: clamp(28px, 1.85vw, 42px) !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+
+  box-shadow:
+    inset -8px -10px 14px rgba(75, 43, 8, 0.36),
+    inset 6px 6px 11px rgba(255, 239, 176, 0.32),
+    0 0 10px rgba(230, 200, 95, 0.28),
+    0 0 22px rgba(230, 200, 95, 0.18) !important;
+
+  text-shadow: none !important;
+
+  transform: none !important;
+  animation: none !important;
+}
+
+.gold-right-panel .gold-globe-last-card .gold-last-balls .gold-small-ball::before {
+  content: "";
+  position: absolute !important;
+  inset: 17% !important;
+
+  border-radius: 50% !important;
+
+  background:
+    radial-gradient(circle at 35% 28%, #ffffff 0%, #fbfaf6 58%, #e7e1d6 100%) !important;
+
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.1) !important;
+
+  z-index: 1 !important;
+}
+
+.gold-right-panel .gold-globe-last-card .gold-last-balls .gold-small-ball::after {
+  content: "";
+  position: absolute !important;
+  inset: 0 !important;
+
+  border-radius: 50% !important;
+
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.45) 0%, transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 46%) !important;
+
+  z-index: 3 !important;
+  pointer-events: none !important;
+}
+
+.gold-right-panel .gold-globe-last-card .gold-last-balls .gold-small-ball span {
+  position: relative !important;
+  z-index: 2 !important;
+
+  display: block !important;
+
+  color: #040712 !important;
+  font-size: inherit !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+
+  text-shadow: none !important;
+}
+
+.gold-right-panel .gold-globe-last-card .gold-last-balls .gold-small-ball.active {
+  transform: scale(1.07) !important;
+
+  border-color: #ecd778 !important;
+
+  box-shadow:
+    inset -8px -10px 14px rgba(75, 43, 8, 0.36),
+    inset 6px 6px 11px rgba(255, 239, 176, 0.32),
+    0 0 16px rgba(230, 200, 95, 0.45),
+    0 0 30px rgba(230, 200, 95, 0.28) !important;
+}
+
+.gold-right-panel .gold-globe-last-card .gold-last-balls .gold-small-ball.empty {
+  opacity: 0.45 !important;
+}
+
+
+/* ===================================================== */
+/* BOTÃO DE ATIVAR SOM */
+/* ===================================================== */
+
+.tv-enable-sound {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 99999;
+
+  padding: 14px 24px;
+  border-radius: 999px;
+  border: 2px solid #ffd75a;
+
+  background: linear-gradient(180deg, #ffe27a, #d99700);
+  color: #1a0d00;
+
+  font-size: 15px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 0 24px rgba(255, 211, 77, 0.75),
+    inset 0 2px 4px rgba(255, 255, 255, 0.45);
+}

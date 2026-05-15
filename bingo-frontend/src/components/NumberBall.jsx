@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 export default function NumberBall({ number }) {
+  const [animationKey, setAnimationKey] = useState(0);
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
@@ -8,6 +9,7 @@ export default function NumberBall({ number }) {
       setAnimate(false);
 
       const timer = setTimeout(() => {
+        setAnimationKey((prev) => prev + 1);
         setAnimate(true);
       }, 80);
 
@@ -21,7 +23,10 @@ export default function NumberBall({ number }) {
         <div className="tube-glow"></div>
       </div>
 
-      <div className={`bingo-ball ${animate ? "drop" : ""}`}>
+      <div
+        key={animationKey}
+        className={`bingo-ball ${animate ? "drop-once" : ""}`}
+      >
         <span>{number ?? "--"}</span>
       </div>
 

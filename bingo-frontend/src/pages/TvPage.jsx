@@ -26,11 +26,15 @@ export default function TvPage() {
 
   const [faseAnimacao, setFaseAnimacao] = useState("idle");
   const [countdown, setCountdown] = useState(null);
-  const [somLiberado, setSomLiberado] = useState(false);
+
+  const [somLiberado, setSomLiberado] = useState(() => {
+    return localStorage.getItem("bingoSomLiberado") === "true";
+  });
 
   const machineAudioRef = useRef(null);
   const dropAudioRef = useRef(null);
   const voiceAudioRef = useRef(null);
+  const somLiberadoRef = useRef(false);
 
   const animandoRef = useRef(false);
   const filaRef = useRef([]);
@@ -56,7 +60,7 @@ export default function TvPage() {
     Array.from({ length: 15 }, (_, i) => i + 61),
   ];
 
-  const ultimasBolas = historico.slice(-9).reverse();
+  const ultimasBolas = historico.slice(-6).reverse();
 
   const premiosDaRodada = [
     {
@@ -413,18 +417,29 @@ export default function TvPage() {
     }
   }
 
-  function caminhoAudioNumero(numero, comZero = true) {
-    const letra = letraDoNumero(numero).toLowerCase();
-    const numeroArquivo = comZero
-      ? formatarNumero(numero)
-      : String(Number(numero));
+  function caminhosAudioNumero(numero) {
+    const letraMaiuscula = letraDoNumero(numero);
+    const letraMinuscula = letraMaiuscula.toLowerCase();
 
-    return `/sounds/bingo-voices/${letra}-${numeroArquivo}.mp3`;
+    const numeroComZero = formatarNumero(numero);
+    const numeroSemZero = String(Number(numero));
+
+    return [
+      `/sounds/bingo-voices/${letraMinuscula}-${numeroComZero}.mp3`,
+      `/sounds/bingo-voices/${letraMinuscula}-${numeroSemZero}.mp3`,
+      `/sounds/bingo-voices/${letraMaiuscula}-${numeroComZero}.mp3`,
+      `/sounds/bingo-voices/${letraMaiuscula}-${numeroSemZero}.mp3`,
+
+      `/sounds/bingo-voice/${letraMinuscula}-${numeroComZero}.mp3`,
+      `/sounds/bingo-voice/${letraMinuscula}-${numeroSemZero}.mp3`,
+      `/sounds/bingo-voice/${letraMaiuscula}-${numeroComZero}.mp3`,
+      `/sounds/bingo-voice/${letraMaiuscula}-${numeroSemZero}.mp3`,
+    ];
   }
 
   function tocarAudioArquivo(src, playbackRate = 0.65) {
     return new Promise((resolve) => {
-      if (!somLiberado) {
+      if (!somLiberadoRef.current) {
         resolve(false);
         return;
       }
@@ -454,27 +469,30 @@ export default function TvPage() {
           console.log("Áudio tocando:", src);
         })
         .catch((error) => {
-          console.error("Erro ao tocar áudio:", error);
+          console.error("Erro ao tocar áudio:", src, error);
           resolve(false);
         });
     });
   }
 
   async function falarNumeroSorteado(numero) {
-    if (!somLiberado) return;
+    if (!somLiberadoRef.current) return;
     if (!numero && numero !== 0) return;
 
     const letra = letraDoNumero(numero);
     const velocidade = letra === "O" ? 0.82 : 0.65;
 
-    const tocouComZero = await tocarAudioArquivo(
-      caminhoAudioNumero(numero, true),
-      velocidade
-    );
+    const caminhos = caminhosAudioNumero(numero);
 
-    if (!tocouComZero) {
-      await tocarAudioArquivo(caminhoAudioNumero(numero, false), velocidade);
+    for (const caminho of caminhos) {
+      const tocou = await tocarAudioArquivo(caminho, velocidade);
+
+      if (tocou) {
+        return;
+      }
     }
+
+    console.error("Nenhum áudio encontrado para o número:", numero);
   }
 
   function esperar(ms) {
@@ -482,7 +500,7 @@ export default function TvPage() {
   }
 
   async function tocarAudio(audioRef) {
-    if (!somLiberado || !audioRef.current) return;
+    if (!somLiberadoRef.current || !audioRef.current) return;
 
     try {
       audioRef.current.pause();
@@ -500,8 +518,32 @@ export default function TvPage() {
     audioRef.current.currentTime = 0;
   }
 
+  async function testarAudioSilencioso(src) {
+    try {
+      const audio = new Audio(src);
+      audio.volume = 0.01;
+      audio.preload = "auto";
+
+      await audio.play();
+
+      audio.pause();
+      audio.currentTime = 0;
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function liberarSom() {
+    somLiberadoRef.current = true;
     setSomLiberado(true);
+
+    try {
+      localStorage.setItem("bingoSomLiberado", "true");
+    } catch {
+      // ignora erro de localStorage
+    }
 
     try {
       if (machineAudioRef.current) {
@@ -520,20 +562,21 @@ export default function TvPage() {
         dropAudioRef.current.volume = 1;
       }
 
-      const testeComZero = new Audio("/sounds/bingo-voices/b-01.mp3");
-      testeComZero.volume = 0.01;
+      const testes = [
+        "/sounds/bingo-voices/b-01.mp3",
+        "/sounds/bingo-voices/B-01.mp3",
+        "/sounds/bingo-voice/b-01.mp3",
+        "/sounds/bingo-voice/B-01.mp3",
+        "/sounds/bingo-voices/b-1.mp3",
+        "/sounds/bingo-voice/b-1.mp3",
+      ];
 
-      try {
-        await testeComZero.play();
-        testeComZero.pause();
-        testeComZero.currentTime = 0;
-      } catch {
-        const testeSemZero = new Audio("/sounds/bingo-voices/b-1.mp3");
-        testeSemZero.volume = 0.01;
-        await testeSemZero.play();
-        testeSemZero.pause();
-        testeSemZero.currentTime = 0;
+      for (const src of testes) {
+        const ok = await testarAudioSilencioso(src);
+        if (ok) break;
       }
+
+      console.log("Som da TV liberado.");
     } catch {
       console.warn("Som será liberado após nova interação do usuário.");
     }
@@ -925,7 +968,7 @@ export default function TvPage() {
         }
       }
     },
-    [premioAtual, rodadaId, somLiberado, premiacaoAtual]
+    [premioAtual, rodadaId, premiacaoAtual]
   );
 
   useWebSocket({
@@ -933,6 +976,18 @@ export default function TvPage() {
     rodadaId,
     onMessage: handleWsMessage,
   });
+
+  useEffect(() => {
+    somLiberadoRef.current = somLiberado;
+
+    if (somLiberado) {
+      try {
+        localStorage.setItem("bingoSomLiberado", "true");
+      } catch {
+        // ignora erro de localStorage
+      }
+    }
+  }, [somLiberado]);
 
   useEffect(() => {
     async function iniciarTv() {
@@ -957,6 +1012,34 @@ export default function TvPage() {
   useEffect(() => {
     carregarHistorico(rodadaId);
   }, [rodadaId]);
+
+  useEffect(() => {
+    if (somLiberado) return;
+
+    const liberarNoPrimeiroClique = () => {
+      liberarSom();
+
+      window.removeEventListener("click", liberarNoPrimeiroClique);
+      window.removeEventListener("touchstart", liberarNoPrimeiroClique);
+      window.removeEventListener("keydown", liberarNoPrimeiroClique);
+    };
+
+    window.addEventListener("click", liberarNoPrimeiroClique);
+    window.addEventListener("touchstart", liberarNoPrimeiroClique);
+    window.addEventListener("keydown", liberarNoPrimeiroClique);
+
+    return () => {
+      window.removeEventListener("click", liberarNoPrimeiroClique);
+      window.removeEventListener("touchstart", liberarNoPrimeiroClique);
+      window.removeEventListener("keydown", liberarNoPrimeiroClique);
+    };
+  }, [somLiberado]);
+
+  useEffect(() => {
+    if (!somLiberado) return;
+
+    somLiberadoRef.current = true;
+  }, [somLiberado]);
 
   useEffect(() => {
     function atualizarPremio(event) {
@@ -1154,20 +1237,29 @@ export default function TvPage() {
                     }`}
                     key={`${numero}-${index}`}
                   >
-                    {formatarNumero(numero)}
+                    <span>{formatarNumero(numero)}</span>
                   </div>
                 ))
               ) : (
                 <>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
-                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">
+                    <span>--</span>
+                  </div>
+                  <div className="gold-small-ball empty">
+                    <span>--</span>
+                  </div>
+                  <div className="gold-small-ball empty">
+                    <span>--</span>
+                  </div>
+                  <div className="gold-small-ball empty">
+                    <span>--</span>
+                  </div>
+                  <div className="gold-small-ball empty">
+                    <span>--</span>
+                  </div>
+                  <div className="gold-small-ball empty">
+                    <span>--</span>
+                  </div>
                 </>
               )}
             </div>

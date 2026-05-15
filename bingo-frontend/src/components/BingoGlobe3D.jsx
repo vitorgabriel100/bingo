@@ -8,6 +8,12 @@ export default function BingoGlobe3D({
   const videoRef = useRef(null);
   const [videoPronto, setVideoPronto] = useState(false);
 
+  const [bolaCaindo, setBolaCaindo] = useState(null);
+  const [quedaKey, setQuedaKey] = useState(0);
+
+  const ultimoNumeroAnimadoRef = useRef(null);
+  const timeoutRef = useRef(null);
+
   const numeroExibido = useMemo(() => {
     if (numeroAnimado !== null && numeroAnimado !== undefined) {
       return numeroAnimado;
@@ -31,12 +37,52 @@ export default function BingoGlobe3D({
 
         await videoRef.current.play();
       } catch {
-        // alguns navegadores só liberam depois de interação, mas muted geralmente toca
+        // vídeo muted normalmente toca sozinho
       }
     }
 
     tentarTocarVideo();
   }, [faseAnimacao]);
+
+  useEffect(() => {
+    const numeroValido =
+      numeroExibido !== null &&
+      numeroExibido !== undefined &&
+      numeroExibido !== "";
+
+    if (!numeroValido) {
+      setBolaCaindo(null);
+      ultimoNumeroAnimadoRef.current = null;
+      return;
+    }
+
+    if (faseAnimacao !== "dropping") {
+      return;
+    }
+
+    if (ultimoNumeroAnimadoRef.current === numeroExibido) {
+      return;
+    }
+
+    ultimoNumeroAnimadoRef.current = numeroExibido;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    setQuedaKey((prev) => prev + 1);
+    setBolaCaindo(numeroExibido);
+
+    timeoutRef.current = setTimeout(() => {
+      setBolaCaindo(null);
+    }, 720);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [numeroExibido, faseAnimacao]);
 
   return (
     <div className={`bingo-video-globe-wrapper fase-${faseAnimacao}`}>
@@ -56,20 +102,22 @@ export default function BingoGlobe3D({
         />
 
         {!videoPronto && (
-          <div className="bingo-video-globe-loading">
-            Carregando globo...
-          </div>
+          <div className="bingo-video-globe-loading">Carregando globo...</div>
         )}
 
         <div className="bingo-video-glass-overlay"></div>
 
         <div className="bingo-video-exit-tube">
-          <div
-            key={numeroExibido ?? "empty"}
-            className={`bingo-video-output-ball ${
-              faseAnimacao === "dropping" ? "dropping" : ""
-            } ${faseAnimacao === "revealed" ? "revealed" : ""}`}
-          >
+          {bolaCaindo !== null && bolaCaindo !== undefined && (
+            <div
+              key={quedaKey}
+              className="bingo-fixed-falling-ball"
+            >
+              <span>{formatarNumero(bolaCaindo)}</span>
+            </div>
+          )}
+
+          <div className="bingo-fixed-current-ball">
             <span>{formatarNumero(numeroExibido)}</span>
           </div>
         </div>
