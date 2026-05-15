@@ -9,7 +9,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/rodadas")
@@ -44,10 +46,25 @@ public class RodadaController {
     @PostMapping("/sessao/{sessaoId}")
     public RodadaResponse criarRodada(
             @PathVariable Long sessaoId,
+            @RequestBody(required = false) Map<String, Object> payload,
             Authentication authentication
     ) {
         Usuario usuario = getUsuarioAutenticado(authentication);
-        return rodadaService.criarRodada(sessaoId, usuario);
+
+        RodadaResponse rodadaCriada = rodadaService.criarRodada(sessaoId, usuario);
+
+        Map<String, Object> dados = payload == null ? Collections.emptyMap() : payload;
+
+        if (!dados.isEmpty()) {
+            return rodadaService.atualizarDadosRodada(rodadaCriada.getId(), dados, usuario);
+        }
+
+        return rodadaCriada;
+    }
+
+    @GetMapping("/{id}")
+    public RodadaResponse buscarPorId(@PathVariable Long id) {
+        return rodadaService.buscarRodadaPorId(id);
     }
 
     @GetMapping("/sessao/{sessaoId}")
@@ -58,6 +75,83 @@ public class RodadaController {
     @GetMapping("/sessao/{sessaoId}/ativa")
     public RodadaResponse buscarRodadaAtiva(@PathVariable Long sessaoId) {
         return rodadaService.buscarRodadaAtiva(sessaoId);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}")
+    public RodadaResponse atualizarDadosRodada(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.atualizarDadosRodada(id, payload, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/premiacao")
+    public RodadaResponse atualizarPremiacao(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.atualizarPremiacao(id, payload, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/premios")
+    public RodadaResponse atualizarPremios(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.atualizarPremiacao(id, payload, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/premio-atual")
+    public RodadaResponse atualizarPremioAtual(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.atualizarPremioAtual(id, payload, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/premio")
+    public RodadaResponse atualizarPremio(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.atualizarPremioAtual(id, payload, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/premios-pagos")
+    public RodadaResponse atualizarPremiosPagos(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.atualizarPremiosPagos(id, payload, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/premios/status")
+    public RodadaResponse atualizarStatusPremios(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication
+    ) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.atualizarPremiosPagos(id, payload, usuario);
     }
 
     private Usuario getUsuarioAutenticado(Authentication authentication) {

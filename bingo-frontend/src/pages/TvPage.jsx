@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import useWebSocket from "../hooks/useWebSocket";
+import BingoGlobe3D from "../components/BingoGlobe3D";
 
 export default function TvPage() {
   const [sessaoId, setSessaoId] = useState(null);
@@ -14,6 +15,15 @@ export default function TvPage() {
   const [numeroRodada, setNumeroRodada] = useState(null);
 
   const [premioAtual, setPremioAtual] = useState("PRIMEIRA_LINHA");
+
+  const [premiacaoAtual, setPremiacaoAtual] = useState({
+    linha: "",
+    bingo: "",
+    duploBingo: "",
+    bolaMax: "60",
+    doacao: "",
+  });
+
   const [faseAnimacao, setFaseAnimacao] = useState("idle");
   const [countdown, setCountdown] = useState(null);
   const [somLiberado, setSomLiberado] = useState(false);
@@ -29,9 +39,11 @@ export default function TvPage() {
 
   const nomesPremio = {
     PRIMEIRA_LINHA: "Linha",
-    SEGUNDA_LINHA: "Acumulado",
-    DUPLA_LINHA: "Duplo Bingo",
     CARTELA_CHEIA: "Bingo",
+    DUPLA_LINHA: "Duplo Bingo",
+    SEGUNDA_LINHA: "Bola Max",
+    BOLA_MAX: "Bola Max",
+    DOACAO: "Doação",
   };
 
   const letrasBingo = ["B", "I", "N", "G", "O"];
@@ -44,20 +56,88 @@ export default function TvPage() {
     Array.from({ length: 15 }, (_, i) => i + 61),
   ];
 
-  const numerosGlobo = useMemo(
-    () => [
-      3, 5, 8, 12, 15, 18, 21, 22, 27, 31, 33, 37,
-      41, 44, 48, 49, 52, 56, 59, 62, 64, 67, 71, 72,
-      73, 75, 9, 14, 25, 36, 43, 54, 68, 70, 6, 11,
-      1, 4, 7, 10, 13, 16, 19, 24, 28, 32, 35, 39,
-    ],
-    []
-  );
+  const ultimasBolas = historico.slice(-9).reverse();
 
-  const ultimasSeisBolas = historico.slice(-6).reverse();
+  const premiosDaRodada = [
+    {
+      codigo: "PRIMEIRA_LINHA",
+      titulo: "Linha",
+      valor: formatarMoeda(premiacaoAtual.linha),
+      descricao: "Primeiro prêmio",
+    },
+    {
+      codigo: "CARTELA_CHEIA",
+      titulo: "Bingo",
+      valor: formatarMoeda(premiacaoAtual.bingo),
+      descricao: "Cartela cheia",
+    },
+    {
+      codigo: "DUPLA_LINHA",
+      titulo: "Duplo Bingo",
+      valor: formatarMoeda(premiacaoAtual.duploBingo),
+      descricao: "Prêmio especial",
+    },
+    {
+      codigo: "SEGUNDA_LINHA",
+      titulo: "Bola Max",
+      valor: premiacaoAtual.bolaMax
+        ? `Até a bola ${premiacaoAtual.bolaMax}`
+        : "--",
+      descricao: "Desafio da rodada",
+    },
+    {
+      codigo: "DOACAO",
+      titulo: "Doação",
+      valor: formatarMoeda(premiacaoAtual.doacao),
+      descricao: "Valor beneficente",
+    },
+  ];
+
+  function formatarNumero(numero) {
+    if (numero === null || numero === undefined || numero === "") return "--";
+    return String(Number(numero)).padStart(2, "0");
+  }
+
+  function formatarStatusRodada(status) {
+    if (!status) return "AGUARDANDO";
+    return String(status).replaceAll("_", " ");
+  }
 
   function formatarPremio(premio) {
     return nomesPremio[premio] || premio || "Linha";
+  }
+
+  function formatarMoeda(valor) {
+    if (valor === null || valor === undefined || valor === "") return "--";
+
+    const numero = Number(String(valor).replace(",", "."));
+
+    if (!Number.isFinite(numero)) return `R$ ${valor}`;
+
+    return numero.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  }
+
+  function valorPremioAtual(premio = premioAtual) {
+    if (premio === "PRIMEIRA_LINHA") return formatarMoeda(premiacaoAtual.linha);
+    if (premio === "CARTELA_CHEIA") return formatarMoeda(premiacaoAtual.bingo);
+    if (premio === "DUPLA_LINHA") return formatarMoeda(premiacaoAtual.duploBingo);
+
+    if (premio === "SEGUNDA_LINHA" || premio === "BOLA_MAX") {
+      return premiacaoAtual.bolaMax
+        ? `Até a bola ${premiacaoAtual.bolaMax}`
+        : "--";
+    }
+
+    if (premio === "DOACAO") return formatarMoeda(premiacaoAtual.doacao);
+
+    return "--";
+  }
+
+  function textoPremioAtual(premio = premioAtual) {
+    return `${formatarPremio(premio)} • ${valorPremioAtual(premio)}`;
   }
 
   function letraDoNumero(numero) {
@@ -94,15 +174,258 @@ export default function TvPage() {
     );
   }
 
-  function caminhoAudioNumero(numero) {
-    const letra = letraDoNumero(numero).toLowerCase();
-    return `/sounds/bingo-voices/${letra}-${numero}.mp3`;
+  function montarFontes(data) {
+    return [
+      data,
+      data?.data,
+      data?.payload,
+      data?.body,
+      data?.rodada,
+      data?.round,
+      data?.premiacao,
+      data?.premiacaoAtual,
+      data?.premios,
+      data?.valoresPremio,
+    ].filter(Boolean);
   }
 
-  function tocarAudioArquivo(src) {
+  function buscarValorEmFontes(fontes, chaves) {
+    for (const fonte of fontes) {
+      if (!fonte || typeof fonte !== "object") continue;
+
+      for (const chave of chaves) {
+        const valor = fonte[chave];
+
+        if (valor !== undefined && valor !== null && valor !== "") {
+          return valor;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  function normalizarPremiacaoFonte(data) {
+    if (!data) return null;
+
+    const fontes = montarFontes(data);
+
+    const linha = buscarValorEmFontes(fontes, [
+      "linha",
+      "premioLinha",
+      "valorLinha",
+      "primeiraLinha",
+      "valorPrimeiraLinha",
+      "premioPrimeiraLinha",
+    ]);
+
+    const bingo = buscarValorEmFontes(fontes, [
+      "bingo",
+      "premioBingo",
+      "valorBingo",
+      "cartelaCheia",
+      "valorCartelaCheia",
+      "premioCartelaCheia",
+    ]);
+
+    const duploBingo = buscarValorEmFontes(fontes, [
+      "duploBingo",
+      "duplo_bingo",
+      "premioDuploBingo",
+      "valorDuploBingo",
+      "duplaLinha",
+      "valorDuplaLinha",
+      "premioDuplaLinha",
+    ]);
+
+    const bolaMax = buscarValorEmFontes(fontes, [
+      "bolaMax",
+      "bola_max",
+      "premioBolaMax",
+      "numeroBolaMax",
+      "valorBolaMax",
+      "acumulado",
+    ]);
+
+    const doacao = buscarValorEmFontes(fontes, [
+      "doacao",
+      "doação",
+      "valorDoacao",
+      "valorDoação",
+      "premioDoacao",
+      "arrecadacao",
+    ]);
+
+    const premiacao = {};
+
+    if (linha !== undefined) premiacao.linha = linha;
+    if (bingo !== undefined) premiacao.bingo = bingo;
+    if (duploBingo !== undefined) premiacao.duploBingo = duploBingo;
+    if (bolaMax !== undefined) premiacao.bolaMax = bolaMax;
+    if (doacao !== undefined) premiacao.doacao = doacao;
+
+    return Object.keys(premiacao).length > 0 ? premiacao : null;
+  }
+
+  function normalizarPremioAtual(valor) {
+    if (!valor) return null;
+
+    const texto = String(valor)
+      .trim()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    if (
+      texto === "PRIMEIRA_LINHA" ||
+      texto === "LINHA" ||
+      texto.includes("PRIMEIRA")
+    ) {
+      return "PRIMEIRA_LINHA";
+    }
+
+    if (
+      texto === "CARTELA_CHEIA" ||
+      texto === "BINGO" ||
+      texto.includes("CARTELA")
+    ) {
+      return "CARTELA_CHEIA";
+    }
+
+    if (
+      texto === "DUPLA_LINHA" ||
+      texto === "DUPLO_BINGO" ||
+      texto.includes("DUPLO") ||
+      texto.includes("DUPLA")
+    ) {
+      return "DUPLA_LINHA";
+    }
+
+    if (
+      texto === "SEGUNDA_LINHA" ||
+      texto === "BOLA_MAX" ||
+      texto.includes("BOLA") ||
+      texto.includes("ACUMULADO")
+    ) {
+      return "SEGUNDA_LINHA";
+    }
+
+    if (texto === "DOACAO" || texto.includes("DOACAO")) {
+      return "DOACAO";
+    }
+
+    return valor;
+  }
+
+  function extrairPremioAtual(data) {
+    const fontes = montarFontes(data);
+
+    const premio = buscarValorEmFontes(fontes, [
+      "premioAtual",
+      "premio",
+      "tipoPremio",
+      "premioDaVez",
+      "concorrendoAgora",
+      "etapaPremio",
+      "fasePremio",
+    ]);
+
+    return normalizarPremioAtual(premio);
+  }
+
+  function salvarPremiacaoLocal(premiacao) {
+    try {
+      localStorage.setItem("premiacaoRodadaAtual", JSON.stringify(premiacao));
+    } catch {
+      // ignora erro de localStorage
+    }
+  }
+
+  function aplicarPremiacao(data, salvarLocalmente = false) {
+    const premiacaoNormalizada = normalizarPremiacaoFonte(data);
+
+    if (!premiacaoNormalizada) return;
+
+    setPremiacaoAtual((atual) => {
+      const novaPremiacao = {
+        ...atual,
+        ...premiacaoNormalizada,
+      };
+
+      if (salvarLocalmente) {
+        salvarPremiacaoLocal(novaPremiacao);
+      }
+
+      return novaPremiacao;
+    });
+  }
+
+  function aplicarPremioAtual(valor, salvarLocalmente = false) {
+    const premioNormalizado = normalizarPremioAtual(valor);
+
+    if (!premioNormalizado) return;
+
+    setPremioAtual(premioNormalizado);
+
+    if (salvarLocalmente) {
+      try {
+        localStorage.setItem("premioAtualOperador", premioNormalizado);
+      } catch {
+        // ignora erro de localStorage
+      }
+    }
+  }
+
+  function lerPremiacaoSalva() {
+    try {
+      const salvo = localStorage.getItem("premiacaoRodadaAtual");
+
+      if (!salvo) return null;
+
+      const dados = JSON.parse(salvo);
+
+      return {
+        linha: dados?.linha || "",
+        bingo: dados?.bingo || "",
+        duploBingo: dados?.duploBingo || "",
+        bolaMax: dados?.bolaMax || "60",
+        doacao: dados?.doacao || "",
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function atualizarPremiacaoDaTv() {
+    const premiacaoSalva = lerPremiacaoSalva();
+
+    if (premiacaoSalva) {
+      setPremiacaoAtual((atual) => {
+        const novaPremiacao = {
+          ...atual,
+          ...premiacaoSalva,
+        };
+
+        return JSON.stringify(atual) === JSON.stringify(novaPremiacao)
+          ? atual
+          : novaPremiacao;
+      });
+    }
+  }
+
+  function caminhoAudioNumero(numero, comZero = true) {
+    const letra = letraDoNumero(numero).toLowerCase();
+    const numeroArquivo = comZero
+      ? formatarNumero(numero)
+      : String(Number(numero));
+
+    return `/sounds/bingo-voices/${letra}-${numeroArquivo}.mp3`;
+  }
+
+  function tocarAudioArquivo(src, playbackRate = 0.65) {
     return new Promise((resolve) => {
       if (!somLiberado) {
-        resolve();
+        resolve(false);
         return;
       }
 
@@ -111,20 +434,18 @@ export default function TvPage() {
         voiceAudioRef.current.currentTime = 0;
       }
 
-      console.log("Tentando tocar áudio:", src);
-
       const audio = new Audio(src);
       audio.volume = 1;
-      audio.playbackRate = 0.65;
+      audio.playbackRate = playbackRate;
       audio.preload = "auto";
 
       voiceAudioRef.current = audio;
 
-      audio.onended = () => resolve();
+      audio.onended = () => resolve(true);
 
       audio.onerror = () => {
         console.error("Erro ao encontrar/tocar áudio:", src);
-        resolve();
+        resolve(false);
       };
 
       audio
@@ -134,7 +455,7 @@ export default function TvPage() {
         })
         .catch((error) => {
           console.error("Erro ao tocar áudio:", error);
-          resolve();
+          resolve(false);
         });
     });
   }
@@ -143,8 +464,17 @@ export default function TvPage() {
     if (!somLiberado) return;
     if (!numero && numero !== 0) return;
 
-    const src = caminhoAudioNumero(numero);
-    await tocarAudioArquivo(src);
+    const letra = letraDoNumero(numero);
+    const velocidade = letra === "O" ? 0.82 : 0.65;
+
+    const tocouComZero = await tocarAudioArquivo(
+      caminhoAudioNumero(numero, true),
+      velocidade
+    );
+
+    if (!tocouComZero) {
+      await tocarAudioArquivo(caminhoAudioNumero(numero, false), velocidade);
+    }
   }
 
   function esperar(ms) {
@@ -190,11 +520,20 @@ export default function TvPage() {
         dropAudioRef.current.volume = 1;
       }
 
-      const teste = new Audio("/sounds/bingo-voices/b-1.mp3");
-      teste.volume = 0.01;
-      await teste.play();
-      teste.pause();
-      teste.currentTime = 0;
+      const testeComZero = new Audio("/sounds/bingo-voices/b-01.mp3");
+      testeComZero.volume = 0.01;
+
+      try {
+        await testeComZero.play();
+        testeComZero.pause();
+        testeComZero.currentTime = 0;
+      } catch {
+        const testeSemZero = new Audio("/sounds/bingo-voices/b-1.mp3");
+        testeSemZero.volume = 0.01;
+        await testeSemZero.play();
+        testeSemZero.pause();
+        testeSemZero.currentTime = 0;
+      }
     } catch {
       console.warn("Som será liberado após nova interação do usuário.");
     }
@@ -282,14 +621,17 @@ export default function TvPage() {
         setStatusRodada(response.data.status || "AGUARDANDO");
         setNumeroRodada(response.data.numeroRodada);
 
-        const premioSalvo = localStorage.getItem("premioAtualOperador");
+        aplicarPremiacao(response.data, true);
 
-        setPremioAtual(
-          premioSalvo ||
-            response.data.premio ||
-            response.data.premioAtual ||
-            "PRIMEIRA_LINHA"
+        const premioSalvo = localStorage.getItem("premioAtualOperador");
+        const premioDaApi = extrairPremioAtual(response.data);
+
+        aplicarPremioAtual(
+          premioSalvo || premioDaApi || "PRIMEIRA_LINHA",
+          false
         );
+
+        atualizarPremiacaoDaTv();
 
         setMensagem(
           `Transmitindo rodada ${response.data.numeroRodada || response.data.id}`
@@ -372,8 +714,6 @@ export default function TvPage() {
 
     animandoRef.current = true;
 
-    const premioFormatado = formatarPremio(premio);
-
     try {
       setCountdown(null);
 
@@ -385,9 +725,9 @@ export default function TvPage() {
       );
 
       setMensagem(
-        `${premioFormatado} • ${letraDoNumero(numeroNormalizado)} ${String(
+        `${textoPremioAtual(premio)} • ${letraDoNumero(
           numeroNormalizado
-        ).padStart(2, "0")}`
+        )} ${formatarNumero(numeroNormalizado)}`
       );
 
       setFaseAnimacao("dropping");
@@ -422,9 +762,42 @@ export default function TvPage() {
     (event) => {
       if (!event?.type) return;
 
+      const tiposAtualizacaoPremio = [
+        "PRIZE_UPDATED",
+        "PRIZES_UPDATED",
+        "PREMIO_ATUALIZADO",
+        "PREMIACAO_ATUALIZADA",
+        "PREMIOS_ATUALIZADOS",
+        "ROUND_PRIZE_UPDATED",
+        "ROUND_PRIZES_UPDATED",
+        "ROUND_UPDATED",
+      ];
+
+      if (tiposAtualizacaoPremio.includes(event.type)) {
+        aplicarPremiacao(event, true);
+
+        const premioDoEvento = extrairPremioAtual(event);
+
+        if (premioDoEvento) {
+          aplicarPremioAtual(premioDoEvento, true);
+        }
+
+        setMensagem("Premiação atualizada.");
+
+        return;
+      }
+
       if (event.type === "NUMBER_DRAWN") {
+        aplicarPremiacao(event, true);
+
         const numero = extrairNumeroSorteado(event);
-        iniciarSequenciaSorteio(numero, premioAtual);
+        const premioDoEvento = extrairPremioAtual(event) || premioAtual;
+
+        if (premioDoEvento) {
+          aplicarPremioAtual(premioDoEvento, true);
+        }
+
+        iniciarSequenciaSorteio(numero, premioDoEvento);
         return;
       }
 
@@ -439,9 +812,16 @@ export default function TvPage() {
           setNumeroRodada(event.numeroRodada);
         }
 
-        const premioSalvo = localStorage.getItem("premioAtualOperador");
+        aplicarPremiacao(event, true);
 
-        setPremioAtual(premioSalvo || "PRIMEIRA_LINHA");
+        const premioSalvo = localStorage.getItem("premioAtualOperador");
+        const premioDoEvento = extrairPremioAtual(event);
+
+        aplicarPremioAtual(
+          premioSalvo || premioDoEvento || "PRIMEIRA_LINHA",
+          false
+        );
+
         setStatusRodada(event.status || "CRIADA");
         setHistorico([]);
         setNumeroAtual(null);
@@ -482,11 +862,15 @@ export default function TvPage() {
           setNumeroRodada(event.numeroRodada);
         }
 
-        const premioSalvo = localStorage.getItem("premioAtualOperador");
+        aplicarPremiacao(event, true);
 
-        if (premioSalvo) {
-          setPremioAtual(premioSalvo);
-        }
+        const premioSalvo = localStorage.getItem("premioAtualOperador");
+        const premioDoEvento = extrairPremioAtual(event);
+
+        aplicarPremioAtual(
+          premioSalvo || premioDoEvento || "PRIMEIRA_LINHA",
+          false
+        );
 
         setStatusRodada("EM_ANDAMENTO");
         setMensagem("Rodada iniciada, boa sorte a todos!");
@@ -541,7 +925,7 @@ export default function TvPage() {
         }
       }
     },
-    [premioAtual, rodadaId, somLiberado]
+    [premioAtual, rodadaId, somLiberado, premiacaoAtual]
   );
 
   useWebSocket({
@@ -555,8 +939,10 @@ export default function TvPage() {
       const premioSalvo = localStorage.getItem("premioAtualOperador");
 
       if (premioSalvo) {
-        setPremioAtual(premioSalvo);
+        aplicarPremioAtual(premioSalvo, false);
       }
+
+      atualizarPremiacaoDaTv();
 
       const idSessao = await carregarOuCriarSessao();
 
@@ -575,31 +961,48 @@ export default function TvPage() {
   useEffect(() => {
     function atualizarPremio(event) {
       if (event.detail) {
-        setPremioAtual(event.detail);
+        aplicarPremioAtual(event.detail, true);
       }
     }
 
-    function atualizarPremioPorStorage(event) {
+    function atualizarPremiacao(event) {
+      if (event.detail) {
+        aplicarPremiacao(event.detail, true);
+      }
+    }
+
+    function atualizarPorStorage(event) {
       if (event.key === "premioAtualOperador" && event.newValue) {
-        setPremioAtual(event.newValue);
+        aplicarPremioAtual(event.newValue, false);
+      }
+
+      if (event.key === "premiacaoRodadaAtual") {
+        atualizarPremiacaoDaTv();
       }
     }
 
-    const intervaloPremio = setInterval(() => {
+    const intervalo = setInterval(() => {
       const premioSalvo = localStorage.getItem("premioAtualOperador");
 
       if (premioSalvo) {
-        setPremioAtual((atual) => (atual === premioSalvo ? atual : premioSalvo));
+        setPremioAtual((atual) => {
+          const premioNormalizado = normalizarPremioAtual(premioSalvo);
+          return atual === premioNormalizado ? atual : premioNormalizado;
+        });
       }
+
+      atualizarPremiacaoDaTv();
     }, 700);
 
     window.addEventListener("premioAtualizado", atualizarPremio);
-    window.addEventListener("storage", atualizarPremioPorStorage);
+    window.addEventListener("premiacaoAtualizada", atualizarPremiacao);
+    window.addEventListener("storage", atualizarPorStorage);
 
     return () => {
-      clearInterval(intervaloPremio);
+      clearInterval(intervalo);
       window.removeEventListener("premioAtualizado", atualizarPremio);
-      window.removeEventListener("storage", atualizarPremioPorStorage);
+      window.removeEventListener("premiacaoAtualizada", atualizarPremiacao);
+      window.removeEventListener("storage", atualizarPorStorage);
     };
   }, []);
 
@@ -642,10 +1045,20 @@ export default function TvPage() {
 
       <main className="gold-tv-layout">
         <section className="gold-left-panel">
+          <div className="gold-benefit-title">
+            <strong>Bingo Beneficente</strong>
+            <span>
+              Rodada {numeroRodada || rodadaId || "--"} •{" "}
+              {formatarStatusRodada(statusRodada)}
+            </span>
+          </div>
+
           <div className="gold-number-board">
             {numerosPainel.map((linha, linhaIndex) => (
               <div className="gold-board-row" key={letrasBingo[linhaIndex]}>
-                <div className="gold-board-letter">{letrasBingo[linhaIndex]}</div>
+                <div className="gold-board-letter">
+                  {letrasBingo[linhaIndex]}
+                </div>
 
                 {linha.map((numero) => {
                   const sorteado = historico.includes(numero);
@@ -658,7 +1071,7 @@ export default function TvPage() {
                         atual ? "current" : ""
                       }`}
                     >
-                      {numero}
+                      {formatarNumero(numero)}
                     </div>
                   );
                 })}
@@ -666,19 +1079,82 @@ export default function TvPage() {
             ))}
           </div>
 
-          <div className="gold-info-card gold-last-card">
-            <span className="gold-info-label">ÚLTIMAS 6 BOLAS</span>
+          <section className="gold-prize-showcase">
+            <div className="gold-prize-now">
+              <span className="gold-prize-eyebrow">Concorrendo agora</span>
+
+              <div className="gold-prize-now-main">
+                <strong>{formatarPremio(premioAtual)}</strong>
+                <em>{valorPremioAtual(premioAtual)}</em>
+              </div>
+
+              <small>Prêmio em destaque da rodada</small>
+            </div>
+
+            <div className="gold-prize-list">
+              {premiosDaRodada.map((premio) => (
+                <div
+                  key={premio.codigo}
+                  className={`gold-prize-mini-card ${
+                    premio.codigo === premioAtual ? "active" : ""
+                  }`}
+                >
+                  <span>{premio.titulo}</span>
+                  <strong>{premio.valor}</strong>
+                  <small>{premio.descricao}</small>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="gold-info-card gold-current-card">
+            <span className="gold-info-label">NÚMERO ATUAL</span>
+            <strong>
+              {numeroAtual ? (
+                <>
+                  <em>{letraDoNumero(numeroAtual)}</em>{" "}
+                  {formatarNumero(numeroAtual)}
+                </>
+              ) : (
+                "--"
+              )}
+            </strong>
+          </div>
+
+          <div className="gold-info-card gold-order-card">
+            <span className="gold-info-label">ORDEM DAS BOLAS CANTADAS</span>
+            <strong>
+              {historico.length}
+              <small>/75</small>
+            </strong>
+          </div>
+
+          <div className="gold-message-card">
+            {mensagem || "Boa sorte a todos!"}
+          </div>
+        </section>
+
+        <section className="gold-right-panel">
+          <BingoGlobe3D
+            numeroAtual={numeroAtual}
+            numeroAnimado={numeroAnimado}
+            faseAnimacao={faseAnimacao}
+            historico={historico}
+          />
+
+          <div className="gold-info-card gold-last-card gold-globe-last-card">
+            <span className="gold-info-label">ÚLTIMAS BOLAS CANTADAS</span>
 
             <div className="gold-last-balls">
-              {ultimasSeisBolas.length > 0 ? (
-                ultimasSeisBolas.map((numero, index) => (
+              {ultimasBolas.length > 0 ? (
+                ultimasBolas.map((numero, index) => (
                   <div
                     className={`gold-small-ball ${
                       numero === numeroAtual ? "active" : ""
                     }`}
                     key={`${numero}-${index}`}
                   >
-                    {String(numero).padStart(2, "0")}
+                    {formatarNumero(numero)}
                   </div>
                 ))
               ) : (
@@ -689,90 +1165,11 @@ export default function TvPage() {
                   <div className="gold-small-ball empty">--</div>
                   <div className="gold-small-ball empty">--</div>
                   <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
+                  <div className="gold-small-ball empty">--</div>
                 </>
               )}
-            </div>
-          </div>
-
-          <div className="gold-info-card gold-prize-card">
-            <span className="gold-info-label">PRÊMIO DA RODADA</span>
-            <strong>{formatarPremio(premioAtual)}</strong>
-          </div>
-
-          <div className="gold-info-card gold-current-card">
-            <span className="gold-info-label">NÚMERO ATUAL</span>
-            <strong>
-              {numeroAtual ? (
-                <>
-                  <em>{letraDoNumero(numeroAtual)}</em>{" "}
-                  {String(numeroAtual).padStart(2, "0")}
-                </>
-              ) : (
-                "--"
-              )}
-            </strong>
-          </div>
-
-          <div className="gold-message-card">
-            {mensagem || "Boa sorte a todos!"}
-          </div>
-        </section>
-
-        <section className="gold-right-panel">
-          <div className="gold-cage-stage">
-            <div className="gold-cage-light"></div>
-
-            <div className="gold-cage-machine">
-              <div className="gold-cage-support left"></div>
-              <div className="gold-cage-support right"></div>
-
-              <div className="gold-crank">
-                <span></span>
-              </div>
-
-              <div className="gold-cage-globe">
-                <div className="gold-cage-rim horizontal"></div>
-                <div className="gold-cage-rim top"></div>
-                <div className="gold-cage-rim bottom"></div>
-
-                {Array.from({ length: 22 }).map((_, index) => (
-                  <span
-                    key={`rod-${index}`}
-                    className="gold-cage-rod"
-                    style={{ "--rod": index }}
-                  ></span>
-                ))}
-
-                <div className="gold-cage-balls">
-                  {numerosGlobo.slice(0, 28).map((numero, index) => (
-                    <span
-                      key={`${numero}-${index}`}
-                      className={`gold-cage-ball ball-${index + 1}`}
-                    >
-                      {numero}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="gold-cage-shine"></div>
-              </div>
-
-              <div className="gold-drop-neck">
-                <div className="gold-drop-window"></div>
-
-                {numeroAnimado !== null && (
-                  <div
-                    key={numeroAnimado}
-                    className={`gold-drop-ball ${
-                      faseAnimacao === "dropping" ? "dropping" : ""
-                    } ${faseAnimacao === "revealed" ? "revealed" : ""}`}
-                  >
-                    {String(numeroAnimado).padStart(2, "0")}
-                  </div>
-                )}
-              </div>
-
-              <div className="gold-stage-base"></div>
             </div>
           </div>
         </section>

@@ -10082,3 +10082,3495 @@ body,
     display: none;
   }
 }
+
+/* ============================= */
+/* MODAL NOVA RODADA / PREMIAÇÃO */
+/* ============================= */
+
+.operator-prize-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.operator-prize-modal {
+  width: min(460px, 100%);
+  border-radius: 24px;
+  padding: 24px;
+
+  background:
+    radial-gradient(circle at top, rgba(255, 221, 120, 0.16), transparent 34%),
+    linear-gradient(180deg, #1a0b02 0%, #090402 100%);
+
+  border: 1px solid rgba(255, 215, 120, 0.32);
+
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  color: #fff3c4;
+  animation: operatorModalShow 0.22s ease-out;
+}
+
+.operator-prize-modal h2 {
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 1000;
+  color: #ffd76a;
+  text-shadow: 0 0 18px rgba(255, 193, 7, 0.36);
+}
+
+.operator-prize-modal p {
+  margin: 0 0 18px;
+  text-align: center;
+  color: #ffe7a3;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.operator-prize-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffd76a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.operator-prize-modal input {
+  width: 100%;
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 215, 120, 0.34);
+  border-radius: 14px;
+  padding: 13px 14px;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 900;
+  outline: none;
+}
+
+.operator-prize-modal input::placeholder {
+  color: rgba(255, 231, 163, 0.5);
+}
+
+.operator-prize-modal input:focus {
+  border-color: #ffd76a;
+  box-shadow: 0 0 0 3px rgba(255, 215, 120, 0.14);
+}
+
+.operator-prize-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.operator-prize-modal-actions button {
+  min-height: 52px;
+  border: 1px solid rgba(255, 215, 120, 0.28);
+  border-radius: 14px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 215, 120, 0.16),
+    rgba(120, 58, 0, 0.45)
+  );
+
+  color: #fff3c4;
+  font-size: 15px;
+  font-weight: 1000;
+  cursor: pointer;
+}
+
+.operator-prize-modal-actions button.primary {
+  background: linear-gradient(180deg, #fff1a8, #ffb300 58%, #c76b00);
+  color: #2b1200;
+  border-color: rgba(255, 236, 170, 0.75);
+  box-shadow: 0 0 18px rgba(255, 193, 7, 0.26);
+}
+
+.operator-prize-modal-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+@keyframes operatorModalShow {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .operator-prize-modal-overlay {
+    align-items: flex-start;
+    padding-top: 28px;
+  }
+
+  .operator-prize-modal {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .operator-prize-modal h2 {
+    font-size: 24px;
+  }
+
+  .operator-prize-modal input {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .operator-prize-modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================= */
+/* AJUSTES TV - PREMIAÇÃO / BINGO BENEFICENTE */
+/* ============================= */
+
+.gold-benefit-title {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 220, 120, 0.22), rgba(94, 33, 0, 0.48)),
+    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 221, 130, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 14px 32px rgba(0, 0, 0, 0.26);
+}
+
+.gold-benefit-title strong {
+  display: block;
+  font-size: clamp(26px, 3vw, 48px);
+  font-weight: 1000;
+  color: #ffd76a;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-shadow:
+    0 0 14px rgba(255, 193, 7, 0.65),
+    0 4px 0 rgba(0, 0, 0, 0.28);
+}
+
+.gold-benefit-title span {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff1bd;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gold-prize-values-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.gold-prize-value {
+  min-height: 72px;
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 224, 138, 0.2), rgba(106, 43, 0, 0.46));
+  border: 1px solid rgba(255, 221, 130, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+.gold-prize-value span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 1000;
+  color: #ffd76a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.gold-prize-value strong {
+  display: block;
+  font-size: clamp(14px, 1.4vw, 20px);
+  font-weight: 1000;
+  color: #fff7d6;
+  line-height: 1.1;
+}
+
+.gold-current-prize-value {
+  display: block;
+  margin-top: 6px;
+  color: #fff1bd;
+  font-size: 18px;
+  font-weight: 1000;
+}
+
+.gold-order-card strong {
+  display: block;
+  font-size: 42px;
+  color: #ffd76a;
+  font-weight: 1000;
+}
+
+.gold-order-card strong small {
+  font-size: 18px;
+  color: #fff1bd;
+  margin-left: 3px;
+}
+
+.gold-globe-last-card {
+  width: min(620px, 100%);
+  margin: 12px auto 0;
+}
+
+.gold-globe-last-card .gold-last-balls {
+  grid-template-columns: repeat(9, 1fr);
+}
+
+@media (max-width: 900px) {
+  .gold-prize-values-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gold-globe-last-card .gold-last-balls {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .gold-benefit-title strong {
+    font-size: 24px;
+  }
+
+  .gold-prize-values-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================= */
+/* CORREÇÃO TV - ÚLTIMAS BOLAS RESPONSIVAS */
+/* ============================= */
+
+.gold-right-panel {
+  min-height: calc(100vh - 90px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  overflow: visible !important;
+}
+
+.gold-cage-stage {
+  width: min(100%, 720px) !important;
+  height: clamp(420px, 58vh, 610px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.gold-cage-machine {
+  transform: scale(0.82);
+  transform-origin: center center;
+}
+
+.gold-globe-last-card {
+  width: min(620px, 100%) !important;
+  max-width: 100% !important;
+  margin: -18px auto 0 !important;
+  padding: 12px 14px !important;
+  border-radius: 12px !important;
+}
+
+.gold-globe-last-card .gold-info-label {
+  display: block;
+  text-align: center;
+  font-size: clamp(13px, 1.2vw, 18px) !important;
+  line-height: 1.1 !important;
+  margin-bottom: 8px !important;
+}
+
+.gold-globe-last-card .gold-last-balls {
+  width: 100% !important;
+  margin-top: 8px !important;
+  display: grid !important;
+  grid-template-columns: repeat(9, minmax(34px, 1fr)) !important;
+  gap: clamp(4px, 0.6vw, 8px) !important;
+  align-items: center !important;
+}
+
+.gold-globe-last-card .gold-small-ball {
+  width: 100% !important;
+  max-width: 54px !important;
+  min-width: 0 !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+
+  font-size: clamp(13px, 1.45vw, 22px) !important;
+  line-height: 1 !important;
+
+  border-width: 2px !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 247, 181, 0.65),
+    0 0 12px rgba(255, 196, 43, 0.34) !important;
+}
+
+/* NOTEBOOK / TELAS MENORES */
+@media (max-width: 1500px) {
+  .gold-tv-layout {
+    grid-template-columns: 1.18fr 0.82fr !important;
+    gap: 16px !important;
+    padding: 30px 48px 20px !important;
+  }
+
+  .gold-cage-stage {
+    height: clamp(390px, 55vh, 540px) !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.72);
+  }
+
+  .gold-globe-last-card {
+    width: min(520px, 100%) !important;
+    margin-top: -26px !important;
+  }
+
+  .gold-globe-last-card .gold-small-ball {
+    max-width: 46px !important;
+    font-size: clamp(12px, 1.3vw, 18px) !important;
+  }
+}
+
+/* NOTEBOOK MAIS APERTADO */
+@media (max-width: 1280px) {
+  .gold-tv-layout {
+    grid-template-columns: 1.22fr 0.78fr !important;
+    gap: 12px !important;
+    padding: 24px 38px 18px !important;
+  }
+
+  .gold-cage-stage {
+    height: 470px !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.64);
+  }
+
+  .gold-globe-last-card {
+    width: min(470px, 100%) !important;
+    margin-top: -38px !important;
+    padding: 10px !important;
+  }
+
+  .gold-globe-last-card .gold-last-balls {
+    gap: 5px !important;
+  }
+
+  .gold-globe-last-card .gold-small-ball {
+    max-width: 40px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* QUANDO NÃO COUBER LADO A LADO, EMPILHA */
+@media (max-width: 1050px) {
+  .bingo-tv-gold {
+    overflow: auto !important;
+  }
+
+  .gold-tv-layout {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+    padding: 18px 20px 24px !important;
+  }
+
+  .gold-right-panel {
+    min-height: auto !important;
+  }
+
+  .gold-cage-stage {
+    height: 460px !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.66);
+  }
+
+  .gold-globe-last-card {
+    margin-top: -34px !important;
+  }
+
+  .gold-globe-last-card .gold-last-balls {
+    grid-template-columns: repeat(9, minmax(32px, 1fr)) !important;
+  }
+}
+
+/* CELULAR / TELA MUITO ESTREITA */
+@media (max-width: 640px) {
+  .gold-globe-last-card .gold-last-balls {
+    grid-template-columns: repeat(5, minmax(38px, 1fr)) !important;
+  }
+
+  .gold-globe-last-card .gold-small-ball {
+    max-width: 48px !important;
+    font-size: 15px !important;
+  }
+}
+
+/* ========================================== */
+/* GLOBO CINEMATOGRÁFICO / ESTILO "VIDEO IA"  */
+/* ========================================== */
+
+.gold-cage-stage {
+  position: relative;
+  overflow: visible !important;
+  filter: drop-shadow(0 0 24px rgba(255, 200, 70, 0.18));
+}
+
+.gold-cage-light {
+  position: absolute;
+  inset: 8% 14% 10% 14%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 229, 143, 0.22), transparent 28%),
+    radial-gradient(circle at 50% 58%, rgba(255, 196, 0, 0.12), transparent 42%),
+    radial-gradient(circle at 50% 82%, rgba(255, 176, 0, 0.08), transparent 48%);
+  filter: blur(14px);
+  animation: cageAmbientPulse 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.gold-cage-machine {
+  position: relative;
+  transform-origin: center center;
+  animation: machineFloating 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ---------------- GLOBO ---------------- */
+
+.gold-cage-globe {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255,255,255,0.26), transparent 18%),
+    radial-gradient(circle at 60% 58%, rgba(255,220,120,0.12), transparent 32%),
+    radial-gradient(circle at 50% 50%, rgba(14, 18, 28, 0.9) 0%, rgba(7, 11, 22, 0.96) 58%, rgba(2, 5, 12, 1) 100%);
+  box-shadow:
+    inset 0 0 42px rgba(255, 219, 103, 0.12),
+    inset 0 -18px 36px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(255, 194, 43, 0.26),
+    0 0 42px rgba(255, 194, 43, 0.12);
+  transform-style: preserve-3d;
+  animation: globeBreath 4s ease-in-out infinite;
+}
+
+.gold-cage-globe::before {
+  content: "";
+  position: absolute;
+  inset: 8% 57% 22% 18%;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.22) 0%,
+    rgba(255,255,255,0.04) 42%,
+    transparent 100%
+  );
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.gold-cage-globe::after {
+  content: "";
+  position: absolute;
+  inset: 14% 12% 12% 12%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 216, 115, 0.12);
+  box-shadow:
+    inset 0 0 20px rgba(255, 216, 115, 0.05),
+    0 0 10px rgba(255, 216, 115, 0.04);
+  pointer-events: none;
+}
+
+.gold-cage-rim {
+  box-shadow:
+    0 0 8px rgba(255, 219, 103, 0.45),
+    0 0 18px rgba(255, 219, 103, 0.2);
+  animation: rimPulse 2.6s ease-in-out infinite;
+}
+
+.gold-cage-rod {
+  opacity: 0.92;
+  filter: drop-shadow(0 0 4px rgba(255, 219, 103, 0.4));
+  animation: rodShine 2.8s ease-in-out infinite;
+}
+
+/* ---------------- MANIVELA / SUPORTES ---------------- */
+
+.gold-cage-support,
+.gold-crank,
+.gold-stage-base,
+.gold-drop-neck {
+  filter:
+    drop-shadow(0 0 6px rgba(255, 207, 81, 0.18))
+    drop-shadow(0 0 18px rgba(255, 207, 81, 0.08));
+}
+
+.gold-crank {
+  transform-origin: left center;
+  animation: crankMove 1.6s linear infinite;
+}
+
+.gold-crank span {
+  box-shadow:
+    0 0 10px rgba(255, 207, 81, 0.4),
+    0 0 20px rgba(255, 207, 81, 0.18);
+}
+
+/* ---------------- BOLINHAS DENTRO DO GLOBO ---------------- */
+
+.gold-cage-balls {
+  position: absolute;
+  inset: 18% 18% 18% 18%;
+  transform-style: preserve-3d;
+  animation: ballMassRotate 2.3s linear infinite;
+}
+
+.gold-cage-ball {
+  position: absolute;
+  border-radius: 50%;
+  font-weight: 1000;
+  color: #3a2500;
+  background:
+    radial-gradient(circle at 32% 28%, #fff7cf 0%, #ffe699 18%, #ffd057 48%, #c48a1b 100%);
+  box-shadow:
+    inset -3px -5px 8px rgba(119, 69, 0, 0.42),
+    inset 3px 3px 5px rgba(255, 250, 219, 0.72),
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    0 0 10px rgba(255, 208, 87, 0.22);
+  text-shadow: none;
+  will-change: transform, opacity, filter;
+}
+
+.gold-cage-ball::before {
+  content: "";
+  position: absolute;
+  inset: 16% 46% 52% 22%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.48);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* variações para parecer profundidade real */
+.gold-cage-ball:nth-child(4n + 1) {
+  animation: ballOrbitA 1.85s ease-in-out infinite;
+  z-index: 2;
+}
+
+.gold-cage-ball:nth-child(4n + 2) {
+  animation: ballOrbitB 2.2s ease-in-out infinite;
+  z-index: 1;
+}
+
+.gold-cage-ball:nth-child(4n + 3) {
+  animation: ballOrbitC 2.05s ease-in-out infinite;
+  z-index: 3;
+}
+
+.gold-cage-ball:nth-child(4n + 4) {
+  animation: ballOrbitD 1.95s ease-in-out infinite;
+  z-index: 2;
+}
+
+.gold-cage-ball:nth-child(odd) {
+  filter:
+    blur(0px)
+    drop-shadow(0 0 4px rgba(255, 211, 98, 0.18));
+}
+
+.gold-cage-ball:nth-child(even) {
+  filter:
+    blur(0.2px)
+    drop-shadow(0 0 5px rgba(255, 211, 98, 0.22));
+}
+
+/* ---------------- BOLA SORTEADA ---------------- */
+
+.gold-drop-window {
+  backdrop-filter: blur(4px);
+  box-shadow:
+    inset 0 0 18px rgba(255, 215, 112, 0.14),
+    0 0 14px rgba(255, 201, 71, 0.12);
+}
+
+.gold-drop-ball {
+  background:
+    radial-gradient(circle at 32% 28%, #fffad9 0%, #ffe89a 20%, #ffd24f 54%, #c78713 100%);
+  color: #251500;
+  box-shadow:
+    inset -4px -6px 10px rgba(115, 65, 0, 0.34),
+    inset 3px 3px 8px rgba(255, 250, 221, 0.74),
+    0 0 18px rgba(255, 205, 80, 0.4),
+    0 0 32px rgba(255, 205, 80, 0.18);
+  will-change: transform, opacity, filter;
+}
+
+.gold-drop-ball.dropping {
+  animation: aiDropBall 0.66s cubic-bezier(0.22, 0.9, 0.22, 1) forwards;
+}
+
+.gold-drop-ball.revealed {
+  animation: aiRevealBall 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* realce quando está sorteando */
+.fase-dropping .gold-cage-machine {
+  animation:
+    machineFloating 3.6s ease-in-out infinite,
+    machineExcite 0.42s ease-in-out infinite;
+}
+
+.fase-dropping .gold-cage-globe {
+  box-shadow:
+    inset 0 0 42px rgba(255, 219, 103, 0.16),
+    inset 0 -18px 36px rgba(0, 0, 0, 0.55),
+    0 0 20px rgba(255, 194, 43, 0.32),
+    0 0 55px rgba(255, 194, 43, 0.18);
+}
+
+/* ---------------- KEYFRAMES ---------------- */
+
+@keyframes machineFloating {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.008);
+  }
+}
+
+@keyframes machineExcite {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-1px) rotate(-0.3deg); }
+  50% { transform: translateY(0px) rotate(0.35deg); }
+  75% { transform: translateY(1px) rotate(-0.25deg); }
+}
+
+@keyframes cageAmbientPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes globeBreath {
+  0%, 100% {
+    transform: perspective(800px) rotateX(2deg) rotateY(-1deg) scale(1);
+  }
+  50% {
+    transform: perspective(800px) rotateX(4deg) rotateY(1.5deg) scale(1.01);
+  }
+}
+
+@keyframes rimPulse {
+  0%, 100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes rodShine {
+  0%, 100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes crankMove {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ballMassRotate {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.015);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes ballOrbitA {
+  0%, 100% {
+    transform: translate3d(0px, 0px, 0px) scale(0.98);
+  }
+  25% {
+    transform: translate3d(5px, -6px, 0px) scale(1.08);
+  }
+  50% {
+    transform: translate3d(-4px, 4px, 0px) scale(0.92);
+  }
+  75% {
+    transform: translate3d(3px, 7px, 0px) scale(1.03);
+  }
+}
+
+@keyframes ballOrbitB {
+  0%, 100% {
+    transform: translate3d(0px, 0px, 0px) scale(1.02);
+  }
+  20% {
+    transform: translate3d(-6px, 4px, 0px) scale(0.92);
+  }
+  50% {
+    transform: translate3d(5px, -5px, 0px) scale(1.07);
+  }
+  80% {
+    transform: translate3d(2px, 6px, 0px) scale(0.97);
+  }
+}
+
+@keyframes ballOrbitC {
+  0%, 100% {
+    transform: translate3d(0px, 0px, 0px) scale(1);
+  }
+  30% {
+    transform: translate3d(6px, 3px, 0px) scale(1.08);
+  }
+  55% {
+    transform: translate3d(-5px, -7px, 0px) scale(0.9);
+  }
+  78% {
+    transform: translate3d(4px, 5px, 0px) scale(1.02);
+  }
+}
+
+@keyframes ballOrbitD {
+  0%, 100% {
+    transform: translate3d(0px, 0px, 0px) scale(1.01);
+  }
+  22% {
+    transform: translate3d(4px, -5px, 0px) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-7px, 3px, 0px) scale(0.91);
+  }
+  76% {
+    transform: translate3d(5px, 6px, 0px) scale(1.04);
+  }
+}
+
+@keyframes aiDropBall {
+  0% {
+    transform: translateY(-72px) scale(0.55);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  35% {
+    transform: translateY(-14px) scale(1.08);
+    opacity: 1;
+    filter: blur(1px);
+  }
+  60% {
+    transform: translateY(8px) scale(0.95);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  82% {
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes aiRevealBall {
+  0% {
+    transform: scale(0.96);
+    box-shadow:
+      0 0 18px rgba(255, 205, 80, 0.42),
+      0 0 30px rgba(255, 205, 80, 0.18);
+  }
+  45% {
+    transform: scale(1.13);
+    box-shadow:
+      0 0 20px rgba(255, 221, 130, 0.72),
+      0 0 42px rgba(255, 205, 80, 0.28);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 18px rgba(255, 205, 80, 0.4),
+      0 0 32px rgba(255, 205, 80, 0.18);
+  }
+}
+
+/* ---------------- RESPONSIVO ---------------- */
+
+@media (max-width: 1500px) {
+  .gold-cage-machine {
+    transform: scale(0.94);
+  }
+}
+
+@media (max-width: 1280px) {
+  .gold-cage-machine {
+    transform: scale(0.88);
+  }
+}
+
+@media (max-width: 1050px) {
+  .gold-cage-machine {
+    transform: scale(0.82);
+  }
+}
+
+/* ============================= */
+/* THREE.JS - GLOBO 3D DO BINGO */
+/* ============================= */
+
+.bingo-three-wrapper {
+  position: relative;
+  width: min(720px, 100%);
+  height: clamp(440px, 58vh, 620px);
+  margin: 0 auto;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.bingo-three-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 9% 8% 4%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 220, 112, 0.24), transparent 36%),
+    radial-gradient(circle at 50% 72%, rgba(255, 177, 40, 0.13), transparent 48%);
+  filter: blur(24px);
+  animation: bingoThreeAura 3.5s ease-in-out infinite;
+  z-index: 0;
+}
+
+.bingo-three-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.bingo-three-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.bingo-three-output {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  width: 118px;
+  height: 132px;
+  transform: translateX(-50%);
+  z-index: 5;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  border-radius: 999px 999px 22px 22px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 218, 120, 0.08),
+      rgba(255, 255, 255, 0.16)
+    );
+  border: 2px solid rgba(255, 221, 130, 0.34);
+
+  box-shadow:
+    inset 0 0 18px rgba(255, 255, 255, 0.08),
+    0 0 22px rgba(255, 193, 7, 0.18);
+}
+
+.bingo-three-output::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  width: 70px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 221, 130, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bingo-three-output-ball {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 30% 24%, #ffffff 0 10%, #fff0a8 11% 27%, #ffc72e 58%, #d77900 100%);
+
+  border: 3px solid rgba(255, 237, 168, 0.78);
+
+  box-shadow:
+    inset -8px -10px 16px rgba(89, 38, 0, 0.36),
+    inset 5px 5px 10px rgba(255, 255, 255, 0.72),
+    0 12px 28px rgba(0, 0, 0, 0.36),
+    0 0 28px rgba(255, 202, 40, 0.42);
+}
+
+.bingo-three-output-ball span {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 35% 30%, #fffdf2, #ffe6a0 62%, #b8750c);
+
+  border: 3px solid #241400;
+  color: #211200;
+
+  font-size: 24px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.bingo-three-output-ball.dropping {
+  animation: bingoThreeBallDrop 0.7s cubic-bezier(0.15, 0.9, 0.22, 1.12) both;
+}
+
+.bingo-three-output-ball.revealed {
+  animation: bingoThreeBallReveal 1s ease-in-out both;
+}
+
+.fase-dropping .bingo-three-wrapper {
+  animation: bingoThreeCameraShake 0.42s ease-in-out infinite;
+}
+
+@keyframes bingoThreeAura {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes bingoThreeBallDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-130px) scale(0.48) rotate(-180deg);
+    filter: blur(7px);
+  }
+
+  38% {
+    opacity: 1;
+    transform: translateY(-22px) scale(1.12) rotate(18deg);
+    filter: blur(1px);
+  }
+
+  62% {
+    transform: translateY(8px) scale(0.94) rotate(-9deg);
+    filter: blur(0);
+  }
+
+  82% {
+    transform: translateY(-5px) scale(1.04) rotate(4deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes bingoThreeBallReveal {
+  0% {
+    transform: scale(0.96);
+  }
+
+  45% {
+    transform: scale(1.13);
+    box-shadow:
+      inset -8px -10px 16px rgba(89, 38, 0, 0.36),
+      inset 5px 5px 10px rgba(255, 255, 255, 0.72),
+      0 14px 30px rgba(0, 0, 0, 0.38),
+      0 0 48px rgba(255, 221, 110, 0.8);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bingoThreeCameraShake {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+
+  25% {
+    transform: translateX(-1px) translateY(1px);
+  }
+
+  50% {
+    transform: translateX(1px) translateY(-1px);
+  }
+
+  75% {
+    transform: translateX(-0.5px) translateY(0.5px);
+  }
+}
+
+@media (max-width: 1500px) {
+  .bingo-three-wrapper {
+    height: clamp(390px, 55vh, 560px);
+  }
+}
+
+@media (max-width: 1280px) {
+  .bingo-three-wrapper {
+    height: 470px;
+  }
+
+  .bingo-three-output {
+    bottom: 3%;
+    transform: translateX(-50%) scale(0.9);
+  }
+}
+
+@media (max-width: 1050px) {
+  .bingo-three-wrapper {
+    height: 460px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bingo-three-wrapper {
+    height: 390px;
+  }
+
+  .bingo-three-output {
+    transform: translateX(-50%) scale(0.78);
+    bottom: 1%;
+  }
+}
+
+/* ================================= */
+/* GLOBO 3D - ACABAMENTO MAIS BONITO */
+/* ================================= */
+
+.bingo-three-wrapper {
+  position: relative;
+  width: min(760px, 100%);
+  height: clamp(470px, 60vh, 660px);
+  margin: 0 auto;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.bingo-three-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 8% 10% 8% 10%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 222, 130, 0.18), transparent 28%),
+    radial-gradient(circle at 50% 65%, rgba(255, 183, 43, 0.11), transparent 42%),
+    radial-gradient(circle at 50% 85%, rgba(255, 162, 0, 0.06), transparent 48%);
+  filter: blur(28px);
+  animation: bingoThreeAura 3.8s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bingo-three-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.bingo-three-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.bingo-three-output {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  width: 106px;
+  height: 124px;
+  transform: translateX(-50%);
+  z-index: 6;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  border-radius: 999px 999px 20px 20px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 220, 120, 0.08)
+    );
+  border: 2px solid rgba(255, 224, 140, 0.32);
+
+  box-shadow:
+    inset 0 0 14px rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(255, 193, 7, 0.14);
+  backdrop-filter: blur(3px);
+}
+
+.bingo-three-output::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  width: 58px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 224, 140, 0.45);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bingo-three-output-ball {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 30% 25%, #ffffff 0 9%, #fff1b2 10% 26%, #ffc730 60%, #cf7600 100%);
+  border: 3px solid rgba(255, 239, 180, 0.82);
+
+  box-shadow:
+    inset -6px -9px 14px rgba(98, 43, 0, 0.32),
+    inset 5px 5px 10px rgba(255, 255, 255, 0.7),
+    0 10px 24px rgba(0, 0, 0, 0.34),
+    0 0 22px rgba(255, 199, 46, 0.36);
+}
+
+.bingo-three-output-ball span {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 35% 30%, #fffdf4, #ffe5a0 62%, #bc790d);
+
+  border: 3px solid #251500;
+  color: #1b1100;
+
+  font-size: 22px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.bingo-three-output-ball.dropping {
+  animation: bingoThreeBallDrop 0.72s cubic-bezier(0.18, 0.88, 0.22, 1.1) both;
+}
+
+.bingo-three-output-ball.revealed {
+  animation: bingoThreeBallReveal 1s ease-in-out both;
+}
+
+.fase-dropping .bingo-three-wrapper {
+  animation: bingoThreeShake 0.4s ease-in-out infinite;
+}
+
+@keyframes bingoThreeAura {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes bingoThreeBallDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-110px) scale(0.52) rotate(-160deg);
+    filter: blur(6px);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translateY(-18px) scale(1.1) rotate(18deg);
+    filter: blur(1px);
+  }
+
+  62% {
+    transform: translateY(8px) scale(0.95) rotate(-8deg);
+    filter: blur(0);
+  }
+
+  82% {
+    transform: translateY(-4px) scale(1.03) rotate(4deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes bingoThreeBallReveal {
+  0% {
+    transform: scale(0.96);
+  }
+
+  45% {
+    transform: scale(1.12);
+    box-shadow:
+      inset -6px -9px 14px rgba(98, 43, 0, 0.32),
+      inset 5px 5px 10px rgba(255, 255, 255, 0.7),
+      0 12px 28px rgba(0, 0, 0, 0.34),
+      0 0 42px rgba(255, 224, 120, 0.8);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bingoThreeShake {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+
+  25% {
+    transform: translateX(-1px) translateY(1px);
+  }
+
+  50% {
+    transform: translateX(1px) translateY(-1px);
+  }
+
+  75% {
+    transform: translateX(-0.5px) translateY(0.5px);
+  }
+}
+
+@media (max-width: 1500px) {
+  .bingo-three-wrapper {
+    height: clamp(420px, 56vh, 580px);
+  }
+}
+
+@media (max-width: 1280px) {
+  .bingo-three-wrapper {
+    height: 500px;
+  }
+
+  .bingo-three-output {
+    transform: translateX(-50%) scale(0.92);
+    bottom: 6%;
+  }
+}
+
+@media (max-width: 1050px) {
+  .bingo-three-wrapper {
+    height: 470px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bingo-three-wrapper {
+    height: 390px;
+  }
+
+  .bingo-three-output {
+    transform: translateX(-50%) scale(0.8);
+    bottom: 4%;
+  }
+}
+
+/* ====================================== */
+/* BINGO GLOBE 3D PREMIUM - SUPER POLISH  */
+/* ====================================== */
+
+.bingo-three-wrapper {
+  position: relative;
+  width: min(780px, 100%);
+  height: clamp(500px, 64vh, 700px);
+  margin: 0 auto;
+  overflow: visible;
+  isolation: isolate;
+  filter: drop-shadow(0 0 18px rgba(255, 192, 49, 0.16));
+}
+
+.bingo-three-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 6% 8% 8% 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 233, 166, 0.16), transparent 22%),
+    radial-gradient(circle at 50% 55%, rgba(255, 197, 74, 0.14), transparent 36%),
+    radial-gradient(circle at 50% 78%, rgba(255, 156, 26, 0.08), transparent 46%);
+  filter: blur(34px);
+  animation: bingoThreeAuraPremium 3.8s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bingo-three-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.bingo-three-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.bingo-three-output {
+  position: absolute;
+  left: 50%;
+  bottom: 7.2%;
+  width: 112px;
+  height: 132px;
+  transform: translateX(-50%);
+  z-index: 7;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  border-radius: 999px 999px 22px 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,220,120,0.08));
+  border: 2px solid rgba(255, 227, 148, 0.36);
+
+  box-shadow:
+    inset 0 0 18px rgba(255,255,255,0.08),
+    0 0 16px rgba(255, 200, 64, 0.12),
+    0 0 28px rgba(255, 200, 64, 0.08);
+  backdrop-filter: blur(3px);
+}
+
+.bingo-three-output::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  width: 62px;
+  height: 25px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 227, 148, 0.48);
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 10px rgba(255, 210, 90, 0.12);
+}
+
+.bingo-three-output-ball {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 30% 25%, #ffffff 0 10%, #fff3bf 11% 27%, #ffca39 58%, #cd7400 100%);
+  border: 3px solid rgba(255, 242, 193, 0.86);
+
+  box-shadow:
+    inset -7px -10px 14px rgba(103, 43, 0, 0.34),
+    inset 5px 5px 10px rgba(255,255,255,0.72),
+    0 12px 26px rgba(0,0,0,0.32),
+    0 0 28px rgba(255, 203, 52, 0.4);
+}
+
+.bingo-three-output-ball::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 18px;
+  width: 18px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.56);
+  filter: blur(1px);
+}
+
+.bingo-three-output-ball span {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 35% 30%, #fffdf6, #ffe7a5 62%, #bd790d);
+
+  border: 3px solid #231300;
+  color: #1d1100;
+
+  font-size: 22px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.bingo-three-output-ball.dropping {
+  animation: bingoThreeBallDropPremium 0.68s cubic-bezier(0.16, 0.88, 0.22, 1.08) both;
+}
+
+.bingo-three-output-ball.revealed {
+  animation: bingoThreeBallRevealPremium 1s ease-in-out both;
+}
+
+.fase-dropping .bingo-three-wrapper {
+  animation: bingoThreeCameraShakePremium 0.34s ease-in-out infinite;
+}
+
+@keyframes bingoThreeAuraPremium {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bingoThreeBallDropPremium {
+  0% {
+    opacity: 0;
+    transform: translateY(-120px) scale(0.48) rotate(-160deg);
+    filter: blur(6px);
+  }
+  34% {
+    opacity: 1;
+    transform: translateY(-18px) scale(1.12) rotate(16deg);
+    filter: blur(1px);
+  }
+  60% {
+    transform: translateY(7px) scale(0.94) rotate(-8deg);
+    filter: blur(0);
+  }
+  82% {
+    transform: translateY(-4px) scale(1.03) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes bingoThreeBallRevealPremium {
+  0% {
+    transform: scale(0.96);
+  }
+  45% {
+    transform: scale(1.14);
+    box-shadow:
+      inset -7px -10px 14px rgba(103, 43, 0, 0.34),
+      inset 5px 5px 10px rgba(255,255,255,0.72),
+      0 14px 28px rgba(0,0,0,0.34),
+      0 0 48px rgba(255, 220, 113, 0.82);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bingoThreeCameraShakePremium {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(-1px) translateY(1px);
+  }
+  50% {
+    transform: translateX(1px) translateY(-1px);
+  }
+  75% {
+    transform: translateX(-0.5px) translateY(0.5px);
+  }
+}
+
+@media (max-width: 1500px) {
+  .bingo-three-wrapper {
+    height: clamp(450px, 58vh, 610px);
+  }
+}
+
+@media (max-width: 1280px) {
+  .bingo-three-wrapper {
+    height: 520px;
+  }
+
+  .bingo-three-output {
+    bottom: 6.2%;
+    transform: translateX(-50%) scale(0.92);
+  }
+}
+
+@media (max-width: 1050px) {
+  .bingo-three-wrapper {
+    height: 480px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bingo-three-wrapper {
+    height: 400px;
+  }
+
+  .bingo-three-output {
+    transform: translateX(-50%) scale(0.8);
+    bottom: 4.5%;
+  }
+}
+
+/* ========================================= */
+/* AJUSTE PREMIUM EXTRA DO GLOBO THREE.JS    */
+/* ========================================= */
+
+.bingo-three-wrapper {
+  position: relative;
+  width: min(780px, 100%);
+  height: clamp(520px, 64vh, 720px);
+  margin: 0 auto;
+  overflow: visible;
+  isolation: isolate;
+  filter: drop-shadow(0 0 20px rgba(255, 196, 54, 0.15));
+}
+
+.bingo-three-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 6% 8% 8% 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 233, 166, 0.16), transparent 22%),
+    radial-gradient(circle at 50% 55%, rgba(255, 197, 74, 0.14), transparent 36%),
+    radial-gradient(circle at 50% 78%, rgba(255, 156, 26, 0.08), transparent 46%);
+  filter: blur(34px);
+  animation: bingoThreeAuraPremium 3.8s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bingo-three-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.bingo-three-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.bingo-three-output {
+  position: absolute;
+  left: 50%;
+  bottom: 7.2%;
+  width: 112px;
+  height: 132px;
+  transform: translateX(-50%);
+  z-index: 7;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  border-radius: 999px 999px 22px 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,220,120,0.08));
+  border: 2px solid rgba(255, 227, 148, 0.36);
+
+  box-shadow:
+    inset 0 0 18px rgba(255,255,255,0.08),
+    0 0 16px rgba(255, 200, 64, 0.12),
+    0 0 28px rgba(255, 200, 64, 0.08);
+  backdrop-filter: blur(3px);
+}
+
+.bingo-three-output::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  width: 62px;
+  height: 25px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 227, 148, 0.48);
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 10px rgba(255, 210, 90, 0.12);
+}
+
+.bingo-three-output-ball {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 30% 25%, #ffffff 0 10%, #fff3bf 11% 27%, #ffca39 58%, #cd7400 100%);
+  border: 3px solid rgba(255, 242, 193, 0.86);
+
+  box-shadow:
+    inset -7px -10px 14px rgba(103, 43, 0, 0.34),
+    inset 5px 5px 10px rgba(255,255,255,0.72),
+    0 12px 26px rgba(0,0,0,0.32),
+    0 0 28px rgba(255, 203, 52, 0.4);
+}
+
+.bingo-three-output-ball::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 18px;
+  width: 18px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.56);
+  filter: blur(1px);
+}
+
+.bingo-three-output-ball span {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 35% 30%, #fffdf6, #ffe7a5 62%, #bd790d);
+
+  border: 3px solid #231300;
+  color: #1d1100;
+
+  font-size: 22px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.bingo-three-output-ball.dropping {
+  animation: bingoThreeBallDropPremium 0.68s cubic-bezier(0.16, 0.88, 0.22, 1.08) both;
+}
+
+.bingo-three-output-ball.revealed {
+  animation: bingoThreeBallRevealPremium 1s ease-in-out both;
+}
+
+.fase-dropping .bingo-three-wrapper {
+  animation: bingoThreeCameraShakePremium 0.34s ease-in-out infinite;
+}
+
+@keyframes bingoThreeAuraPremium {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bingoThreeBallDropPremium {
+  0% {
+    opacity: 0;
+    transform: translateY(-120px) scale(0.48) rotate(-160deg);
+    filter: blur(6px);
+  }
+  34% {
+    opacity: 1;
+    transform: translateY(-18px) scale(1.12) rotate(16deg);
+    filter: blur(1px);
+  }
+  60% {
+    transform: translateY(7px) scale(0.94) rotate(-8deg);
+    filter: blur(0);
+  }
+  82% {
+    transform: translateY(-4px) scale(1.03) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes bingoThreeBallRevealPremium {
+  0% {
+    transform: scale(0.96);
+  }
+  45% {
+    transform: scale(1.14);
+    box-shadow:
+      inset -7px -10px 14px rgba(103, 43, 0, 0.34),
+      inset 5px 5px 10px rgba(255,255,255,0.72),
+      0 14px 28px rgba(0,0,0,0.34),
+      0 0 48px rgba(255, 220, 113, 0.82);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bingoThreeCameraShakePremium {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(-1px) translateY(1px);
+  }
+  50% {
+    transform: translateX(1px) translateY(-1px);
+  }
+  75% {
+    transform: translateX(-0.5px) translateY(0.5px);
+  }
+}
+
+@media (max-width: 1500px) {
+  .bingo-three-wrapper {
+    height: clamp(460px, 58vh, 630px);
+  }
+}
+
+@media (max-width: 1280px) {
+  .bingo-three-wrapper {
+    height: 520px;
+  }
+
+  .bingo-three-output {
+    bottom: 6.2%;
+    transform: translateX(-50%) scale(0.92);
+  }
+}
+
+@media (max-width: 1050px) {
+  .bingo-three-wrapper {
+    height: 480px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bingo-three-wrapper {
+    height: 400px;
+  }
+
+  .bingo-three-output {
+    transform: translateX(-50%) scale(0.8);
+    bottom: 4.5%;
+  }
+}
+
+/* ========================================= */
+/* GLOBO COM VÍDEO + BOLA REAL DO SISTEMA    */
+/* ========================================= */
+
+.bingo-video-globe-wrapper {
+  position: relative;
+  width: min(780px, 100%);
+  height: clamp(520px, 64vh, 720px);
+  margin: 0 auto;
+  overflow: visible;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bingo-video-globe-aura {
+  position: absolute;
+  inset: 6% 7% 7% 7%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 238, 182, 0.2), transparent 23%),
+    radial-gradient(circle at 50% 56%, rgba(255, 202, 83, 0.17), transparent 38%),
+    radial-gradient(circle at 50% 78%, rgba(255, 156, 26, 0.1), transparent 48%);
+  filter: blur(38px);
+  animation: bingoVideoAura 3.4s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bingo-video-globe-stage {
+  position: relative;
+  width: min(620px, 100%);
+  height: min(620px, 100%);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  z-index: 2;
+}
+
+.bingo-video-globe {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  filter:
+    saturate(1.16)
+    contrast(1.08)
+    brightness(1.08)
+    drop-shadow(0 0 24px rgba(255, 203, 72, 0.22))
+    drop-shadow(0 0 54px rgba(255, 170, 0, 0.09));
+  transform: scale(1.08);
+  transition: opacity 0.35s ease;
+}
+
+.bingo-video-globe.loaded {
+  opacity: 1;
+}
+
+.bingo-video-glass-overlay {
+  position: absolute;
+  inset: 8% 7% 11% 7%;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 31% 22%, rgba(255, 255, 255, 0.22), transparent 10%),
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.12) 18%,
+      transparent 31%,
+      transparent 100%
+    );
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  z-index: 3;
+}
+
+.bingo-video-globe-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffd76a;
+  font-size: 18px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 16px rgba(255, 193, 7, 0.6);
+}
+
+.bingo-video-exit-tube {
+  position: absolute;
+  left: 50%;
+  bottom: 9.2%;
+  width: 112px;
+  height: 132px;
+  transform: translateX(-50%);
+  z-index: 8;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  border-radius: 999px 999px 22px 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,220,120,0.09));
+  border: 2px solid rgba(255, 227, 148, 0.42);
+
+  box-shadow:
+    inset 0 0 18px rgba(255,255,255,0.1),
+    0 0 18px rgba(255, 200, 64, 0.16),
+    0 0 34px rgba(255, 200, 64, 0.1);
+  backdrop-filter: blur(3px);
+}
+
+.bingo-video-exit-tube::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  width: 62px;
+  height: 25px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 227, 148, 0.5);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 0 10px rgba(255, 210, 90, 0.14);
+}
+
+.bingo-video-output-ball {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 30% 25%, #ffffff 0 10%, #fff3bf 11% 27%, #ffca39 58%, #cd7400 100%);
+  border: 3px solid rgba(255, 242, 193, 0.9);
+
+  box-shadow:
+    inset -8px -11px 15px rgba(103, 43, 0, 0.36),
+    inset 5px 5px 12px rgba(255,255,255,0.78),
+    0 14px 30px rgba(0,0,0,0.34),
+    0 0 34px rgba(255, 211, 73, 0.54);
+}
+
+.bingo-video-output-ball::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 18px;
+  width: 18px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.6);
+  filter: blur(1px);
+}
+
+.bingo-video-output-ball span {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(circle at 35% 30%, #fffdf6, #ffe7a5 62%, #bd790d);
+
+  border: 3px solid #231300;
+  color: #1d1100;
+
+  font-size: 22px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.bingo-video-output-ball.dropping {
+  animation: bingoVideoBallDrop 0.68s cubic-bezier(0.16, 0.88, 0.22, 1.08) both;
+}
+
+.bingo-video-output-ball.revealed {
+  animation: bingoVideoBallReveal 1s ease-in-out both;
+}
+
+.fase-dropping .bingo-video-globe-wrapper {
+  animation: bingoVideoShake 0.34s ease-in-out infinite;
+}
+
+.fase-dropping .bingo-video-globe {
+  filter:
+    saturate(1.26)
+    contrast(1.13)
+    brightness(1.14)
+    drop-shadow(0 0 28px rgba(255, 203, 72, 0.28))
+    drop-shadow(0 0 64px rgba(255, 170, 0, 0.14));
+}
+
+@keyframes bingoVideoAura {
+  0%, 100% {
+    opacity: 0.86;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bingoVideoBallDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-130px) scale(0.46) rotate(-170deg);
+    filter: blur(7px);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translateY(-18px) scale(1.14) rotate(16deg);
+    filter: blur(1px);
+  }
+
+  60% {
+    transform: translateY(8px) scale(0.94) rotate(-8deg);
+    filter: blur(0);
+  }
+
+  82% {
+    transform: translateY(-4px) scale(1.04) rotate(4deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes bingoVideoBallReveal {
+  0% {
+    transform: scale(0.96);
+  }
+
+  45% {
+    transform: scale(1.15);
+    box-shadow:
+      inset -8px -11px 15px rgba(103, 43, 0, 0.36),
+      inset 5px 5px 12px rgba(255,255,255,0.78),
+      0 16px 34px rgba(0,0,0,0.36),
+      0 0 54px rgba(255, 220, 113, 0.86);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bingoVideoShake {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+
+  25% {
+    transform: translateX(-1px) translateY(1px);
+  }
+
+  50% {
+    transform: translateX(1px) translateY(-1px);
+  }
+
+  75% {
+    transform: translateX(-0.5px) translateY(0.5px);
+  }
+}
+
+@media (max-width: 1500px) {
+  .bingo-video-globe-wrapper {
+    height: clamp(470px, 60vh, 650px);
+  }
+
+  .bingo-video-globe-stage {
+    width: min(560px, 100%);
+    height: min(560px, 100%);
+  }
+}
+
+@media (max-width: 1280px) {
+  .bingo-video-globe-wrapper {
+    height: 540px;
+  }
+
+  .bingo-video-globe-stage {
+    width: min(510px, 100%);
+    height: min(510px, 100%);
+  }
+
+  .bingo-video-exit-tube {
+    bottom: 6.5%;
+    transform: translateX(-50%) scale(0.92);
+  }
+}
+
+@media (max-width: 1050px) {
+  .bingo-video-globe-wrapper {
+    height: 490px;
+  }
+
+  .bingo-video-globe-stage {
+    width: min(470px, 100%);
+    height: min(470px, 100%);
+  }
+}
+
+@media (max-width: 640px) {
+  .bingo-video-globe-wrapper {
+    height: 410px;
+  }
+
+  .bingo-video-exit-tube {
+    transform: translateX(-50%) scale(0.8);
+    bottom: 4.5%;
+  }
+}
+
+/* ========================================= */
+/* BOLINHEIRA MAIOR E RESPONSIVA             */
+/* ========================================= */
+
+.bingo-video-globe-wrapper {
+  width: min(760px, 100%) !important;
+  height: clamp(520px, 64vh, 700px) !important;
+  margin: 0 auto !important;
+  overflow: visible !important;
+}
+
+.bingo-video-globe-stage {
+  width: min(680px, 100%) !important;
+  height: min(680px, 100%) !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.bingo-video-globe {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  transform: scale(1.08) !important;
+  transform-origin: center center !important;
+}
+
+/* Dá espaço entre o vídeo e as últimas bolas */
+.gold-globe-last-card {
+  margin-top: 8px !important;
+}
+
+/* TV / MONITOR GRANDE */
+@media (min-width: 1600px) {
+  .bingo-video-globe-wrapper {
+    width: min(840px, 100%) !important;
+    height: clamp(600px, 68vh, 780px) !important;
+  }
+
+  .bingo-video-globe-stage {
+    width: min(760px, 100%) !important;
+    height: min(760px, 100%) !important;
+  }
+
+  .bingo-video-globe {
+    transform: scale(1.1) !important;
+  }
+}
+
+/* NOTEBOOK GRANDE */
+@media (max-width: 1500px) {
+  .bingo-video-globe-wrapper {
+    width: min(700px, 100%) !important;
+    height: clamp(500px, 62vh, 660px) !important;
+  }
+
+  .bingo-video-globe-stage {
+    width: min(620px, 100%) !important;
+    height: min(620px, 100%) !important;
+  }
+
+  .bingo-video-globe {
+    transform: scale(1.06) !important;
+  }
+}
+
+/* NOTEBOOK MÉDIO */
+@media (max-width: 1280px) {
+  .bingo-video-globe-wrapper {
+    width: min(620px, 100%) !important;
+    height: 540px !important;
+  }
+
+  .bingo-video-globe-stage {
+    width: min(560px, 100%) !important;
+    height: min(560px, 100%) !important;
+  }
+
+  .bingo-video-globe {
+    transform: scale(1.04) !important;
+  }
+}
+
+/* TABLET / TELA MENOR */
+@media (max-width: 1050px) {
+  .bingo-video-globe-wrapper {
+    width: min(540px, 100%) !important;
+    height: 490px !important;
+  }
+
+  .bingo-video-globe-stage {
+    width: min(500px, 100%) !important;
+    height: min(500px, 100%) !important;
+  }
+
+  .bingo-video-globe {
+    transform: scale(1.02) !important;
+  }
+}
+
+/* CELULAR / TELA ESTREITA */
+@media (max-width: 640px) {
+  .bingo-video-globe-wrapper {
+    width: min(420px, 100%) !important;
+    height: 410px !important;
+  }
+
+  .bingo-video-globe-stage {
+    width: min(400px, 100%) !important;
+    height: min(400px, 100%) !important;
+  }
+
+  .bingo-video-globe {
+    transform: scale(1) !important;
+  }
+}
+
+/* ========================================================= */
+/* TV GOLD - PRÊMIOS EM DESTAQUE                            */
+/* COLE ESTE BLOCO NO FINAL DO App.css                      */
+/* ========================================================= */
+
+.bingo-tv-gold,
+.bingo-tv-gold * {
+  box-sizing: border-box;
+}
+
+.tv-page.bingo-tv-gold {
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255, 213, 97, 0.18), transparent 28%),
+    radial-gradient(circle at 22% 48%, rgba(255, 123, 0, 0.12), transparent 24%),
+    radial-gradient(circle at 82% 44%, rgba(255, 218, 110, 0.11), transparent 26%),
+    linear-gradient(135deg, #050816 0%, #121b2e 48%, #050814 100%) !important;
+}
+
+.tv-page.bingo-tv-gold::before,
+.tv-page.bingo-tv-gold::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  width: 32px;
+  height: 100vh;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(255, 229, 143, 0.95) 0 4px, rgba(255, 184, 40, 0.55) 6px, transparent 10px) center 18px / 32px 65px repeat-y,
+    linear-gradient(180deg, rgba(255, 190, 48, 0.12), transparent 38%, rgba(255, 190, 48, 0.12));
+  filter: drop-shadow(0 0 7px rgba(255, 204, 82, 0.75));
+  z-index: 0;
+}
+
+.tv-page.bingo-tv-gold::before {
+  left: 0;
+}
+
+.tv-page.bingo-tv-gold::after {
+  right: 0;
+}
+
+/* ============================= */
+/* LAYOUT PRINCIPAL */
+/* ============================= */
+
+.gold-tv-layout {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+
+  display: grid !important;
+  grid-template-columns: minmax(760px, 1.35fr) minmax(390px, 0.75fr) !important;
+  gap: clamp(18px, 2.2vw, 38px) !important;
+
+  align-items: center !important;
+  padding:
+    clamp(18px, 2.2vw, 40px)
+    clamp(48px, 4.8vw, 92px)
+    clamp(16px, 1.8vw, 32px) !important;
+
+  overflow: hidden !important;
+}
+
+.gold-left-panel {
+  min-width: 0 !important;
+  height: 100% !important;
+  max-height: calc(100vh - 48px) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: clamp(7px, 1.1vh, 14px) !important;
+}
+
+/* ============================= */
+/* TÍTULO */
+/* ============================= */
+
+.gold-benefit-title {
+  width: 100% !important;
+  min-height: clamp(50px, 6.5vh, 76px) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: clamp(8px, 1vh, 14px) clamp(18px, 1.8vw, 34px) !important;
+  border-radius: 12px !important;
+
+  background:
+    linear-gradient(180deg, rgba(255, 220, 125, 0.25), rgba(83, 29, 0, 0.56)),
+    rgba(7, 6, 4, 0.72) !important;
+
+  border: 1px solid rgba(255, 220, 125, 0.38) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 10px 28px rgba(0, 0, 0, 0.28),
+    0 0 18px rgba(255, 196, 43, 0.12) !important;
+}
+
+.gold-benefit-title strong {
+  display: block !important;
+  font-size: clamp(22px, 2.05vw, 42px) !important;
+  line-height: 1 !important;
+  font-weight: 1000 !important;
+  color: #ffd76a !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  text-shadow:
+    0 0 14px rgba(255, 193, 7, 0.72),
+    0 3px 0 rgba(0, 0, 0, 0.32) !important;
+}
+
+.gold-benefit-title span {
+  display: block !important;
+  margin-top: 5px !important;
+  font-size: clamp(9px, 0.75vw, 14px) !important;
+  font-weight: 1000 !important;
+  color: #fff2bd !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.07em !important;
+}
+
+/* ============================= */
+/* PAINEL B-I-N-G-O */
+/* ============================= */
+
+.gold-number-board {
+  width: 100% !important;
+  flex: 0 0 auto !important;
+
+  border: 1px solid rgba(255, 207, 73, 0.76) !important;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(18, 13, 4, 0.96)),
+    radial-gradient(circle at center, rgba(255, 202, 55, 0.08), transparent 60%) !important;
+
+  box-shadow:
+    inset 0 0 22px rgba(255, 208, 60, 0.12),
+    0 0 22px rgba(255, 181, 29, 0.12) !important;
+}
+
+.gold-board-row {
+  display: grid !important;
+  grid-template-columns: clamp(38px, 3.2vw, 58px) repeat(15, minmax(0, 1fr)) !important;
+  min-height: clamp(35px, 5.2vh, 60px) !important;
+}
+
+.gold-board-letter,
+.gold-board-cell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border: 1px solid rgba(255, 210, 91, 0.34) !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
+}
+
+.gold-board-letter {
+  font-size: clamp(24px, 2.45vw, 44px) !important;
+  color: #ffd21f !important;
+  background:
+    linear-gradient(180deg, rgba(27, 20, 5, 0.96), rgba(0, 0, 0, 0.96)) !important;
+  text-shadow: 0 0 15px rgba(255, 205, 25, 0.76) !important;
+}
+
+.gold-board-cell {
+  position: relative !important;
+  font-size: clamp(17px, 1.65vw, 32px) !important;
+  color: #f8f8f8 !important;
+  background:
+    linear-gradient(180deg, rgba(20, 20, 20, 0.97), rgba(2, 2, 2, 0.97)) !important;
+  text-shadow: 0 2px 3px #000 !important;
+}
+
+.gold-board-cell.drawn {
+  color: #171005 !important;
+  background:
+    radial-gradient(circle at 35% 24%, #fff8c6, transparent 28%),
+    linear-gradient(180deg, #ffe879 0%, #e4a513 52%, #9c6200 100%) !important;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 247, 181, 0.58),
+    0 0 14px rgba(255, 196, 43, 0.26) !important;
+
+  text-shadow: none !important;
+}
+
+.gold-board-cell.current {
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 35% 25%, #fff2a8, transparent 23%),
+    linear-gradient(180deg, #ff3b30, #b30000 68%, #3b0000) !important;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.62),
+    0 0 28px rgba(255, 58, 48, 0.92) !important;
+
+  animation: goldCurrentCellPulse 0.85s ease-in-out infinite alternate !important;
+}
+
+@keyframes goldCurrentCellPulse {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.05);
+  }
+}
+
+/* ============================= */
+/* NOVO BLOCO DE PRÊMIOS */
+/* ============================= */
+
+.gold-prize-showcase {
+  width: 100% !important;
+
+  display: grid !important;
+  grid-template-columns: minmax(250px, 0.82fr) minmax(420px, 1.18fr) !important;
+  gap: clamp(10px, 1.1vw, 18px) !important;
+
+  padding: clamp(10px, 1.15vw, 18px) !important;
+  border-radius: 18px !important;
+
+  background:
+    radial-gradient(circle at 28% 0%, rgba(255, 215, 96, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(255, 224, 138, 0.16), rgba(11, 8, 3, 0.92)) !important;
+
+  border: 1px solid rgba(255, 210, 91, 0.58) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 16px 36px rgba(0, 0, 0, 0.32),
+    0 0 24px rgba(255, 196, 43, 0.12) !important;
+}
+
+.gold-prize-now {
+  min-height: clamp(128px, 17vh, 185px) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+
+  padding: clamp(14px, 1.5vw, 24px) !important;
+  border-radius: 18px !important;
+  text-align: center !important;
+
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.24), transparent 28%),
+    linear-gradient(180deg, #ffe173 0%, #f3b21c 42%, #8f5100 100%) !important;
+
+  border: 2px solid rgba(255, 245, 182, 0.74) !important;
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -14px 26px rgba(74, 31, 0, 0.32),
+    0 0 30px rgba(255, 196, 43, 0.38),
+    0 16px 34px rgba(0, 0, 0, 0.36) !important;
+}
+
+.gold-prize-eyebrow {
+  display: block !important;
+  margin-bottom: 8px !important;
+
+  color: #3a2100 !important;
+  font-size: clamp(11px, 0.95vw, 17px) !important;
+  line-height: 1 !important;
+  font-weight: 1000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
+}
+
+.gold-prize-now-main {
+  width: 100% !important;
+}
+
+.gold-prize-now-main strong {
+  display: block !important;
+  color: #1d1100 !important;
+  font-size: clamp(34px, 3.65vw, 72px) !important;
+  line-height: 0.95 !important;
+  font-weight: 1000 !important;
+  text-transform: uppercase !important;
+  text-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.28),
+    0 8px 18px rgba(84, 37, 0, 0.28) !important;
+}
+
+.gold-prize-now-main em {
+  display: block !important;
+  margin-top: 8px !important;
+
+  color: #fff8d6 !important;
+  font-size: clamp(25px, 2.7vw, 54px) !important;
+  line-height: 1 !important;
+  font-style: normal !important;
+  font-weight: 1000 !important;
+
+  text-shadow:
+    0 0 14px rgba(255, 255, 255, 0.55),
+    0 3px 8px rgba(0, 0, 0, 0.45) !important;
+}
+
+.gold-prize-now small {
+  display: block !important;
+  margin-top: 10px !important;
+  color: rgba(38, 22, 0, 0.78) !important;
+  font-size: clamp(10px, 0.8vw, 14px) !important;
+  font-weight: 1000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.gold-prize-list {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: clamp(6px, 0.65vw, 12px) !important;
+}
+
+.gold-prize-mini-card {
+  min-width: 0 !important;
+  min-height: clamp(92px, 12vh, 142px) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+
+  padding: clamp(9px, 0.95vw, 15px) !important;
+  border-radius: 14px !important;
+  text-align: center !important;
+
+  background:
+    linear-gradient(180deg, rgba(255, 224, 138, 0.16), rgba(10, 7, 2, 0.78)) !important;
+
+  border: 1px solid rgba(255, 221, 130, 0.24) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 22px rgba(0, 0, 0, 0.22) !important;
+}
+
+.gold-prize-mini-card span {
+  display: block !important;
+  margin-bottom: 6px !important;
+
+  color: #ffd76a !important;
+  font-size: clamp(10px, 0.82vw, 14px) !important;
+  line-height: 1.05 !important;
+  font-weight: 1000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+.gold-prize-mini-card strong {
+  display: block !important;
+
+  color: #fff7d6 !important;
+  font-size: clamp(15px, 1.25vw, 25px) !important;
+  line-height: 1.05 !important;
+  font-weight: 1000 !important;
+
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.gold-prize-mini-card small {
+  display: block !important;
+  margin-top: 6px !important;
+
+  color: rgba(255, 241, 189, 0.74) !important;
+  font-size: clamp(8px, 0.7vw, 12px) !important;
+  line-height: 1.1 !important;
+  font-weight: 900 !important;
+}
+
+.gold-prize-mini-card.active {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.24), transparent 30%),
+    linear-gradient(180deg, rgba(255, 213, 97, 0.42), rgba(149, 86, 0, 0.86)) !important;
+
+  border-color: rgba(255, 239, 174, 0.78) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 22px rgba(255, 196, 43, 0.42),
+    0 12px 24px rgba(0, 0, 0, 0.28) !important;
+
+  transform: translateY(-2px) !important;
+}
+
+/* Esconde a grade antiga de prêmios se ainda existir em alguma versão antiga */
+.gold-prize-values-grid {
+  display: none !important;
+}
+
+/* ============================= */
+/* CARDS INFERIORES */
+/* ============================= */
+
+.gold-info-card,
+.gold-message-card {
+  width: 100% !important;
+  border-radius: 12px !important;
+
+  background:
+    linear-gradient(180deg, rgba(255, 221, 130, 0.075), rgba(0, 0, 0, 0.88)) !important;
+
+  border: 1px solid rgba(255, 207, 73, 0.7) !important;
+
+  box-shadow:
+    inset 0 0 18px rgba(255, 186, 28, 0.08),
+    0 0 18px rgba(255, 183, 30, 0.1) !important;
+}
+
+.gold-current-card {
+  min-height: clamp(66px, 8.2vh, 98px) !important;
+  padding: clamp(8px, 1vh, 14px) clamp(18px, 1.8vw, 30px) !important;
+
+  display: grid !important;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(260px, 1.25fr) !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+.gold-info-label {
+  color: #fff !important;
+  font-size: clamp(14px, 1.25vw, 24px) !important;
+  line-height: 1.05 !important;
+  font-weight: 1000 !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 2px 4px #000 !important;
+}
+
+.gold-current-card strong {
+  display: block !important;
+  color: #f5f5f5 !important;
+  font-size: clamp(35px, 4.1vw, 78px) !important;
+  line-height: 1 !important;
+  font-weight: 1000 !important;
+  text-align: center !important;
+  text-shadow:
+    0 0 16px rgba(255, 255, 255, 0.16),
+    0 3px 5px #000 !important;
+}
+
+.gold-current-card strong em {
+  color: #ffd21f !important;
+  font-style: normal !important;
+  text-shadow:
+    0 0 16px rgba(255, 205, 31, 0.82),
+    0 3px 4px #000 !important;
+}
+
+.gold-order-card {
+  min-height: clamp(48px, 6.2vh, 72px) !important;
+  padding: clamp(7px, 0.8vh, 12px) clamp(16px, 1.6vw, 26px) !important;
+
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+.gold-order-card strong {
+  display: block !important;
+  color: #ffd76a !important;
+  font-size: clamp(27px, 2.9vw, 48px) !important;
+  line-height: 1 !important;
+  font-weight: 1000 !important;
+  text-shadow: 0 0 14px rgba(255, 193, 7, 0.58) !important;
+}
+
+.gold-order-card strong small {
+  margin-left: 3px !important;
+  color: #fff1bd !important;
+  font-size: clamp(13px, 1.1vw, 19px) !important;
+}
+
+.gold-message-card {
+  min-height: clamp(42px, 5.3vh, 64px) !important;
+  padding: clamp(8px, 0.9vh, 13px) clamp(16px, 1.8vw, 28px) !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  color: #fff4cf !important;
+  font-size: clamp(17px, 1.55vw, 30px) !important;
+  line-height: 1.1 !important;
+  font-weight: 1000 !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.035em !important;
+  text-shadow:
+    0 0 12px rgba(255, 221, 130, 0.35),
+    0 3px 5px #000 !important;
+}
+
+/* ============================= */
+/* LADO DIREITO - GLOBO */
+/* ============================= */
+
+.gold-right-panel {
+  min-width: 0 !important;
+  height: 100% !important;
+  max-height: calc(100vh - 48px) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: clamp(8px, 1.1vh, 14px) !important;
+
+  overflow: visible !important;
+}
+
+.gold-cage-stage {
+  width: min(100%, 720px) !important;
+  height: clamp(390px, 58vh, 650px) !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.gold-cage-machine {
+  transform: scale(0.9) !important;
+  transform-origin: center center !important;
+}
+
+/* Últimas bolas */
+.gold-globe-last-card {
+  width: min(620px, 100%) !important;
+  max-width: 100% !important;
+  margin: -10px auto 0 !important;
+  padding: clamp(10px, 1vw, 16px) clamp(12px, 1.2vw, 20px) !important;
+  border-radius: 14px !important;
+}
+
+.gold-globe-last-card .gold-info-label {
+  display: block !important;
+  text-align: center !important;
+  font-size: clamp(12px, 1.15vw, 19px) !important;
+  line-height: 1.1 !important;
+  margin-bottom: 8px !important;
+}
+
+.gold-globe-last-card .gold-last-balls {
+  width: 100% !important;
+  margin-top: 8px !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(9, minmax(32px, 1fr)) !important;
+  gap: clamp(4px, 0.6vw, 9px) !important;
+  align-items: center !important;
+}
+
+.gold-globe-last-card .gold-small-ball {
+  width: 100% !important;
+  max-width: 58px !important;
+  min-width: 0 !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border-radius: 50% !important;
+  color: #151006 !important;
+  font-size: clamp(13px, 1.45vw, 23px) !important;
+  line-height: 1 !important;
+  font-weight: 1000 !important;
+
+  background:
+    radial-gradient(circle at 35% 25%, #fff8c6, transparent 26%),
+    radial-gradient(circle at 65% 78%, #a96e00, transparent 24%),
+    linear-gradient(145deg, #ffec8a, #d69a12 55%, #fff0a8) !important;
+
+  border: 2px solid #3a2600 !important;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 247, 181, 0.65),
+    0 0 12px rgba(255, 196, 43, 0.34) !important;
+}
+
+.gold-globe-last-card .gold-small-ball.active {
+  animation: goldBallPop 0.8s infinite alternate !important;
+}
+
+.gold-globe-last-card .gold-small-ball.empty {
+  opacity: 0.45 !important;
+}
+
+/* ============================= */
+/* BOTÃO DE SOM E CONTAGEM */
+/* ============================= */
+
+.tv-enable-sound {
+  position: fixed !important;
+  left: auto !important;
+  right: 24px !important;
+  top: 24px !important;
+  bottom: auto !important;
+  z-index: 1000 !important;
+
+  border: 1px solid rgba(255, 234, 166, 0.8) !important;
+  border-radius: 999px !important;
+
+  padding: 13px 22px !important;
+  background: linear-gradient(180deg, #f8d56d, #a56a10) !important;
+  color: #fff8e4 !important;
+
+  font-size: 15px !important;
+  font-weight: 1000 !important;
+  cursor: pointer !important;
+
+  box-shadow: 0 0 24px rgba(255, 184, 52, 0.35) !important;
+  animation: soundPulse 1.4s ease-in-out infinite !important;
+}
+
+.tv-countdown-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  background:
+    radial-gradient(circle, rgba(255, 193, 7, 0.22), rgba(0, 0, 0, 0.88)),
+    rgba(0, 0, 0, 0.84) !important;
+
+  backdrop-filter: blur(4px) !important;
+}
+
+.tv-countdown-content {
+  width: clamp(250px, 28vw, 430px) !important;
+  height: clamp(250px, 28vw, 430px) !important;
+
+  border-radius: 50% !important;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.9), transparent 18%),
+    linear-gradient(145deg, #facc15, #d97706 55%, #78350f) !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  box-shadow:
+    inset -20px -28px 45px rgba(0, 0, 0, 0.35),
+    0 0 80px rgba(250, 204, 21, 0.65) !important;
+
+  animation: countdownPop 0.8s ease-in-out infinite !important;
+}
+
+.tv-countdown-content strong {
+  font-size: clamp(120px, 12vw, 190px) !important;
+  line-height: 1 !important;
+  color: #111827 !important;
+  font-weight: 1000 !important;
+  text-shadow: 0 5px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+/* ============================= */
+/* RESPONSIVO PARA TVS MENORES */
+/* ============================= */
+
+@media (max-width: 1600px) {
+  .gold-tv-layout {
+    grid-template-columns: minmax(700px, 1.25fr) minmax(360px, 0.75fr) !important;
+    gap: 18px !important;
+    padding: 24px 52px 20px !important;
+  }
+
+  .gold-left-panel,
+  .gold-right-panel {
+    max-height: calc(100vh - 40px) !important;
+  }
+
+  .gold-board-row {
+    min-height: clamp(32px, 4.75vh, 48px) !important;
+  }
+
+  .gold-prize-showcase {
+    grid-template-columns: minmax(230px, 0.8fr) minmax(390px, 1.2fr) !important;
+    padding: 10px !important;
+  }
+
+  .gold-prize-now {
+    min-height: clamp(118px, 15.5vh, 160px) !important;
+  }
+
+  .gold-prize-mini-card {
+    min-height: clamp(82px, 10.5vh, 122px) !important;
+  }
+
+  .gold-cage-stage {
+    height: clamp(360px, 54vh, 540px) !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.82) !important;
+  }
+}
+
+@media (max-width: 1350px) {
+  .gold-tv-layout {
+    grid-template-columns: 1.12fr 0.88fr !important;
+    padding: 20px 40px 18px !important;
+    gap: 14px !important;
+  }
+
+  .gold-board-row {
+    grid-template-columns: 38px repeat(15, minmax(0, 1fr)) !important;
+    min-height: 34px !important;
+  }
+
+  .gold-board-letter {
+    font-size: 23px !important;
+  }
+
+  .gold-board-cell {
+    font-size: 17px !important;
+  }
+
+  .gold-prize-showcase {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gold-prize-list {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+
+  .gold-prize-now {
+    min-height: 96px !important;
+  }
+
+  .gold-prize-now-main strong {
+    font-size: 38px !important;
+  }
+
+  .gold-prize-now-main em {
+    font-size: 28px !important;
+  }
+
+  .gold-prize-mini-card {
+    min-height: 74px !important;
+  }
+
+  .gold-current-card {
+    min-height: 68px !important;
+  }
+
+  .gold-current-card strong {
+    font-size: 42px !important;
+  }
+
+  .gold-cage-stage {
+    height: 390px !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.72) !important;
+  }
+}
+
+@media (max-width: 1050px) {
+  .tv-page.bingo-tv-gold {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  .gold-tv-layout {
+    height: auto !important;
+    min-height: 100vh !important;
+    grid-template-columns: 1fr !important;
+    padding: 24px 18px !important;
+  }
+
+  .gold-left-panel,
+  .gold-right-panel {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .gold-prize-showcase {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gold-prize-list {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .gold-current-card,
+  .gold-order-card {
+    grid-template-columns: 1fr !important;
+    text-align: center !important;
+  }
+
+  .gold-right-panel {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .gold-prize-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gold-benefit-title strong {
+    font-size: 24px !important;
+  }
+
+  .gold-board-row {
+    grid-template-columns: 34px repeat(15, minmax(0, 1fr)) !important;
+    min-height: 30px !important;
+  }
+
+  .gold-board-cell {
+    font-size: 13px !important;
+  }
+
+  .gold-board-letter {
+    font-size: 20px !important;
+  }
+}
+
+/* ========================================================= */
+/* AJUSTE FINO TV GOLD - MENOS ESPAÇO E PRÊMIOS MAIS LEGÍVEIS */
+/* COLE NO FINAL DO App.css                                  */
+/* ========================================================= */
+
+@media (min-width: 1051px) {
+  .tv-page.bingo-tv-gold {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .gold-tv-layout {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    padding: 18px 58px 18px !important;
+    align-items: center !important;
+    grid-template-columns: minmax(780px, 1.38fr) minmax(360px, 0.62fr) !important;
+    gap: 34px !important;
+  }
+
+  .gold-left-panel {
+    justify-content: center !important;
+    gap: 9px !important;
+    max-height: 96vh !important;
+  }
+
+  .gold-benefit-title {
+    min-height: 52px !important;
+    padding: 8px 18px !important;
+  }
+
+  .gold-benefit-title strong {
+    font-size: clamp(24px, 1.75vw, 34px) !important;
+  }
+
+  .gold-benefit-title span {
+    font-size: 9px !important;
+    margin-top: 3px !important;
+  }
+
+  .gold-board-row {
+    min-height: clamp(31px, 4.25vh, 44px) !important;
+  }
+
+  .gold-board-letter {
+    font-size: clamp(22px, 2vw, 34px) !important;
+  }
+
+  .gold-board-cell {
+    font-size: clamp(15px, 1.32vw, 25px) !important;
+  }
+
+  .gold-prize-showcase {
+    grid-template-columns: minmax(410px, 0.95fr) minmax(560px, 1.05fr) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .gold-prize-now {
+    min-height: 92px !important;
+    padding: 10px 14px !important;
+    border-radius: 10px !important;
+  }
+
+  .gold-prize-eyebrow {
+    font-size: 8px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .gold-prize-now-main strong {
+    font-size: clamp(34px, 2.8vw, 56px) !important;
+  }
+
+  .gold-prize-now-main em {
+    margin-top: 3px !important;
+    font-size: clamp(18px, 1.8vw, 34px) !important;
+  }
+
+  .gold-prize-now small {
+    margin-top: 6px !important;
+    font-size: 7px !important;
+  }
+
+  .gold-prize-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .gold-prize-mini-card {
+    min-height: 92px !important;
+    padding: 8px 6px !important;
+    border-radius: 8px !important;
+  }
+
+  .gold-prize-mini-card span {
+    font-size: 8px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .gold-prize-mini-card strong {
+    font-size: clamp(11px, 1vw, 17px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .gold-prize-mini-card small {
+    font-size: 6px !important;
+    margin-top: 4px !important;
+  }
+
+  .gold-current-card {
+    min-height: 54px !important;
+    padding: 7px 14px !important;
+    grid-template-columns: 220px 1fr !important;
+  }
+
+  .gold-current-card .gold-info-label {
+    font-size: 14px !important;
+  }
+
+  .gold-current-card strong {
+    font-size: clamp(34px, 3.1vw, 58px) !important;
+  }
+
+  .gold-order-card {
+    min-height: 42px !important;
+    padding: 6px 12px !important;
+  }
+
+  .gold-order-card .gold-info-label {
+    font-size: 13px !important;
+  }
+
+  .gold-order-card strong {
+    font-size: clamp(22px, 2.3vw, 38px) !important;
+  }
+
+  .gold-message-card {
+    min-height: 38px !important;
+    padding: 6px 14px !important;
+    font-size: clamp(15px, 1.35vw, 24px) !important;
+  }
+
+  .gold-right-panel {
+    justify-content: center !important;
+    max-height: 96vh !important;
+    gap: 6px !important;
+  }
+
+  .gold-cage-stage {
+    height: clamp(330px, 48vh, 500px) !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.82) !important;
+  }
+
+  .gold-globe-last-card {
+    margin-top: -4px !important;
+    padding: 8px 12px !important;
+    max-width: 430px !important;
+  }
+
+  .gold-globe-last-card .gold-info-label {
+    font-size: 10px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .gold-globe-last-card .gold-last-balls {
+    gap: 4px !important;
+  }
+
+  .gold-globe-last-card .gold-small-ball {
+    max-width: 34px !important;
+    font-size: 10px !important;
+    border-width: 1px !important;
+  }
+}
+
+/* Ajuste específico para TV 1366x768 / notebook simulando TV */
+@media (min-width: 1051px) and (max-height: 720px) {
+  .gold-tv-layout {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .gold-left-panel {
+    gap: 7px !important;
+  }
+
+  .gold-benefit-title {
+    min-height: 44px !important;
+  }
+
+  .gold-board-row {
+    min-height: 30px !important;
+  }
+
+  .gold-prize-now {
+    min-height: 84px !important;
+  }
+
+  .gold-prize-mini-card {
+    min-height: 84px !important;
+  }
+
+  .gold-current-card {
+    min-height: 48px !important;
+  }
+
+  .gold-order-card {
+    min-height: 38px !important;
+  }
+
+  .gold-message-card {
+    min-height: 34px !important;
+  }
+
+  .gold-cage-stage {
+    height: 330px !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.74) !important;
+  }
+}
+
+/* ========================================================= */
+/* AJUSTE FINAL - PRÊMIOS MAIS LEGÍVEIS NA TV                */
+/* COLE NO FINAL DO App.css                                  */
+/* ========================================================= */
+
+@media (min-width: 1051px) {
+  .gold-prize-showcase {
+    grid-template-columns: minmax(520px, 1fr) minmax(620px, 1.05fr) !important;
+    gap: 8px !important;
+  }
+
+  .gold-prize-now {
+    min-height: 112px !important;
+  }
+
+  .gold-prize-eyebrow {
+    font-size: 10px !important;
+    letter-spacing: 0.14em !important;
+  }
+
+  .gold-prize-now-main strong {
+    font-size: clamp(44px, 3.7vw, 70px) !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  .gold-prize-now-main em {
+    font-size: clamp(24px, 2.1vw, 42px) !important;
+    margin-top: 4px !important;
+  }
+
+  .gold-prize-now small {
+    font-size: 8px !important;
+    margin-top: 7px !important;
+  }
+
+  .gold-prize-list {
+    gap: 7px !important;
+  }
+
+  .gold-prize-mini-card {
+    min-height: 112px !important;
+    padding: 10px 8px !important;
+    border-radius: 10px !important;
+  }
+
+  .gold-prize-mini-card span {
+    font-size: 9px !important;
+    margin-bottom: 8px !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  .gold-prize-mini-card strong {
+    font-size: clamp(15px, 1.25vw, 23px) !important;
+    line-height: 1.08 !important;
+  }
+
+  .gold-prize-mini-card small {
+    font-size: 7px !important;
+    margin-top: 7px !important;
+  }
+
+  .gold-prize-mini-card.active {
+    transform: translateY(-3px) scale(1.015) !important;
+  }
+
+  .gold-current-card {
+    margin-top: 2px !important;
+  }
+
+  .gold-cage-stage {
+    height: clamp(340px, 49vh, 520px) !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.78) !important;
+  }
+}
+
+/* Para telas como 1366x768, mantém tudo sem encavalar */
+@media (min-width: 1051px) and (max-height: 780px) {
+  .gold-prize-showcase {
+    grid-template-columns: minmax(520px, 1fr) minmax(620px, 1.05fr) !important;
+  }
+
+  .gold-prize-now {
+    min-height: 102px !important;
+  }
+
+  .gold-prize-mini-card {
+    min-height: 102px !important;
+  }
+
+  .gold-prize-now-main strong {
+    font-size: 50px !important;
+  }
+
+  .gold-prize-now-main em {
+    font-size: 28px !important;
+  }
+
+  .gold-prize-mini-card strong {
+    font-size: 17px !important;
+  }
+
+  .gold-cage-stage {
+    height: 405px !important;
+  }
+
+  .gold-cage-machine {
+    transform: scale(0.76) !important;
+  }
+}

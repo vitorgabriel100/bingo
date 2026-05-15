@@ -16,8 +16,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -85,18 +88,7 @@ public class RodadaService {
                                 + " encerrada automaticamente ao iniciar nova rodada."
                 );
 
-                Map<String, Object> payloadRodadaAntiga = Map.of(
-                        "type", "ROUND_FINISHED",
-                        "rodadaId", rodadaAntiga.getId(),
-                        "sessaoId", sessaoId,
-                        "numeroRodada", rodadaAntiga.getNumeroRodada(),
-                        "status", rodadaAntiga.getStatus().name(),
-                        "timestamp", rodadaAntiga.getEncerrouEm().toString()
-                );
-
-                bingoEventPublisher.publicarRodada(rodadaAntiga.getId(), payloadRodadaAntiga);
-                bingoEventPublisher.publicarSessao(sessaoId, payloadRodadaAntiga);
-                bingoEventPublisher.publicarTv(sessaoId, payloadRodadaAntiga);
+                publicarEventoRodada(rodadaAntiga, "ROUND_FINISHED");
             }
         }
 
@@ -110,7 +102,7 @@ public class RodadaService {
                 sessao.setDataInicio(LocalDateTime.now());
             }
 
-            sessao = sessaoBingoRepository.save(sessao);
+            sessaoBingoRepository.save(sessao);
         }
 
         rodada.setStatus(StatusRodada.EM_ANDAMENTO);
@@ -129,18 +121,7 @@ public class RodadaService {
                 "Rodada " + rodada.getNumeroRodada() + " iniciada."
         );
 
-        Map<String, Object> payload = Map.of(
-                "type", "ROUND_STARTED",
-                "rodadaId", rodada.getId(),
-                "sessaoId", sessao.getId(),
-                "numeroRodada", rodada.getNumeroRodada(),
-                "status", rodada.getStatus().name(),
-                "timestamp", rodada.getIniciouEm().toString()
-        );
-
-        bingoEventPublisher.publicarRodada(rodada.getId(), payload);
-        bingoEventPublisher.publicarSessao(sessao.getId(), payload);
-        bingoEventPublisher.publicarTv(sessao.getId(), payload);
+        publicarEventoRodada(rodada, "ROUND_STARTED");
 
         return toResponse(rodada);
     }
@@ -164,17 +145,7 @@ public class RodadaService {
                 "Rodada " + rodada.getNumeroRodada() + " pausada."
         );
 
-        Map<String, Object> payload = Map.of(
-                "type", "ROUND_PAUSED",
-                "rodadaId", rodada.getId(),
-                "sessaoId", rodada.getSessao().getId(),
-                "numeroRodada", rodada.getNumeroRodada(),
-                "status", rodada.getStatus().name()
-        );
-
-        bingoEventPublisher.publicarRodada(rodada.getId(), payload);
-        bingoEventPublisher.publicarSessao(rodada.getSessao().getId(), payload);
-        bingoEventPublisher.publicarTv(rodada.getSessao().getId(), payload);
+        publicarEventoRodada(rodada, "ROUND_PAUSED");
 
         return toResponse(rodada);
     }
@@ -202,18 +173,7 @@ public class RodadaService {
                 "Rodada " + rodada.getNumeroRodada() + " encerrada."
         );
 
-        Map<String, Object> payload = Map.of(
-                "type", "ROUND_FINISHED",
-                "rodadaId", rodada.getId(),
-                "sessaoId", rodada.getSessao().getId(),
-                "numeroRodada", rodada.getNumeroRodada(),
-                "status", rodada.getStatus().name(),
-                "timestamp", rodada.getEncerrouEm().toString()
-        );
-
-        bingoEventPublisher.publicarRodada(rodada.getId(), payload);
-        bingoEventPublisher.publicarSessao(rodada.getSessao().getId(), payload);
-        bingoEventPublisher.publicarTv(rodada.getSessao().getId(), payload);
+        publicarEventoRodada(rodada, "ROUND_FINISHED");
 
         return toResponse(rodada);
     }
@@ -236,6 +196,9 @@ public class RodadaService {
                 .sessao(sessao)
                 .numeroRodada(ultimoNumero + 1)
                 .status(StatusRodada.CRIADA)
+                .premioAtual("PRIMEIRA_LINHA")
+                .premiosPagos("")
+                .bolaMax(60)
                 .build();
 
         novaRodada = rodadaRepository.save(novaRodada);
@@ -248,16 +211,7 @@ public class RodadaService {
                 "Rodada " + novaRodada.getNumeroRodada() + " criada."
         );
 
-        Map<String, Object> payload = Map.of(
-                "type", "ROUND_CREATED",
-                "rodadaId", novaRodada.getId(),
-                "sessaoId", sessao.getId(),
-                "numeroRodada", novaRodada.getNumeroRodada(),
-                "status", novaRodada.getStatus().name()
-        );
-
-        bingoEventPublisher.publicarSessao(sessao.getId(), payload);
-        bingoEventPublisher.publicarTv(sessao.getId(), payload);
+        publicarEventoRodada(novaRodada, "ROUND_CREATED");
 
         return toResponse(novaRodada);
     }
@@ -309,22 +263,23 @@ public class RodadaService {
                 "Número " + numeroSorteado + " sorteado na rodada " + rodada.getNumeroRodada() + "."
         );
 
-        Map<String, Object> payload = Map.of(
-                "type", "NUMBER_DRAWN",
-                "id", registro.getId(),
-                "numero", registro.getNumero(),
-                "ordem", registro.getOrdem(),
-                "rodadaId", rodada.getId(),
-                "sessaoId", rodada.getSessao().getId(),
-                "numeroRodada", rodada.getNumeroRodada(),
-                "sorteadoEm", registro.getSorteadoEm().toString()
-        );
+        Map<String, Object> payload = montarPayloadRodada(rodada, "NUMBER_DRAWN");
+        payload.put("id", registro.getId());
+        payload.put("numero", registro.getNumero());
+        payload.put("numeroSorteado", registro.getNumero());
+        payload.put("ordem", registro.getOrdem());
+        payload.put("sorteadoEm", registro.getSorteadoEm().toString());
 
         bingoEventPublisher.publicarRodada(rodada.getId(), payload);
         bingoEventPublisher.publicarSessao(rodada.getSessao().getId(), payload);
         bingoEventPublisher.publicarTv(rodada.getSessao().getId(), payload);
 
         return payload;
+    }
+
+    @Transactional(readOnly = true)
+    public RodadaResponse buscarRodadaPorId(Long rodadaId) {
+        return toResponse(buscarRodada(rodadaId));
     }
 
     public Rodada buscarRodada(Long rodadaId) {
@@ -344,7 +299,13 @@ public class RodadaService {
     @Transactional(readOnly = true)
     public RodadaResponse buscarRodadaAtiva(Long sessaoId) {
         return rodadaRepository
-                .findBySessaoIdAndStatus(sessaoId, StatusRodada.EM_ANDAMENTO)
+                .findBySessaoIdOrderByNumeroRodadaDesc(sessaoId)
+                .stream()
+                .filter(rodada -> rodada.getStatus() == StatusRodada.EM_ANDAMENTO
+                        || rodada.getStatus() == StatusRodada.CRIADA
+                        || rodada.getStatus() == StatusRodada.AGUARDANDO
+                        || rodada.getStatus() == StatusRodada.PAUSADA)
+                .findFirst()
                 .map(this::toResponse)
                 .orElse(null);
     }
@@ -353,14 +314,496 @@ public class RodadaService {
     public List<Map<String, Object>> listarNumerosDaRodada(Long rodadaId) {
         return numeroSorteadoRepository.findByRodadaIdOrderByOrdemAsc(rodadaId)
                 .stream()
-                .map(numero -> Map.<String, Object>of(
-                        "id", numero.getId(),
-                        "numero", numero.getNumero(),
-                        "ordem", numero.getOrdem(),
-                        "rodadaId", numero.getRodada().getId(),
-                        "sorteadoEm", numero.getSorteadoEm().toString()
-                ))
+                .map(numero -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", numero.getId());
+                    item.put("numero", numero.getNumero());
+                    item.put("ordem", numero.getOrdem());
+                    item.put("rodadaId", numero.getRodada().getId());
+                    item.put("sorteadoEm", numero.getSorteadoEm().toString());
+                    return item;
+                })
                 .toList();
+    }
+
+    @Transactional
+    public RodadaResponse atualizarDadosRodada(
+            Long rodadaId,
+            Map<String, Object> payload,
+            Usuario usuarioLogado
+    ) {
+        Rodada rodada = buscarRodada(rodadaId);
+
+        aplicarPremiacaoNaRodada(rodada, payload);
+        aplicarPremioAtualNaRodada(rodada, payload);
+        aplicarPremiosPagosNaRodada(rodada, payload);
+
+        rodada = rodadaRepository.save(rodada);
+
+        auditoriaService.registrar(
+                usuarioLogado,
+                "ATUALIZAR_DADOS_RODADA",
+                "RODADA",
+                rodada.getId(),
+                "Dados da rodada " + rodada.getNumeroRodada() + " atualizados."
+        );
+
+        publicarEventoRodada(rodada, "ROUND_UPDATED");
+
+        return toResponse(rodada);
+    }
+
+    @Transactional
+    public RodadaResponse atualizarPremiacao(
+            Long rodadaId,
+            Map<String, Object> payload,
+            Usuario usuarioLogado
+    ) {
+        Rodada rodada = buscarRodada(rodadaId);
+
+        aplicarPremiacaoNaRodada(rodada, payload);
+
+        rodada = rodadaRepository.save(rodada);
+
+        auditoriaService.registrar(
+                usuarioLogado,
+                "ATUALIZAR_PREMIACAO",
+                "RODADA",
+                rodada.getId(),
+                "Premiação da rodada " + rodada.getNumeroRodada() + " atualizada."
+        );
+
+        publicarEventoRodada(rodada, "PRIZES_UPDATED");
+
+        return toResponse(rodada);
+    }
+
+    @Transactional
+    public RodadaResponse atualizarPremioAtual(
+            Long rodadaId,
+            Map<String, Object> payload,
+            Usuario usuarioLogado
+    ) {
+        Rodada rodada = buscarRodada(rodadaId);
+
+        aplicarPremioAtualNaRodada(rodada, payload);
+
+        rodada = rodadaRepository.save(rodada);
+
+        auditoriaService.registrar(
+                usuarioLogado,
+                "ATUALIZAR_PREMIO_ATUAL",
+                "RODADA",
+                rodada.getId(),
+                "Prêmio atual da rodada " + rodada.getNumeroRodada()
+                        + " atualizado para " + rodada.getPremioAtual() + "."
+        );
+
+        publicarEventoRodada(rodada, "PRIZE_UPDATED");
+
+        return toResponse(rodada);
+    }
+
+    @Transactional
+    public RodadaResponse atualizarPremiosPagos(
+            Long rodadaId,
+            Map<String, Object> payload,
+            Usuario usuarioLogado
+    ) {
+        Rodada rodada = buscarRodada(rodadaId);
+
+        aplicarPremiosPagosNaRodada(rodada, payload);
+        aplicarPremioAtualNaRodada(rodada, payload);
+
+        rodada = rodadaRepository.save(rodada);
+
+        auditoriaService.registrar(
+                usuarioLogado,
+                "ATUALIZAR_PREMIOS_PAGOS",
+                "RODADA",
+                rodada.getId(),
+                "Prêmios pagos da rodada " + rodada.getNumeroRodada() + " atualizados."
+        );
+
+        publicarEventoRodada(rodada, "PRIZE_UPDATED");
+
+        return toResponse(rodada);
+    }
+
+    private void aplicarPremiacaoNaRodada(Rodada rodada, Map<String, Object> payload) {
+        BigDecimal premioLinha = extrairDecimal(payload,
+                "linha",
+                "premioLinha",
+                "valorLinha",
+                "primeiraLinha",
+                "valorPrimeiraLinha",
+                "premioPrimeiraLinha"
+        );
+
+        BigDecimal premioBingo = extrairDecimal(payload,
+                "bingo",
+                "premioBingo",
+                "valorBingo",
+                "cartelaCheia",
+                "valorCartelaCheia",
+                "premioCartelaCheia"
+        );
+
+        BigDecimal premioDuploBingo = extrairDecimal(payload,
+                "duploBingo",
+                "duplo_bingo",
+                "premioDuploBingo",
+                "valorDuploBingo",
+                "duplaLinha",
+                "valorDuplaLinha",
+                "premioDuplaLinha"
+        );
+
+        Integer bolaMax = extrairInteger(payload,
+                "bolaMax",
+                "bola_max",
+                "premioBolaMax",
+                "numeroBolaMax",
+                "valorBolaMax",
+                "acumulado"
+        );
+
+        BigDecimal valorDoacao = extrairDecimal(payload,
+                "doacao",
+                "doação",
+                "valorDoacao",
+                "valorDoação",
+                "premioDoacao",
+                "arrecadacao"
+        );
+
+        if (premioLinha != null) {
+            rodada.setPremioLinha(premioLinha);
+        }
+
+        if (premioBingo != null) {
+            rodada.setPremioBingo(premioBingo);
+        }
+
+        if (premioDuploBingo != null) {
+            rodada.setPremioDuploBingo(premioDuploBingo);
+        }
+
+        if (bolaMax != null) {
+            rodada.setBolaMax(Math.max(1, Math.min(75, bolaMax)));
+        }
+
+        if (valorDoacao != null) {
+            rodada.setValorDoacao(valorDoacao);
+        }
+    }
+
+    private void aplicarPremioAtualNaRodada(Rodada rodada, Map<String, Object> payload) {
+        String premio = extrairString(payload,
+                "premioAtual",
+                "premio",
+                "tipoPremio",
+                "premioDaVez",
+                "concorrendoAgora",
+                "etapaPremio",
+                "fasePremio"
+        );
+
+        String premioNormalizado = normalizarPremio(premio);
+
+        if (premioNormalizado != null) {
+            rodada.setPremioAtual(premioNormalizado);
+        }
+    }
+
+    private void aplicarPremiosPagosNaRodada(Rodada rodada, Map<String, Object> payload) {
+        Object valor = buscarPrimeiroValor(payload,
+                "premiosPagos",
+                "premios_pagos",
+                "pagamentos",
+                "premiosFinalizados",
+                "premiosMarcados"
+        );
+
+        if (valor == null) {
+            return;
+        }
+
+        if (valor instanceof List<?> lista) {
+            List<String> normalizados = lista.stream()
+                    .map(item -> normalizarPremio(item == null ? null : String.valueOf(item)))
+                    .filter(item -> item != null && !item.isBlank())
+                    .toList();
+
+            rodada.setPremiosPagos(String.join(",", normalizados));
+            return;
+        }
+
+        String texto = String.valueOf(valor).trim();
+
+        if (texto.isBlank()) {
+            rodada.setPremiosPagos("");
+            return;
+        }
+
+        List<String> normalizados = Arrays.stream(texto.split(","))
+                .map(String::trim)
+                .map(this::normalizarPremio)
+                .filter(item -> item != null && !item.isBlank())
+                .toList();
+
+        rodada.setPremiosPagos(String.join(",", normalizados));
+    }
+
+    private Object buscarPrimeiroValor(Map<String, Object> payload, String... chaves) {
+        if (payload == null) {
+            return null;
+        }
+
+        for (String chave : chaves) {
+            if (payload.containsKey(chave)) {
+                Object valor = payload.get(chave);
+
+                if (valor != null) {
+                    return valor;
+                }
+            }
+        }
+
+        Object data = payload.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            for (String chave : chaves) {
+                if (dataMap.containsKey(chave)) {
+                    Object valor = dataMap.get(chave);
+
+                    if (valor != null) {
+                        return valor;
+                    }
+                }
+            }
+        }
+
+        Object premiacao = payload.get("premiacao");
+        if (premiacao instanceof Map<?, ?> premiacaoMap) {
+            for (String chave : chaves) {
+                if (premiacaoMap.containsKey(chave)) {
+                    Object valor = premiacaoMap.get(chave);
+
+                    if (valor != null) {
+                        return valor;
+                    }
+                }
+            }
+        }
+
+        Object premios = payload.get("premios");
+        if (premios instanceof Map<?, ?> premiosMap) {
+            for (String chave : chaves) {
+                if (premiosMap.containsKey(chave)) {
+                    Object valor = premiosMap.get(chave);
+
+                    if (valor != null) {
+                        return valor;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private BigDecimal extrairDecimal(Map<String, Object> payload, String... chaves) {
+        Object valor = buscarPrimeiroValor(payload, chaves);
+
+        if (valor == null) {
+            return null;
+        }
+
+        try {
+            if (valor instanceof BigDecimal decimal) {
+                return decimal;
+            }
+
+            if (valor instanceof Number numero) {
+                return BigDecimal.valueOf(numero.doubleValue());
+            }
+
+            String texto = String.valueOf(valor)
+                    .replace("R$", "")
+                    .replace(".", "")
+                    .replace(",", ".")
+                    .trim();
+
+            if (texto.isBlank()) {
+                return null;
+            }
+
+            return new BigDecimal(texto);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Integer extrairInteger(Map<String, Object> payload, String... chaves) {
+        Object valor = buscarPrimeiroValor(payload, chaves);
+
+        if (valor == null) {
+            return null;
+        }
+
+        try {
+            if (valor instanceof Number numero) {
+                return numero.intValue();
+            }
+
+            String texto = String.valueOf(valor).trim();
+
+            if (texto.isBlank()) {
+                return null;
+            }
+
+            return Integer.parseInt(texto);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String extrairString(Map<String, Object> payload, String... chaves) {
+        Object valor = buscarPrimeiroValor(payload, chaves);
+
+        if (valor == null) {
+            return null;
+        }
+
+        String texto = String.valueOf(valor).trim();
+
+        return texto.isBlank() ? null : texto;
+    }
+
+    private String normalizarPremio(String premio) {
+        if (premio == null || premio.isBlank()) {
+            return null;
+        }
+
+        String texto = premio
+                .trim()
+                .toUpperCase()
+                .replace("Ã", "A")
+                .replace("Á", "A")
+                .replace("À", "A")
+                .replace("Â", "A")
+                .replace("É", "E")
+                .replace("Ê", "E")
+                .replace("Í", "I")
+                .replace("Ó", "O")
+                .replace("Ô", "O")
+                .replace("Õ", "O")
+                .replace("Ú", "U")
+                .replace("Ç", "C")
+                .replace(" ", "_")
+                .replace("-", "_");
+
+        if (texto.equals("PRIMEIRA_LINHA")
+                || texto.equals("LINHA")
+                || texto.contains("PRIMEIRA")) {
+            return "PRIMEIRA_LINHA";
+        }
+
+        if (texto.equals("CARTELA_CHEIA")
+                || texto.equals("BINGO")
+                || texto.contains("CARTELA")) {
+            return "CARTELA_CHEIA";
+        }
+
+        if (texto.equals("DUPLA_LINHA")
+                || texto.equals("DUPLO_BINGO")
+                || texto.contains("DUPLO")
+                || texto.contains("DUPLA")) {
+            return "DUPLA_LINHA";
+        }
+
+        if (texto.equals("SEGUNDA_LINHA")
+                || texto.equals("BOLA_MAX")
+                || texto.contains("BOLA")
+                || texto.contains("ACUMULADO")) {
+            return "SEGUNDA_LINHA";
+        }
+
+        if (texto.equals("DOACAO")
+                || texto.equals("DOAÇÃO")
+                || texto.contains("DOACAO")) {
+            return "DOACAO";
+        }
+
+        return texto;
+    }
+
+    private List<String> premiosPagosComoLista(String premiosPagos) {
+        if (premiosPagos == null || premiosPagos.isBlank()) {
+            return List.of();
+        }
+
+        return Arrays.stream(premiosPagos.split(","))
+                .map(String::trim)
+                .filter(item -> !item.isBlank())
+                .toList();
+    }
+
+    private Map<String, Object> montarPayloadRodada(Rodada rodada, String tipoEvento) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+
+        payload.put("type", tipoEvento);
+        payload.put("rodadaId", rodada.getId());
+        payload.put("id", rodada.getId());
+        payload.put("sessaoId", rodada.getSessao() != null ? rodada.getSessao().getId() : null);
+        payload.put("numeroRodada", rodada.getNumeroRodada());
+        payload.put("status", rodada.getStatus() != null ? rodada.getStatus().name() : null);
+
+        payload.put("linha", rodada.getPremioLinha());
+        payload.put("premioLinha", rodada.getPremioLinha());
+        payload.put("valorLinha", rodada.getPremioLinha());
+
+        payload.put("bingo", rodada.getPremioBingo());
+        payload.put("premioBingo", rodada.getPremioBingo());
+        payload.put("valorBingo", rodada.getPremioBingo());
+
+        payload.put("duploBingo", rodada.getPremioDuploBingo());
+        payload.put("premioDuploBingo", rodada.getPremioDuploBingo());
+        payload.put("valorDuploBingo", rodada.getPremioDuploBingo());
+
+        payload.put("bolaMax", rodada.getBolaMax());
+        payload.put("premioBolaMax", rodada.getBolaMax());
+        payload.put("numeroBolaMax", rodada.getBolaMax());
+
+        payload.put("doacao", rodada.getValorDoacao());
+        payload.put("valorDoacao", rodada.getValorDoacao());
+
+        payload.put("premioAtual", rodada.getPremioAtual());
+        payload.put("premio", rodada.getPremioAtual());
+
+        payload.put("premiosPagos", premiosPagosComoLista(rodada.getPremiosPagos()));
+
+        if (rodada.getIniciouEm() != null) {
+            payload.put("iniciouEm", rodada.getIniciouEm().toString());
+        }
+
+        if (rodada.getEncerrouEm() != null) {
+            payload.put("encerrouEm", rodada.getEncerrouEm().toString());
+            payload.put("timestamp", rodada.getEncerrouEm().toString());
+        }
+
+        return payload;
+    }
+
+    private void publicarEventoRodada(Rodada rodada, String tipoEvento) {
+        Map<String, Object> payload = montarPayloadRodada(rodada, tipoEvento);
+
+        if (rodada.getSessao() != null) {
+            bingoEventPublisher.publicarSessao(rodada.getSessao().getId(), payload);
+            bingoEventPublisher.publicarTv(rodada.getSessao().getId(), payload);
+        }
+
+        bingoEventPublisher.publicarRodada(rodada.getId(), payload);
     }
 
     private RodadaResponse toResponse(Rodada rodada) {
@@ -371,6 +814,29 @@ public class RodadaService {
                 .iniciouEm(rodada.getIniciouEm())
                 .encerrouEm(rodada.getEncerrouEm())
                 .sessaoId(rodada.getSessao() != null ? rodada.getSessao().getId() : null)
+
+                .linha(rodada.getPremioLinha())
+                .premioLinha(rodada.getPremioLinha())
+                .valorLinha(rodada.getPremioLinha())
+
+                .bingo(rodada.getPremioBingo())
+                .premioBingo(rodada.getPremioBingo())
+                .valorBingo(rodada.getPremioBingo())
+
+                .duploBingo(rodada.getPremioDuploBingo())
+                .premioDuploBingo(rodada.getPremioDuploBingo())
+                .valorDuploBingo(rodada.getPremioDuploBingo())
+
+                .bolaMax(rodada.getBolaMax())
+                .premioBolaMax(rodada.getBolaMax())
+                .numeroBolaMax(rodada.getBolaMax())
+
+                .doacao(rodada.getValorDoacao())
+                .valorDoacao(rodada.getValorDoacao())
+
+                .premioAtual(rodada.getPremioAtual())
+                .premio(rodada.getPremioAtual())
+                .premiosPagos(premiosPagosComoLista(rodada.getPremiosPagos()))
                 .build();
     }
 }
