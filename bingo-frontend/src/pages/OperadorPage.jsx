@@ -1609,7 +1609,7 @@ export default function OperadorPage() {
             disabled={!rodadaId || salvandoPremiacao}
             style={{ marginTop: "12px" }}
           >
-            {salvandoPremiacao ? "SALVANDO..." : "SALVAR VALORES NO BACKEND"}
+            {salvandoPremiacao ? "SALVANDO..." : "SALVAR VALORES"}
           </button>
         </section>
 
