@@ -27,9 +27,10 @@ export default function TvPage() {
   const [faseAnimacao, setFaseAnimacao] = useState("idle");
   const [countdown, setCountdown] = useState(null);
 
-  const [somLiberado, setSomLiberado] = useState(() => {
-    return localStorage.getItem("bingoSomLiberado") === "true";
-  });
+  // IMPORTANTE:
+  // Não use localStorage para liberar som.
+  // O navegador exige um clique real a cada nova abertura da página.
+  const [somLiberado, setSomLiberado] = useState(false);
 
   const machineAudioRef = useRef(null);
   const dropAudioRef = useRef(null);
@@ -425,19 +426,14 @@ export default function TvPage() {
     const numeroSemZero = String(Number(numero));
 
     return [
-      `/sounds/bingo-voices/${letraMinuscula}-${numeroComZero}.mp3`,
-      `/sounds/bingo-voices/${letraMinuscula}-${numeroSemZero}.mp3`,
-      `/sounds/bingo-voices/${letraMaiuscula}-${numeroComZero}.mp3`,
-      `/sounds/bingo-voices/${letraMaiuscula}-${numeroSemZero}.mp3`,
-
-      `/sounds/bingo-voice/${letraMinuscula}-${numeroComZero}.mp3`,
-      `/sounds/bingo-voice/${letraMinuscula}-${numeroSemZero}.mp3`,
-      `/sounds/bingo-voice/${letraMaiuscula}-${numeroComZero}.mp3`,
-      `/sounds/bingo-voice/${letraMaiuscula}-${numeroSemZero}.mp3`,
+      `/sounds/bingo-voice/${letraMaiuscula}_${numeroSemZero}.mp3`,
+      `/sounds/bingo-voice/${letraMinuscula}_${numeroSemZero}.mp3`,
+      `/sounds/bingo-voice/${letraMaiuscula}_${numeroComZero}.mp3`,
+      `/sounds/bingo-voice/${letraMinuscula}_${numeroComZero}.mp3`,
     ];
   }
 
-  function tocarAudioArquivo(src, playbackRate = 0.65) {
+  function tocarAudioArquivo(src, playbackRate = 1) {
     return new Promise((resolve) => {
       if (!somLiberadoRef.current) {
         resolve(false);
@@ -449,18 +445,27 @@ export default function TvPage() {
         voiceAudioRef.current.currentTime = 0;
       }
 
-      const audio = new Audio(src);
+      const audio = new Audio();
+      audio.src = src;
       audio.volume = 1;
       audio.playbackRate = playbackRate;
       audio.preload = "auto";
 
       voiceAudioRef.current = audio;
 
-      audio.onended = () => resolve(true);
+      let finalizado = false;
+
+      const finalizar = (tocou) => {
+        if (finalizado) return;
+        finalizado = true;
+        resolve(tocou);
+      };
+
+      audio.onended = () => finalizar(true);
 
       audio.onerror = () => {
         console.error("Erro ao encontrar/tocar áudio:", src);
-        resolve(false);
+        finalizar(false);
       };
 
       audio
@@ -470,7 +475,7 @@ export default function TvPage() {
         })
         .catch((error) => {
           console.error("Erro ao tocar áudio:", src, error);
-          resolve(false);
+          finalizar(false);
         });
     });
   }
@@ -479,13 +484,10 @@ export default function TvPage() {
     if (!somLiberadoRef.current) return;
     if (!numero && numero !== 0) return;
 
-    const letra = letraDoNumero(numero);
-    const velocidade = letra === "O" ? 0.82 : 0.65;
-
     const caminhos = caminhosAudioNumero(numero);
 
     for (const caminho of caminhos) {
-      const tocou = await tocarAudioArquivo(caminho, velocidade);
+      const tocou = await tocarAudioArquivo(caminho, 1);
 
       if (tocou) {
         return;
@@ -505,9 +507,10 @@ export default function TvPage() {
     try {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.volume = 1;
       await audioRef.current.play();
-    } catch {
-      console.warn("O navegador bloqueou o áudio até haver interação do usuário.");
+    } catch (error) {
+      console.warn("Áudio bloqueado ou arquivo ausente:", error);
     }
   }
 
@@ -518,67 +521,30 @@ export default function TvPage() {
     audioRef.current.currentTime = 0;
   }
 
-  async function testarAudioSilencioso(src) {
-    try {
-      const audio = new Audio(src);
-      audio.volume = 0.01;
-      audio.preload = "auto";
-
-      await audio.play();
-
-      audio.pause();
-      audio.currentTime = 0;
-
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   async function liberarSom() {
-    somLiberadoRef.current = true;
-    setSomLiberado(true);
-
     try {
-      localStorage.setItem("bingoSomLiberado", "true");
-    } catch {
-      // ignora erro de localStorage
-    }
+      somLiberadoRef.current = true;
 
-    try {
-      if (machineAudioRef.current) {
-        machineAudioRef.current.volume = 0.01;
-        await machineAudioRef.current.play();
-        machineAudioRef.current.pause();
-        machineAudioRef.current.currentTime = 0;
-        machineAudioRef.current.volume = 1;
-      }
+      // Destrava o autoplay com um áudio silencioso em data URI.
+      // Isso acontece dentro do clique real do botão.
+      const unlockAudio = new Audio(
+        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQQAAAAAAA=="
+      );
 
-      if (dropAudioRef.current) {
-        dropAudioRef.current.volume = 0.01;
-        await dropAudioRef.current.play();
-        dropAudioRef.current.pause();
-        dropAudioRef.current.currentTime = 0;
-        dropAudioRef.current.volume = 1;
-      }
+      unlockAudio.volume = 0.01;
+      await unlockAudio.play();
+      unlockAudio.pause();
+      unlockAudio.currentTime = 0;
 
-      const testes = [
-        "/sounds/bingo-voices/b-01.mp3",
-        "/sounds/bingo-voices/B-01.mp3",
-        "/sounds/bingo-voice/b-01.mp3",
-        "/sounds/bingo-voice/B-01.mp3",
-        "/sounds/bingo-voices/b-1.mp3",
-        "/sounds/bingo-voice/b-1.mp3",
-      ];
-
-      for (const src of testes) {
-        const ok = await testarAudioSilencioso(src);
-        if (ok) break;
-      }
+      setSomLiberado(true);
+      setMensagem("Som da TV ativado. Boa sorte a todos!");
 
       console.log("Som da TV liberado.");
-    } catch {
-      console.warn("Som será liberado após nova interação do usuário.");
+    } catch (error) {
+      somLiberadoRef.current = false;
+      setSomLiberado(false);
+      console.warn("Não foi possível liberar o som:", error);
+      setMensagem("Clique novamente em Ativar som da TV.");
     }
   }
 
@@ -979,14 +945,6 @@ export default function TvPage() {
 
   useEffect(() => {
     somLiberadoRef.current = somLiberado;
-
-    if (somLiberado) {
-      try {
-        localStorage.setItem("bingoSomLiberado", "true");
-      } catch {
-        // ignora erro de localStorage
-      }
-    }
   }, [somLiberado]);
 
   useEffect(() => {
@@ -1012,34 +970,6 @@ export default function TvPage() {
   useEffect(() => {
     carregarHistorico(rodadaId);
   }, [rodadaId]);
-
-  useEffect(() => {
-    if (somLiberado) return;
-
-    const liberarNoPrimeiroClique = () => {
-      liberarSom();
-
-      window.removeEventListener("click", liberarNoPrimeiroClique);
-      window.removeEventListener("touchstart", liberarNoPrimeiroClique);
-      window.removeEventListener("keydown", liberarNoPrimeiroClique);
-    };
-
-    window.addEventListener("click", liberarNoPrimeiroClique);
-    window.addEventListener("touchstart", liberarNoPrimeiroClique);
-    window.addEventListener("keydown", liberarNoPrimeiroClique);
-
-    return () => {
-      window.removeEventListener("click", liberarNoPrimeiroClique);
-      window.removeEventListener("touchstart", liberarNoPrimeiroClique);
-      window.removeEventListener("keydown", liberarNoPrimeiroClique);
-    };
-  }, [somLiberado]);
-
-  useEffect(() => {
-    if (!somLiberado) return;
-
-    somLiberadoRef.current = true;
-  }, [somLiberado]);
 
   useEffect(() => {
     function atualizarPremio(event) {
