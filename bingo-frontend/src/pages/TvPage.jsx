@@ -27,20 +27,26 @@ export default function TvPage() {
   const [faseAnimacao, setFaseAnimacao] = useState("idle");
   const [countdown, setCountdown] = useState(null);
 
-  // IMPORTANTE:
-  // Não use localStorage para liberar som.
-  // O navegador exige um clique real a cada nova abertura da página.
   const [somLiberado, setSomLiberado] = useState(false);
 
   const machineAudioRef = useRef(null);
   const dropAudioRef = useRef(null);
   const voiceAudioRef = useRef(null);
+  const countdownAudioRef = useRef(null);
   const somLiberadoRef = useRef(false);
 
   const animandoRef = useRef(false);
   const filaRef = useRef([]);
   const countdownRodadaRef = useRef(null);
   const ultimoNumeroFaladoRef = useRef(null);
+  const contagemCanceladaRef = useRef(false);
+
+  const VOICE_PLAYBACK_RATE = 1.15;
+  const VOLUME_MUSICA_CONTAGEM = 0.72;
+  const VOLUME_MUSICA_FUNDO = 0.34;
+  const VOLUME_MUSICA_DURANTE_VOZ = 0.16;
+  const VOLUME_MAQUINA = 0.9;
+  const VOLUME_QUEDA = 1;
 
   const nomesPremio = {
     PRIMEIRA_LINHA: "Linha",
@@ -61,7 +67,19 @@ export default function TvPage() {
     Array.from({ length: 15 }, (_, i) => i + 61),
   ];
 
-  const ultimasBolas = historico.slice(-6).reverse();
+  const quantidadeUltimasBolas =
+    historico.length <= 12 ? 6 : historico.length <= 35 ? 8 : 10;
+
+  const ultimasBolas = historico.slice(-quantidadeUltimasBolas).reverse();
+
+  const classeTamanhoUltimas =
+    historico.length <= 12
+      ? "last-balls-large"
+      : historico.length <= 35
+      ? "last-balls-medium"
+      : historico.length <= 55
+      ? "last-balls-small"
+      : "last-balls-mini";
 
   const premiosDaRodada = [
     {
@@ -433,6 +451,27 @@ export default function TvPage() {
     ];
   }
 
+  function ajustarVolume(audioRef, volume) {
+    if (!audioRef.current) return;
+
+    const volumeSeguro = Math.max(0, Math.min(1, volume));
+    audioRef.current.volume = volumeSeguro;
+  }
+
+  async function tocarTrilhaDeFundo(volume = VOLUME_MUSICA_FUNDO) {
+    if (!somLiberadoRef.current || !countdownAudioRef.current) return;
+
+    try {
+      countdownAudioRef.current.pause();
+      countdownAudioRef.current.currentTime = 0;
+      countdownAudioRef.current.volume = volume;
+      countdownAudioRef.current.loop = false;
+      await countdownAudioRef.current.play();
+    } catch (error) {
+      console.warn("Não foi possível tocar a vinheta/trilha:", error);
+    }
+  }
+
   function tocarAudioArquivo(src, playbackRate = 1) {
     return new Promise((resolve) => {
       if (!somLiberadoRef.current) {
@@ -444,6 +483,8 @@ export default function TvPage() {
         voiceAudioRef.current.pause();
         voiceAudioRef.current.currentTime = 0;
       }
+
+      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_DURANTE_VOZ);
 
       const audio = new Audio();
       audio.src = src;
@@ -458,6 +499,7 @@ export default function TvPage() {
       const finalizar = (tocou) => {
         if (finalizado) return;
         finalizado = true;
+        ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
         resolve(tocou);
       };
 
@@ -471,7 +513,7 @@ export default function TvPage() {
       audio
         .play()
         .then(() => {
-          console.log("Áudio tocando:", src);
+          console.log("Áudio tocando:", src, "velocidade:", playbackRate);
         })
         .catch((error) => {
           console.error("Erro ao tocar áudio:", src, error);
@@ -487,7 +529,7 @@ export default function TvPage() {
     const caminhos = caminhosAudioNumero(numero);
 
     for (const caminho of caminhos) {
-      const tocou = await tocarAudioArquivo(caminho, 1);
+      const tocou = await tocarAudioArquivo(caminho, VOICE_PLAYBACK_RATE);
 
       if (tocou) {
         return;
@@ -501,13 +543,13 @@ export default function TvPage() {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function tocarAudio(audioRef) {
+  async function tocarAudio(audioRef, volume = 1) {
     if (!somLiberadoRef.current || !audioRef.current) return;
 
     try {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      audioRef.current.volume = 1;
+      audioRef.current.volume = volume;
       await audioRef.current.play();
     } catch (error) {
       console.warn("Áudio bloqueado ou arquivo ausente:", error);
@@ -521,12 +563,21 @@ export default function TvPage() {
     audioRef.current.currentTime = 0;
   }
 
+  function pararTodosAudios() {
+    pararAudio(machineAudioRef);
+    pararAudio(dropAudioRef);
+    pararAudio(countdownAudioRef);
+
+    if (voiceAudioRef.current) {
+      voiceAudioRef.current.pause();
+      voiceAudioRef.current.currentTime = 0;
+    }
+  }
+
   async function liberarSom() {
     try {
       somLiberadoRef.current = true;
 
-      // Destrava o autoplay com um áudio silencioso em data URI.
-      // Isso acontece dentro do clique real do botão.
       const unlockAudio = new Audio(
         "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQQAAAAAAA=="
       );
@@ -691,18 +742,40 @@ export default function TvPage() {
     }
 
     countdownRodadaRef.current = chaveRodada;
+    contagemCanceladaRef.current = false;
 
-    const sequencia = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+    const sequencia = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
     setNumeroAtual(null);
     setNumeroAnimado(null);
     setMensagem("Rodada iniciada, boa sorte a todos!");
     setFaseAnimacao("countdown");
 
+    await tocarTrilhaDeFundo(VOLUME_MUSICA_CONTAGEM);
+
     for (const item of sequencia) {
+      if (contagemCanceladaRef.current) {
+        pararAudio(countdownAudioRef);
+        setCountdown(null);
+        setFaseAnimacao("idle");
+        return;
+      }
+
       setCountdown(item);
-      await esperar(1300);
+      await esperar(1000);
     }
+
+    setCountdown("JÁ!");
+    await esperar(900);
+
+    if (contagemCanceladaRef.current) {
+      pararAudio(countdownAudioRef);
+      setCountdown(null);
+      setFaseAnimacao("idle");
+      return;
+    }
+
+    ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
 
     setCountdown(null);
     setFaseAnimacao("idle");
@@ -725,6 +798,16 @@ export default function TvPage() {
 
     try {
       setCountdown(null);
+      setNumeroAnimado(null);
+
+      setMensagem("Girando o globo...");
+      setFaseAnimacao("spinning");
+
+      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
+      await tocarAudio(machineAudioRef, VOLUME_MAQUINA);
+      await esperar(2200);
+
+      setMensagem("Bolinha saindo do globo...");
 
       setNumeroAnimado(numeroNormalizado);
       setNumeroAtual(numeroNormalizado);
@@ -733,18 +816,18 @@ export default function TvPage() {
         prev.includes(numeroNormalizado) ? prev : [...prev, numeroNormalizado]
       );
 
+      setFaseAnimacao("dropping");
+
+      await tocarAudio(dropAudioRef, VOLUME_QUEDA);
+      await esperar(850);
+
+      pararAudio(machineAudioRef);
+
       setMensagem(
         `${textoPremioAtual(premio)} • ${letraDoNumero(
           numeroNormalizado
         )} ${formatarNumero(numeroNormalizado)}`
       );
-
-      setFaseAnimacao("dropping");
-
-      await tocarAudio(dropAudioRef);
-      pararAudio(machineAudioRef);
-
-      await esperar(650);
 
       setFaseAnimacao("revealed");
 
@@ -753,7 +836,9 @@ export default function TvPage() {
         await falarNumeroSorteado(numeroNormalizado);
       }
 
-      await esperar(350);
+      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
+
+      await esperar(500);
 
       setFaseAnimacao("idle");
     } finally {
@@ -842,14 +927,9 @@ export default function TvPage() {
         filaRef.current = [];
         animandoRef.current = false;
         ultimoNumeroFaladoRef.current = null;
+        contagemCanceladaRef.current = false;
 
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
-
-        if (voiceAudioRef.current) {
-          voiceAudioRef.current.pause();
-          voiceAudioRef.current.currentTime = 0;
-        }
+        pararTodosAudios();
 
         setMensagem(
           event.numeroRodada
@@ -894,14 +974,9 @@ export default function TvPage() {
         filaRef.current = [];
         animandoRef.current = false;
         ultimoNumeroFaladoRef.current = null;
+        contagemCanceladaRef.current = false;
 
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
-
-        if (voiceAudioRef.current) {
-          voiceAudioRef.current.pause();
-          voiceAudioRef.current.currentTime = 0;
-        }
+        pararTodosAudios();
 
         iniciarContagemRodada(idRodada);
 
@@ -911,13 +986,29 @@ export default function TvPage() {
       if (event.type === "ROUND_PAUSED") {
         setStatusRodada("PAUSADA");
         setMensagem("Rodada pausada.");
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
+        setCountdown(null);
+        setFaseAnimacao("idle");
 
-        if (voiceAudioRef.current) {
-          voiceAudioRef.current.pause();
-          voiceAudioRef.current.currentTime = 0;
-        }
+        contagemCanceladaRef.current = true;
+        animandoRef.current = false;
+        filaRef.current = [];
+
+        pararTodosAudios();
+
+        return;
+      }
+
+      if (
+        event.type === "ROUND_RESUMED" ||
+        event.type === "ROUND_CONTINUED" ||
+        event.type === "GAME_RESUMED"
+      ) {
+        setStatusRodada("EM_ANDAMENTO");
+        setMensagem("Rodada retomada. Boa sorte a todos!");
+        setCountdown(null);
+        setFaseAnimacao("idle");
+
+        contagemCanceladaRef.current = false;
 
         return;
       }
@@ -925,13 +1016,14 @@ export default function TvPage() {
       if (event.type === "ROUND_FINISHED") {
         setStatusRodada("FINALIZADA");
         setMensagem("Rodada encerrada.");
-        pararAudio(machineAudioRef);
-        pararAudio(dropAudioRef);
+        setCountdown(null);
+        setFaseAnimacao("idle");
 
-        if (voiceAudioRef.current) {
-          voiceAudioRef.current.pause();
-          voiceAudioRef.current.currentTime = 0;
-        }
+        contagemCanceladaRef.current = true;
+        animandoRef.current = false;
+        filaRef.current = [];
+
+        pararTodosAudios();
       }
     },
     [premioAtual, rodadaId, premiacaoAtual]
@@ -1021,13 +1113,7 @@ export default function TvPage() {
 
   useEffect(() => {
     return () => {
-      pararAudio(machineAudioRef);
-      pararAudio(dropAudioRef);
-
-      if (voiceAudioRef.current) {
-        voiceAudioRef.current.pause();
-        voiceAudioRef.current.currentTime = 0;
-      }
+      pararTodosAudios();
     };
   }, []);
 
@@ -1042,6 +1128,12 @@ export default function TvPage() {
 
       <audio ref={dropAudioRef} src="/sounds/ball-drop.mp3" preload="auto" />
 
+      <audio
+        ref={countdownAudioRef}
+        src="/sounds/countdown-vignette.mp3"
+        preload="auto"
+      />
+
       {!somLiberado && (
         <button className="tv-enable-sound" onClick={liberarSom}>
           Ativar som da TV
@@ -1051,7 +1143,9 @@ export default function TvPage() {
       {faseAnimacao === "countdown" && countdown !== null && (
         <div className="tv-countdown-overlay">
           <div className="tv-countdown-content">
+            <span>PREPAREM-SE</span>
             <strong>{countdown}</strong>
+            <small>RODADA VAI COMEÇAR</small>
           </div>
         </div>
       )}
@@ -1158,7 +1252,7 @@ export default function TvPage() {
           <div className="gold-info-card gold-last-card gold-globe-last-card">
             <span className="gold-info-label">ÚLTIMAS BOLAS CANTADAS</span>
 
-            <div className="gold-last-balls">
+            <div className={`gold-last-balls ${classeTamanhoUltimas}`}>
               {ultimasBolas.length > 0 ? (
                 ultimasBolas.map((numero, index) => (
                   <div

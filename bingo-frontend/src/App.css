@@ -14111,3 +14111,863 @@ body,
     0 0 24px rgba(255, 211, 77, 0.75),
     inset 0 2px 4px rgba(255, 255, 255, 0.45);
 }
+
+/* ============================= */
+/* BORDA E DIVISÃO VISUAL DA TV  */
+/* ============================= */
+
+.tv-page.bingo-tv-gold {
+  position: relative;
+  box-sizing: border-box;
+  border: clamp(5px, 0.65vw, 10px) solid rgba(255, 214, 112, 0.95);
+  outline: 2px solid rgba(255, 255, 255, 0.14);
+  outline-offset: -16px;
+  box-shadow:
+    inset 0 0 42px rgba(255, 210, 90, 0.18),
+    inset 0 0 95px rgba(0, 0, 0, 0.55),
+    0 0 38px rgba(255, 184, 44, 0.25);
+}
+
+.tv-page.bingo-tv-gold::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 2px solid rgba(255, 232, 155, 0.42);
+  border-radius: 26px;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow:
+    inset 0 0 24px rgba(255, 214, 112, 0.12),
+    0 0 18px rgba(255, 184, 44, 0.16);
+}
+
+.gold-left-panel,
+.gold-right-panel {
+  border: 2px solid rgba(255, 214, 112, 0.38);
+  border-radius: 28px;
+  box-shadow:
+    inset 0 0 24px rgba(255, 214, 112, 0.08),
+    0 0 18px rgba(0, 0, 0, 0.22);
+}
+
+.gold-number-board,
+.gold-prize-showcase,
+.gold-info-card,
+.gold-message-card,
+.gold-globe-last-card {
+  border: 1px solid rgba(255, 224, 145, 0.34);
+  box-shadow:
+    inset 0 0 18px rgba(255, 224, 145, 0.08),
+    0 0 12px rgba(0, 0, 0, 0.18);
+}
+
+.gold-benefit-title {
+  border-bottom: 1px solid rgba(255, 224, 145, 0.32);
+  padding-bottom: 10px;
+}
+
+.gold-right-panel {
+  position: relative;
+}
+
+.gold-right-panel::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px dashed rgba(255, 224, 145, 0.24);
+  border-radius: 22px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ========================================================= */
+/* AJUSTES FINAIS TV - CONTAGEM, GLOBO E ÚLTIMAS BOLAS */
+/* Colar no FINAL do App.css */
+/* ========================================================= */
+
+/* ========================= */
+/* BOTÃO ATIVAR SOM */
+/* ========================= */
+
+.tv-enable-sound {
+  position: fixed;
+  left: 28px;
+  bottom: 28px;
+  z-index: 9999;
+  border: 1px solid rgba(255, 234, 166, 0.9);
+  background: linear-gradient(180deg, #ffe58a, #ffb300 55%, #a85f00);
+  color: #2b1200;
+  border-radius: 999px;
+  padding: 15px 24px;
+  font-size: 16px;
+  font-weight: 1000;
+  cursor: pointer;
+  box-shadow:
+    0 0 28px rgba(255, 193, 7, 0.55),
+    0 18px 40px rgba(0, 0, 0, 0.45);
+  animation: tvSoundPulse 1.3s ease-in-out infinite;
+}
+
+@keyframes tvSoundPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.055);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ========================= */
+/* CONTAGEM REGRESSIVA */
+/* ========================= */
+
+.tv-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at center, rgba(255, 193, 7, 0.2), transparent 34%),
+    radial-gradient(circle at 20% 20%, rgba(255, 123, 0, 0.18), transparent 24%),
+    radial-gradient(circle at 80% 80%, rgba(255, 213, 97, 0.16), transparent 28%),
+    rgba(0, 0, 0, 0.86);
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+}
+
+.tv-countdown-overlay::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent,
+      rgba(255, 193, 7, 0.15),
+      transparent,
+      rgba(255, 115, 0, 0.13),
+      transparent
+    );
+  animation: countdownSpinBg 4s linear infinite;
+}
+
+.tv-countdown-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.08) 0 2px, transparent 3px) 0 0 / 80px 80px;
+  opacity: 0.35;
+}
+
+.tv-countdown-content {
+  position: relative;
+  z-index: 2;
+  width: min(470px, 82vw);
+  height: min(470px, 82vw);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.95) 0 8%, transparent 18%),
+    radial-gradient(circle at center, #fff0a8 0%, #ffc533 34%, #c76b00 66%, #4a1700 100%);
+
+  border: 9px solid rgba(255, 239, 174, 0.92);
+
+  box-shadow:
+    inset -24px -30px 48px rgba(65, 24, 0, 0.48),
+    inset 18px 18px 36px rgba(255, 255, 255, 0.45),
+    0 0 60px rgba(255, 193, 7, 0.75),
+    0 0 130px rgba(255, 115, 0, 0.35),
+    0 30px 80px rgba(0, 0, 0, 0.75);
+
+  animation: countdownMainPop 0.9s ease-in-out infinite;
+}
+
+.tv-countdown-content span {
+  display: block;
+  color: rgba(43, 18, 0, 0.76);
+  font-size: clamp(15px, 2.1vw, 27px);
+  font-weight: 1000;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.tv-countdown-content strong {
+  display: block;
+  color: #241000;
+  font-size: clamp(130px, 22vw, 210px);
+  line-height: 0.88;
+  font-weight: 1000;
+  text-shadow:
+    0 5px 0 rgba(255, 255, 255, 0.32),
+    0 12px 24px rgba(65, 24, 0, 0.32);
+}
+
+.tv-countdown-content small {
+  display: block;
+  margin-top: 12px;
+  color: rgba(43, 18, 0, 0.82);
+  font-size: clamp(12px, 1.5vw, 19px);
+  font-weight: 1000;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@keyframes countdownMainPop {
+  0% {
+    transform: scale(0.93) rotate(-1deg);
+    filter: brightness(0.95);
+  }
+
+  50% {
+    transform: scale(1.06) rotate(1deg);
+    filter: brightness(1.15);
+  }
+
+  100% {
+    transform: scale(0.93) rotate(-1deg);
+    filter: brightness(0.95);
+  }
+}
+
+@keyframes countdownSpinBg {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================= */
+/* FASES DA TV */
+/* ========================= */
+
+.bingo-tv-gold.fase-countdown .gold-tv-layout {
+  filter: blur(2px) brightness(0.65);
+}
+
+.bingo-tv-gold.fase-spinning .gold-message-card {
+  animation: goldMessagePulse 0.65s ease-in-out infinite;
+}
+
+.bingo-tv-gold.fase-dropping .gold-message-card,
+.bingo-tv-gold.fase-revealed .gold-message-card {
+  animation: goldMessageGlow 0.85s ease-in-out infinite;
+}
+
+@keyframes goldMessagePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.18);
+  }
+
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 0 30px rgba(255, 193, 7, 0.48);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.18);
+  }
+}
+
+@keyframes goldMessageGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgba(255, 193, 7, 0.28);
+  }
+
+  50% {
+    box-shadow: 0 0 42px rgba(255, 193, 7, 0.62);
+  }
+}
+
+/* ========================= */
+/* GLOBO - REFORÇO DE ANIMAÇÃO */
+/* Funciona com as classes do BingoGlobe3D já existentes */
+/* ========================= */
+
+.fase-spinning .cinematic-bingo-machine,
+.fase-spinning .casino-bingo-machine,
+.fase-spinning .bingo-machine,
+.fase-spinning .cinematic-globe,
+.fase-spinning .casino-globe,
+.fase-spinning .glass-globe {
+  animation-duration: 0.45s !important;
+}
+
+.fase-spinning .cinematic-inner-ball,
+.fase-spinning .casino-inner-ball,
+.fase-spinning .globe-mini-ball,
+.fase-spinning .inner-ball {
+  animation-duration: 0.42s !important;
+  filter: brightness(1.08);
+}
+
+.fase-dropping .cinematic-drawn-ball,
+.fase-dropping .casino-drawn-ball,
+.fase-dropping .falling-bingo-ball,
+.fase-dropping .tv-drawn-ball {
+  animation:
+    tvBallDropFromGlobe 1.15s cubic-bezier(0.13, 0.92, 0.2, 1.04) forwards !important;
+}
+
+.fase-revealed .cinematic-drawn-ball,
+.fase-revealed .casino-drawn-ball,
+.fase-revealed .falling-bingo-ball,
+.fase-revealed .tv-drawn-ball {
+  opacity: 1 !important;
+  animation: tvBallRevealPulse 1s ease-in-out infinite !important;
+}
+
+@keyframes tvBallDropFromGlobe {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-190px) scale(0.45) rotate(-220deg);
+    filter: blur(5px);
+  }
+
+  22% {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  68% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(18px) scale(1.12) rotate(22deg);
+  }
+
+  84% {
+    transform: translateX(-50%) translateY(-12px) scale(0.95) rotate(-9deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes tvBallRevealPulse {
+  0%,
+  100% {
+    filter: brightness(1);
+    box-shadow:
+      inset -12px -15px 22px rgba(82, 35, 0, 0.38),
+      inset 8px 8px 14px rgba(255,255,255,0.68),
+      0 16px 34px rgba(0,0,0,0.34),
+      0 0 24px rgba(255, 202, 40, 0.3);
+  }
+
+  50% {
+    filter: brightness(1.16);
+    box-shadow:
+      inset -12px -15px 22px rgba(82, 35, 0, 0.38),
+      inset 8px 8px 14px rgba(255,255,255,0.78),
+      0 20px 40px rgba(0,0,0,0.42),
+      0 0 56px rgba(255, 202, 40, 0.85);
+  }
+}
+
+/* ========================= */
+/* ÚLTIMAS BOLAS - DIMINUI PROPORCIONALMENTE */
+/* ========================= */
+
+.gold-last-balls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 10px;
+  column-gap: 12px;
+}
+
+.gold-last-balls .gold-small-ball {
+  flex: 0 0 auto;
+  transition: 0.25s ease;
+}
+
+.gold-last-balls.last-balls-large .gold-small-ball {
+  width: 72px;
+  height: 72px;
+}
+
+.gold-last-balls.last-balls-large .gold-small-ball span {
+  font-size: 30px;
+}
+
+.gold-last-balls.last-balls-medium .gold-small-ball {
+  width: 60px;
+  height: 60px;
+}
+
+.gold-last-balls.last-balls-medium .gold-small-ball span {
+  font-size: 25px;
+}
+
+.gold-last-balls.last-balls-small .gold-small-ball {
+  width: 50px;
+  height: 50px;
+}
+
+.gold-last-balls.last-balls-small .gold-small-ball span {
+  font-size: 21px;
+}
+
+.gold-last-balls.last-balls-mini .gold-small-ball {
+  width: 42px;
+  height: 42px;
+}
+
+.gold-last-balls.last-balls-mini .gold-small-ball span {
+  font-size: 17px;
+}
+
+.gold-small-ball.active {
+  animation: lastBallActivePulse 0.9s ease-in-out infinite;
+}
+
+@keyframes lastBallActivePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  50% {
+    transform: scale(1.12);
+    filter: brightness(1.18);
+  }
+}
+
+/* ========================= */
+/* RESPONSIVO TV */
+/* ========================= */
+
+@media (max-width: 900px) {
+  .tv-countdown-content {
+    width: min(360px, 84vw);
+    height: min(360px, 84vw);
+  }
+
+  .tv-countdown-content strong {
+    font-size: clamp(100px, 27vw, 160px);
+  }
+
+  .tv-countdown-content span {
+    font-size: 14px;
+  }
+
+  .tv-countdown-content small {
+    font-size: 11px;
+  }
+
+  .gold-last-balls.last-balls-large .gold-small-ball,
+  .gold-last-balls.last-balls-medium .gold-small-ball {
+    width: 50px;
+    height: 50px;
+  }
+
+  .gold-last-balls.last-balls-large .gold-small-ball span,
+  .gold-last-balls.last-balls-medium .gold-small-ball span {
+    font-size: 21px;
+  }
+}
+
+/* ========================================================= */
+/* HISTÓRICO DE RODADAS - VISUAL BINGO/CASSINO */
+/* ========================================================= */
+
+.round-history-page {
+  min-height: calc(100vh - 80px);
+  padding: 28px;
+  color: #fff7df;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 213, 97, 0.2), transparent 32%),
+    radial-gradient(circle at 12% 28%, rgba(255, 123, 0, 0.13), transparent 24%),
+    radial-gradient(circle at 88% 40%, rgba(255, 193, 7, 0.12), transparent 28%),
+    linear-gradient(135deg, #130005 0%, #28050d 48%, #060004 100%);
+}
+
+.round-history-header {
+  position: relative;
+  padding: 24px;
+  margin-bottom: 22px;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 220, 130, 0.28);
+  background:
+    linear-gradient(135deg, rgba(65, 18, 20, 0.92), rgba(19, 5, 12, 0.94)),
+    radial-gradient(circle at top left, rgba(255, 213, 97, 0.18), transparent 36%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 22px 60px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+}
+
+.round-history-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 215, 120, 0.08), transparent);
+  pointer-events: none;
+}
+
+.round-history-header h2 {
+  margin: 0;
+  color: #ffe58a;
+  font-size: clamp(26px, 3vw, 42px);
+  font-weight: 1000;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 2px 0 rgba(85, 35, 0, 0.65),
+    0 0 28px rgba(255, 193, 7, 0.36);
+}
+
+.round-history-header p {
+  margin: 6px 0 0;
+  color: #f8d98d;
+  font-weight: 800;
+}
+
+.round-history-header label {
+  color: #ffe8a8 !important;
+}
+
+.round-history-header input[type="date"] {
+  height: 44px;
+  border: 1px solid rgba(255, 220, 130, 0.38) !important;
+  border-radius: 999px !important;
+  padding: 0 14px !important;
+  background:
+    linear-gradient(180deg, rgba(40, 7, 13, 0.96), rgba(16, 2, 6, 0.98)) !important;
+  color: #fff7df !important;
+  font-weight: 900 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.24);
+}
+
+.round-history-header button,
+.round-actions button {
+  border: 1px solid rgba(255, 236, 166, 0.55);
+  border-radius: 999px;
+  padding: 12px 18px;
+  background:
+    linear-gradient(180deg, #ffe58a, #ffb300 58%, #b36a00);
+  color: #2b1200;
+  font-weight: 1000;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow:
+    0 0 18px rgba(255, 193, 7, 0.25),
+    0 12px 26px rgba(0, 0, 0, 0.34);
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.round-history-header button:hover,
+.round-actions button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 0 26px rgba(255, 193, 7, 0.42),
+    0 16px 34px rgba(0, 0, 0, 0.42);
+}
+
+.round-history-header button:disabled,
+.round-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.round-history-header > div:nth-of-type(2) > div,
+.round-history-header > div[style*="grid"] > div {
+  min-height: 86px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 220, 130, 0.24);
+  background:
+    radial-gradient(circle at 30% 0%, rgba(255, 213, 97, 0.16), transparent 44%),
+    linear-gradient(180deg, rgba(75, 16, 18, 0.72), rgba(15, 4, 8, 0.84));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 14px 30px rgba(0, 0, 0, 0.26);
+}
+
+.round-history-header > div:nth-of-type(2) span,
+.round-history-header > div[style*="grid"] span {
+  display: block;
+  color: #f5c452;
+  font-size: 12px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.round-history-header > div:nth-of-type(2) strong,
+.round-history-header > div[style*="grid"] strong {
+  display: block;
+  color: #fff7df;
+  font-size: 26px;
+  font-weight: 1000;
+}
+
+.round-list {
+  display: grid;
+  gap: 16px;
+}
+
+.round-card {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr 1.25fr 1.25fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 220, 130, 0.25);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 213, 97, 0.13), transparent 34%),
+    linear-gradient(135deg, rgba(49, 9, 15, 0.96), rgba(14, 3, 7, 0.97));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 18px 48px rgba(0, 0, 0, 0.36);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.round-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 220, 130, 0.48);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 60px rgba(0, 0, 0, 0.48),
+    0 0 28px rgba(255, 193, 7, 0.12);
+}
+
+.round-card h3 {
+  margin: 0 0 6px;
+  color: #ffe58a;
+  font-size: 22px;
+  font-weight: 1000;
+}
+
+.round-card span {
+  display: block;
+  color: #d7b56d;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 5px;
+}
+
+.round-card strong {
+  display: block;
+  color: #fff7df;
+  font-size: 15px;
+  font-weight: 1000;
+}
+
+.round-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.round-actions button {
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.round-actions .danger,
+.round-card .danger {
+  border-color: rgba(255, 150, 150, 0.6);
+  background:
+    linear-gradient(180deg, #ff8a8a, #ef4444 58%, #991b1b);
+  color: #fff;
+  box-shadow:
+    0 0 18px rgba(239, 68, 68, 0.28),
+    0 12px 26px rgba(0, 0, 0, 0.34);
+}
+
+/* Status */
+
+.round-card strong[class*="status-"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 118px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-em_andamento,
+.status-em-andamento {
+  background: rgba(34, 197, 94, 0.16);
+  color: #86efac !important;
+  border: 1px solid rgba(34, 197, 94, 0.38);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.16);
+}
+
+.status-pausada {
+  background: rgba(250, 204, 21, 0.14);
+  color: #fde047 !important;
+  border: 1px solid rgba(250, 204, 21, 0.38);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.14);
+}
+
+.status-finalizada,
+.status-finalizado,
+.status-encerrada,
+.status-encerrado {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.status-criada,
+.status-aguardando {
+  background: rgba(59, 130, 246, 0.14);
+  color: #93c5fd !important;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+/* Detalhes abertos da rodada */
+/* Como parte dos detalhes está com style inline no JSX, aqui reforçamos o visual do container logo após o card */
+
+.round-card + div {
+  position: relative;
+  margin-top: -8px !important;
+  margin-bottom: 18px !important;
+  padding: 20px !important;
+  border-radius: 0 0 24px 24px !important;
+  border: 1px solid rgba(255, 220, 130, 0.22) !important;
+  border-top: none !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 213, 97, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(34, 7, 12, 0.96), rgba(9, 2, 5, 0.98)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+.round-card + div h3 {
+  color: #ffe58a !important;
+  font-size: 18px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.round-card + div span {
+  color: #f5c452 !important;
+}
+
+.round-card + div strong {
+  color: #fff7df !important;
+}
+
+/* Bolinhas dos números sorteados no detalhe */
+
+.round-card + div span[title^="Ordem"] {
+  width: 44px !important;
+  height: 44px !important;
+  border: 2px solid rgba(255, 239, 174, 0.7);
+  background:
+    radial-gradient(circle at 32% 25%, rgba(255, 255, 255, 0.95), transparent 17%),
+    radial-gradient(circle at center, #ffe58a 0%, #f5c452 42%, #b66a00 100%) !important;
+  color: #2b1200 !important;
+  font-weight: 1000 !important;
+  box-shadow:
+    inset -7px -9px 14px rgba(83, 37, 0, 0.3),
+    inset 5px 5px 9px rgba(255, 255, 255, 0.55),
+    0 10px 20px rgba(0, 0, 0, 0.36) !important;
+  transition: 0.18s ease;
+}
+
+.round-card + div span[title^="Ordem"]:hover {
+  transform: translateY(-3px) scale(1.08);
+  filter: brightness(1.12);
+}
+
+/* Mensagem vazia */
+
+.round-list > p {
+  padding: 28px;
+  border-radius: 22px;
+  text-align: center;
+  color: #ffe8a8;
+  font-weight: 900;
+  border: 1px solid rgba(255, 220, 130, 0.24);
+  background:
+    linear-gradient(135deg, rgba(49, 9, 15, 0.9), rgba(14, 3, 7, 0.95));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+}
+
+/* Responsivo */
+
+@media (max-width: 1100px) {
+  .round-card {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .round-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .round-history-page {
+    padding: 16px;
+  }
+
+  .round-history-header {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .round-history-header h2 {
+    font-size: 26px;
+  }
+
+  .round-history-header > div:nth-of-type(2),
+  .round-history-header > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .round-card {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .round-actions {
+    justify-content: stretch;
+  }
+
+  .round-actions button {
+    flex: 1;
+  }
+}

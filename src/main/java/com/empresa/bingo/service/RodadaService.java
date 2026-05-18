@@ -151,6 +151,52 @@ public class RodadaService {
     }
 
     @Transactional
+public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
+    Rodada rodada = buscarRodada(rodadaId);
+    SessaoBingo sessao = rodada.getSessao();
+
+    if (rodada.getStatus() != StatusRodada.PAUSADA) {
+        throw new RegraNegocioException("A rodada só pode ser continuada se estiver pausada.");
+    }
+
+    if (sessao == null) {
+        throw new RegraNegocioException("A rodada não possui sessão vinculada.");
+    }
+
+    if (sessao.getStatus() == StatusSessao.PAUSADA
+            || sessao.getStatus() == StatusSessao.CRIADA
+            || sessao.getStatus() == StatusSessao.AGENDADA) {
+        sessao.setStatus(StatusSessao.EM_ANDAMENTO);
+
+        if (sessao.getDataInicio() == null) {
+            sessao.setDataInicio(LocalDateTime.now());
+        }
+
+        sessaoBingoRepository.save(sessao);
+    }
+
+    rodada.setStatus(StatusRodada.EM_ANDAMENTO);
+
+    if (rodada.getIniciouEm() == null) {
+        rodada.setIniciouEm(LocalDateTime.now());
+    }
+
+    rodada = rodadaRepository.save(rodada);
+
+    auditoriaService.registrar(
+            usuarioLogado,
+            "CONTINUAR_RODADA",
+            "RODADA",
+            rodada.getId(),
+            "Rodada " + rodada.getNumeroRodada() + " continuada."
+    );
+
+    publicarEventoRodada(rodada, "ROUND_RESUMED");
+
+    return toResponse(rodada);
+}
+
+    @Transactional
     public RodadaResponse encerrarRodada(Long rodadaId, Usuario usuarioLogado) {
         Rodada rodada = buscarRodada(rodadaId);
 

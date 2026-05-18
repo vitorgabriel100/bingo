@@ -25,7 +25,7 @@ export default function NumberBall({ number }) {
 
       <div
         key={animationKey}
-        className={`bingo-ball ${animate ? "drop-once" : ""}`}
+        className={`bingo-ball ${animate ? "drop" : ""}`}
       >
         <span>{number ?? "--"}</span>
       </div>

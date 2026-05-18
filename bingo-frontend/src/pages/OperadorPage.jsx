@@ -127,6 +127,10 @@ export default function OperadorPage() {
     );
   }
 
+  function rodadaPausada(status = statusRodada) {
+    return String(status || "").toUpperCase() === "PAUSADA";
+  }
+
   function limparRodadaSelecionada() {
     setRodadaId(null);
     setNumeroRodada(null);
@@ -923,6 +927,7 @@ export default function OperadorPage() {
 
       setStatusRodada(event.status || "CRIADA");
       setSorteioLiberado(false);
+      setAutoSorteio(false);
       setMensagem(`Rodada ${event.numeroRodada || idRodada} criada.`);
       return;
     }
@@ -941,6 +946,7 @@ export default function OperadorPage() {
       aplicarDadosRodada(event);
 
       setStatusRodada("EM_ANDAMENTO");
+      setAutoSorteio(false);
       liberarSorteioAposContagem();
 
       return;
@@ -951,6 +957,20 @@ export default function OperadorPage() {
       setAutoSorteio(false);
       setSorteioLiberado(false);
       setMensagem("Rodada pausada.");
+
+      return;
+    }
+
+    if (
+      event.type === "ROUND_RESUMED" ||
+      event.type === "ROUND_CONTINUED" ||
+      event.type === "GAME_RESUMED"
+    ) {
+      aplicarDadosRodada(event);
+      setStatusRodada("EM_ANDAMENTO");
+      setAutoSorteio(false);
+      setSorteioLiberado(true);
+      setMensagem("Rodada retomada. Sorteio liberado.");
 
       return;
     }
@@ -1013,6 +1033,11 @@ export default function OperadorPage() {
       return;
     }
 
+    if (rodadaPausada()) {
+      setMensagem("A rodada está pausada. Use o botão Continuar.");
+      return;
+    }
+
     try {
       setAutoSorteio(false);
       setSorteioLiberado(false);
@@ -1054,11 +1079,23 @@ export default function OperadorPage() {
     }
 
     try {
-      const response = await api.patch(`/rodadas/${rodadaId}/pausar`);
+      setAutoSorteio(false);
+      setSorteioLiberado(false);
+      setMensagem("Pausando rodada...");
 
-      aplicarDadosRodada(response.data);
+      const data = await tentarRequisicoes([
+        { metodo: "patch", url: `/rodadas/${rodadaId}/pausar` },
+        { metodo: "patch", url: `/rodadas/${rodadaId}/pause` },
+        {
+          metodo: "patch",
+          url: `/rodadas/${rodadaId}`,
+          body: { status: "PAUSADA" },
+        },
+      ]);
 
-      setStatusRodada(response.data.status || "PAUSADA");
+      aplicarDadosRodada(data);
+
+      setStatusRodada(data?.status || "PAUSADA");
       setAutoSorteio(false);
       setSorteioLiberado(false);
       setMensagem("Rodada pausada.");
@@ -1076,6 +1113,62 @@ export default function OperadorPage() {
     }
   }
 
+  async function continuarRodada() {
+    if (!rodadaId) {
+      setMensagem("Nenhuma rodada selecionada.");
+      return;
+    }
+
+    if (statusFinalizado(statusRodada)) {
+      setMensagem("Essa rodada já está encerrada.");
+      limparRodadaSelecionada();
+      return;
+    }
+
+    try {
+      setAutoSorteio(false);
+      setMensagem("Retomando rodada...");
+
+      const data = await tentarRequisicoes([
+        { metodo: "patch", url: `/rodadas/${rodadaId}/continuar` },
+        { metodo: "patch", url: `/rodadas/${rodadaId}/retomar` },
+        { metodo: "patch", url: `/rodadas/${rodadaId}/resume` },
+        {
+          metodo: "patch",
+          url: `/rodadas/${rodadaId}`,
+          body: { status: "EM_ANDAMENTO" },
+        },
+        { metodo: "patch", url: `/rodadas/${rodadaId}/iniciar` },
+      ]);
+
+      aplicarDadosRodada(data);
+
+      setStatusRodada(data?.status || "EM_ANDAMENTO");
+      setSorteioLiberado(true);
+      setMensagem("Rodada retomada. Sorteio liberado.");
+    } catch (error) {
+      console.error("Erro ao continuar rodada:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Resposta do backend:", error.response?.data);
+
+      setMensagem(
+        error?.response?.data?.mensagem ||
+          error?.response?.data?.message ||
+          error?.response?.data?.erro ||
+          "Erro ao continuar rodada."
+      );
+    }
+  }
+
+  async function alternarPausaRodada() {
+    if (rodadaPausada()) {
+      await continuarRodada();
+      return;
+    }
+
+    await pausarRodada();
+  }
+
   async function encerrarRodada() {
     if (!rodadaId) {
       setMensagem("Nenhuma rodada selecionada.");
@@ -1085,6 +1178,15 @@ export default function OperadorPage() {
     if (statusFinalizado(statusRodada)) {
       setMensagem("Essa rodada já está encerrada.");
       limparRodadaSelecionada();
+      return;
+    }
+
+    const confirmou = window.confirm(
+      "Tem certeza que deseja encerrar esta rodada? Essa ação não poderá ser desfeita."
+    );
+
+    if (!confirmou) {
+      setMensagem("Encerramento cancelado.");
       return;
     }
 
@@ -1132,6 +1234,11 @@ export default function OperadorPage() {
     if (statusFinalizado(statusRodada)) {
       setMensagem("Essa rodada já foi encerrada. Crie uma nova rodada.");
       limparRodadaSelecionada();
+      return;
+    }
+
+    if (rodadaPausada()) {
+      setMensagem("A rodada está pausada. Clique em Continuar para voltar.");
       return;
     }
 
@@ -1303,6 +1410,49 @@ export default function OperadorPage() {
     setMensagem("Marcações de prêmio reiniciadas no backend.");
   }
 
+  function alternarAutomatico() {
+    if (!rodadaId) {
+      setMensagem("Crie ou selecione uma rodada antes de ligar o automático.");
+      return;
+    }
+
+    if (statusFinalizado(statusRodada)) {
+      setMensagem("Essa rodada já está encerrada.");
+      setAutoSorteio(false);
+      return;
+    }
+
+    if (rodadaPausada()) {
+      setMensagem("A rodada está pausada. Clique em Continuar antes de ligar o automático.");
+      setAutoSorteio(false);
+      return;
+    }
+
+    if (statusRodada !== "EM_ANDAMENTO") {
+      setMensagem("Inicie a rodada antes de ligar o automático.");
+      setAutoSorteio(false);
+      return;
+    }
+
+    if (!sorteioLiberado) {
+      setMensagem("Aguarde a contagem terminar na TV antes de ligar o automático.");
+      setAutoSorteio(false);
+      return;
+    }
+
+    if (historico.length >= 75) {
+      setMensagem("Todos os 75 números já foram sorteados.");
+      setAutoSorteio(false);
+      return;
+    }
+
+    setAutoSorteio((atual) => {
+      const novoValor = !atual;
+      setMensagem(novoValor ? "Automático ligado." : "Automático desligado.");
+      return novoValor;
+    });
+  }
+
   useEffect(() => {
     if (timeoutAutoRef.current) {
       clearTimeout(timeoutAutoRef.current);
@@ -1310,6 +1460,7 @@ export default function OperadorPage() {
 
     if (!autoSorteio) return;
     if (statusRodada !== "EM_ANDAMENTO") return;
+    if (rodadaPausada(statusRodada)) return;
     if (!sorteioLiberado) return;
     if (!rodadaId) return;
     if (sorteando) return;
@@ -1350,14 +1501,24 @@ export default function OperadorPage() {
   }, []);
 
   const rodadaEstaFinalizada = statusFinalizado(statusRodada);
+  const estaPausada = rodadaPausada(statusRodada);
 
   const sorteioBloqueado =
     !rodadaId ||
     rodadaEstaFinalizada ||
+    estaPausada ||
     statusRodada !== "EM_ANDAMENTO" ||
     !sorteioLiberado ||
     historico.length >= 75 ||
     sorteando;
+
+  const automaticoBloqueado =
+    !rodadaId ||
+    rodadaEstaFinalizada ||
+    estaPausada ||
+    statusRodada !== "EM_ANDAMENTO" ||
+    !sorteioLiberado ||
+    historico.length >= 75;
 
   const ultimosNove = historico.slice(-9).reverse();
   const ordemAtual = historico.length;
@@ -1458,6 +1619,8 @@ export default function OperadorPage() {
           >
             {sorteando
               ? "SORTEANDO..."
+              : estaPausada
+              ? "RODADA PAUSADA"
               : !sorteioLiberado && statusRodada === "EM_ANDAMENTO"
               ? "AGUARDE A CONTAGEM"
               : "SORTEAR"}
@@ -1478,6 +1641,7 @@ export default function OperadorPage() {
             disabled={
               !rodadaId ||
               statusRodada === "EM_ANDAMENTO" ||
+              estaPausada ||
               rodadaEstaFinalizada
             }
           >
@@ -1485,24 +1649,18 @@ export default function OperadorPage() {
           </button>
 
           <button
-            onClick={pausarRodada}
+            onClick={alternarPausaRodada}
             disabled={!rodadaId || rodadaEstaFinalizada}
           >
-            Pausar
+            {estaPausada ? "Continuar" : "Pausar"}
           </button>
 
           <button
-            onClick={() => setAutoSorteio((v) => !v)}
-            disabled={
-              !rodadaId ||
-              rodadaEstaFinalizada ||
-              statusRodada !== "EM_ANDAMENTO" ||
-              !sorteioLiberado ||
-              historico.length >= 75
-            }
+            onClick={alternarAutomatico}
+            disabled={automaticoBloqueado && !autoSorteio}
             className={autoSorteio ? "auto-on" : ""}
           >
-            Auto: {autoSorteio ? "ON" : "OFF"}
+            Automático {autoSorteio ? "Ligado" : "Desligado"}
           </button>
 
           <button onClick={abrirModalNovaRodada}>Nova Rodada</button>

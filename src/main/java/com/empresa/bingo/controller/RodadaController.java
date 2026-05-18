@@ -36,6 +36,27 @@ public class RodadaController {
     }
 
     @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/continuar")
+    public RodadaResponse continuar(@PathVariable Long id, Authentication authentication) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.continuarRodada(id, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/retomar")
+    public RodadaResponse retomar(@PathVariable Long id, Authentication authentication) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.continuarRodada(id, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    @PatchMapping("/{id}/resume")
+    public RodadaResponse resume(@PathVariable Long id, Authentication authentication) {
+        Usuario usuario = getUsuarioAutenticado(authentication);
+        return rodadaService.continuarRodada(id, usuario);
+    }
+
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
     @PatchMapping("/{id}/encerrar")
     public RodadaResponse encerrar(@PathVariable Long id, Authentication authentication) {
         Usuario usuario = getUsuarioAutenticado(authentication);
@@ -64,6 +85,16 @@ public class RodadaController {
 
     @GetMapping("/{id}")
     public RodadaResponse buscarPorId(@PathVariable Long id) {
+        return rodadaService.buscarRodadaPorId(id);
+    }
+
+    @GetMapping("/{id}/premiacao")
+    public RodadaResponse buscarPremiacaoDaRodada(@PathVariable Long id) {
+        return rodadaService.buscarRodadaPorId(id);
+    }
+
+    @GetMapping("/{id}/premios")
+    public RodadaResponse buscarPremiosDaRodada(@PathVariable Long id) {
         return rodadaService.buscarRodadaPorId(id);
     }
 
