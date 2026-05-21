@@ -547,12 +547,22 @@ export default function TvPage() {
     if (!somLiberadoRef.current || !audioRef.current) return;
 
     try {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.volume = volume;
-      await audioRef.current.play();
+      const audio = audioRef.current;
+
+      audio.pause();
+
+      try {
+        audio.currentTime = 0;
+      } catch {
+        // algumas TVs travam ao mexer no currentTime antes do áudio carregar
+      }
+
+      audio.muted = false;
+      audio.volume = Math.max(0, Math.min(1, volume));
+
+      await audio.play();
     } catch (error) {
-      console.warn("Áudio bloqueado ou arquivo ausente:", error);
+      console.warn("Áudio bloqueado, ausente ou incompatível:", error);
     }
   }
 
@@ -574,28 +584,113 @@ export default function TvPage() {
     }
   }
 
+  function desbloquearAudioElemento(audioRef, nome = "áudio") {
+    return new Promise((resolve) => {
+      const audio = audioRef.current;
+
+      if (!audio) {
+        resolve(false);
+        return;
+      }
+
+      let finalizado = false;
+
+      const volumeOriginal = audio.volume;
+      const mutedOriginal = audio.muted;
+      const loopOriginal = audio.loop;
+      const playbackRateOriginal = audio.playbackRate;
+
+      function finalizar(resultado) {
+        if (finalizado) return;
+
+        finalizado = true;
+
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch {
+          // ignora erro de reset em navegador de TV
+        }
+
+        audio.volume = volumeOriginal;
+        audio.muted = mutedOriginal;
+        audio.loop = loopOriginal;
+        audio.playbackRate = playbackRateOriginal;
+
+        resolve(resultado);
+      }
+
+      try {
+        audio.pause();
+
+        try {
+          audio.currentTime = 0;
+        } catch {
+          // ignora
+        }
+
+        audio.volume = 0.001;
+        audio.muted = false;
+        audio.loop = false;
+        audio.playbackRate = 1;
+
+        const playPromise = audio.play();
+
+        if (playPromise && typeof playPromise.then === "function") {
+          playPromise
+            .then(() => {
+              setTimeout(() => finalizar(true), 180);
+            })
+            .catch((error) => {
+              console.warn(`Não foi possível liberar ${nome}:`, error);
+              finalizar(false);
+            });
+        } else {
+          setTimeout(() => finalizar(true), 180);
+        }
+      } catch (error) {
+        console.warn(`Erro ao tentar liberar ${nome}:`, error);
+        finalizar(false);
+      }
+    });
+  }
+
   async function liberarSom() {
     try {
       somLiberadoRef.current = true;
+      setMensagem("Ativando som da TV...");
 
-      const unlockAudio = new Audio(
-        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQQAAAAAAA=="
+      const resultados = await Promise.allSettled([
+        desbloquearAudioElemento(machineAudioRef, "som da máquina"),
+        desbloquearAudioElemento(dropAudioRef, "som da bolinha"),
+        desbloquearAudioElemento(countdownAudioRef, "vinheta da contagem"),
+      ]);
+
+      const algumAudioLiberado = resultados.some(
+        (resultado) =>
+          resultado.status === "fulfilled" && resultado.value === true
       );
 
-      unlockAudio.volume = 0.01;
-      await unlockAudio.play();
-      unlockAudio.pause();
-      unlockAudio.currentTime = 0;
-
       setSomLiberado(true);
-      setMensagem("Som da TV ativado. Boa sorte a todos!");
 
-      console.log("Som da TV liberado.");
+      if (algumAudioLiberado) {
+        setMensagem("Som da TV ativado. Boa sorte a todos!");
+        console.log("Som da TV liberado.");
+      } else {
+        setMensagem(
+          "Som ativado. Se não tocar na próxima bola, verifique os arquivos de áudio."
+        );
+        console.warn(
+          "A TV não confirmou o desbloqueio dos áudios, mas o som foi liberado no sistema."
+        );
+      }
     } catch (error) {
-      somLiberadoRef.current = false;
-      setSomLiberado(false);
-      console.warn("Não foi possível liberar o som:", error);
-      setMensagem("Clique novamente em Ativar som da TV.");
+      somLiberadoRef.current = true;
+      setSomLiberado(true);
+
+      console.warn("Falha parcial ao liberar som, mantendo som ativado:", error);
+
+      setMensagem("Som ativado. Sorteie uma bola para testar o áudio da TV.");
     }
   }
 

@@ -14971,3 +14971,64 @@ body,
     flex: 1;
   }
 }
+
+.bingo-video-globe-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible !important;
+}
+
+.bingo-video-globe-stage {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible !important;
+}
+
+.bingo-video-globe {
+  display: block !important;
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+  min-height: 320px;
+  object-fit: contain;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+
+.bingo-video-globe.loaded {
+  opacity: 1 !important;
+}
+
+.bingo-video-globe-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f7d675;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.bingo-video-glass-overlay {
+  pointer-events: none;
+}
+
+.bingo-video-exit-tube {
+  pointer-events: none;
+}
