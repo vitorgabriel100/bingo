@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const VIDEO_SRC = "/videos/bingo-globo.mp4?v=2";
+const VIDEO_SRC = "/videos/bingo-globo.mp4?v=3";
 
 export default function BingoGlobe3D({
   numeroAtual,
@@ -16,11 +16,12 @@ export default function BingoGlobe3D({
   const [quedaKey, setQuedaKey] = useState(0);
 
   const ultimoNumeroAnimadoRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const tentativaPlayRef = useRef(null);
+  const timeoutQuedaRef = useRef(null);
+  const fallbackLoadingRef = useRef(null);
+  const jaTentouPlayRef = useRef(false);
 
   const numeroExibido = useMemo(() => {
-    if (numeroAnimado !== null && numeroAnimado !== undefined) {
+    if (numeroAnimado !== null && numeroAnimado !== undefined && numeroAnimado !== "") {
       return numeroAnimado;
     }
 
@@ -29,15 +30,24 @@ export default function BingoGlobe3D({
 
   function formatarNumero(numero) {
     if (numero === null || numero === undefined || numero === "") return "--";
-    return String(Number(numero)).padStart(2, "0");
+
+    const numeroConvertido = Number(numero);
+
+    if (Number.isNaN(numeroConvertido)) return "--";
+
+    return String(numeroConvertido).padStart(2, "0");
   }
 
   function marcarVideoPronto() {
-    setVideoPronto(true);
+    setVideoPronto((anterior) => {
+      if (anterior) return anterior;
+      return true;
+    });
+
     setVideoErro(false);
   }
 
-  async function tentarTocarVideo() {
+  async function iniciarVideo() {
     const video = videoRef.current;
 
     if (!video) return;
@@ -46,57 +56,115 @@ export default function BingoGlobe3D({
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
+      video.autoplay = true;
 
       video.setAttribute("muted", "");
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
 
-      if (faseAnimacao === "spinning") {
-        video.playbackRate = 1.2;
-      } else if (faseAnimacao === "dropping" || faseAnimacao === "revealed") {
-        video.playbackRate = 1.25;
-      } else {
-        video.playbackRate = 1;
-      }
+      video.playbackRate = 1;
 
-      await video.play();
+      const resultadoPlay = video.play();
+
+      if (resultadoPlay && typeof resultadoPlay.then === "function") {
+        await resultadoPlay;
+      }
 
       marcarVideoPronto();
     } catch (error) {
-      console.warn("TV não conseguiu iniciar o vídeo do globo ainda:", error);
+      console.warn("TV não conseguiu iniciar o vídeo automaticamente:", error);
 
-      if (tentativaPlayRef.current) {
-        clearTimeout(tentativaPlayRef.current);
-      }
-
-      tentativaPlayRef.current = setTimeout(() => {
-        tentarTocarVideo();
-      }, 900);
+      /*
+        Não fica tentando play em loop infinito.
+        Em algumas TVs isso trava bastante.
+        Mesmo se o vídeo não tocar, liberamos a tela para não ficar presa em "Carregando globo...".
+      */
+      marcarVideoPronto();
     }
   }
-
-  useEffect(() => {
-    tentarTocarVideo();
-
-    return () => {
-      if (tentativaPlayRef.current) {
-        clearTimeout(tentativaPlayRef.current);
-      }
-    };
-  }, [faseAnimacao]);
 
   useEffect(() => {
     const video = videoRef.current;
 
     if (!video) return;
 
+    /*
+      Fallback principal:
+      Se a TV demorar ou falhar nos eventos do vídeo, remove o "Carregando globo..."
+      para não deixar a tela preta presa.
+    */
+    fallbackLoadingRef.current = setTimeout(() => {
+      marcarVideoPronto();
+    }, 1800);
+
+    const aoCarregar = () => {
+      marcarVideoPronto();
+    };
+
+    const aoErro = (error) => {
+      console.error("Erro ao carregar vídeo do globo:", error);
+      setVideoErro(true);
+
+      /*
+        Mesmo com erro no vídeo, não deixa a TV pesada presa no loading.
+        A bolinha e o restante da tela continuam funcionando.
+      */
+      setVideoPronto(true);
+    };
+
+    video.addEventListener("loadedmetadata", aoCarregar);
+    video.addEventListener("loadeddata", aoCarregar);
+    video.addEventListener("canplay", aoCarregar);
+    video.addEventListener("canplaythrough", aoCarregar);
+    video.addEventListener("playing", aoCarregar);
+    video.addEventListener("error", aoErro);
+
     try {
       video.load();
-      tentarTocarVideo();
     } catch {
-      // ignora falha de load em navegador antigo de TV
+      // Ignora falha de load em navegador antigo de TV.
     }
+
+    if (!jaTentouPlayRef.current) {
+      jaTentouPlayRef.current = true;
+      iniciarVideo();
+    }
+
+    return () => {
+      if (fallbackLoadingRef.current) {
+        clearTimeout(fallbackLoadingRef.current);
+      }
+
+      video.removeEventListener("loadedmetadata", aoCarregar);
+      video.removeEventListener("loadeddata", aoCarregar);
+      video.removeEventListener("canplay", aoCarregar);
+      video.removeEventListener("canplaythrough", aoCarregar);
+      video.removeEventListener("playing", aoCarregar);
+      video.removeEventListener("error", aoErro);
+    };
   }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    /*
+      Evita ficar chamando play toda hora.
+      Só ajusta velocidade de reprodução quando o vídeo já existe.
+    */
+    try {
+      if (faseAnimacao === "spinning") {
+        video.playbackRate = 1.08;
+      } else if (faseAnimacao === "dropping" || faseAnimacao === "revealed") {
+        video.playbackRate = 1.12;
+      } else {
+        video.playbackRate = 1;
+      }
+    } catch {
+      // Ignora falha em TVs antigas.
+    }
+  }, [faseAnimacao]);
 
   useEffect(() => {
     const numeroValido =
@@ -120,23 +188,25 @@ export default function BingoGlobe3D({
 
     ultimoNumeroAnimadoRef.current = numeroExibido;
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    if (timeoutQuedaRef.current) {
+      clearTimeout(timeoutQuedaRef.current);
     }
 
     setQuedaKey((prev) => prev + 1);
     setBolaCaindo(numeroExibido);
 
-    timeoutRef.current = setTimeout(() => {
+    timeoutQuedaRef.current = setTimeout(() => {
       setBolaCaindo(null);
-    }, 720);
+    }, 620);
 
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (timeoutQuedaRef.current) {
+        clearTimeout(timeoutQuedaRef.current);
       }
     };
   }, [numeroExibido, faseAnimacao]);
+
+  const numeroFormatado = formatarNumero(numeroExibido);
 
   return (
     <div className={`bingo-video-globe-wrapper fase-${faseAnimacao}`}>
@@ -153,21 +223,15 @@ export default function BingoGlobe3D({
           preload="auto"
           controls={false}
           disablePictureInPicture
-          onLoadedData={marcarVideoPronto}
-          onCanPlay={marcarVideoPronto}
-          onCanPlayThrough={marcarVideoPronto}
-          onPlaying={marcarVideoPronto}
-          onError={(error) => {
-            console.error("Erro ao carregar vídeo do globo:", error);
-            setVideoErro(true);
-            setVideoPronto(false);
-          }}
+          poster=""
         >
           <source src={VIDEO_SRC} type="video/mp4" />
         </video>
 
         {!videoPronto && !videoErro && (
-          <div className="bingo-video-globe-loading">Carregando globo...</div>
+          <div className="bingo-video-globe-loading">
+            Carregando globo...
+          </div>
         )}
 
         {videoErro && (
@@ -186,7 +250,7 @@ export default function BingoGlobe3D({
           )}
 
           <div className="bingo-fixed-current-ball">
-            <span>{formatarNumero(numeroExibido)}</span>
+            <span>{numeroFormatado}</span>
           </div>
         </div>
       </div>

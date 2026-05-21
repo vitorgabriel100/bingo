@@ -41,7 +41,7 @@ export default function TvPage() {
   const ultimoNumeroFaladoRef = useRef(null);
   const contagemCanceladaRef = useRef(false);
 
-  const VOICE_PLAYBACK_RATE = 1.15;
+  const VOICE_PLAYBACK_RATE = 0.65;
   const VOLUME_MUSICA_CONTAGEM = 0.72;
   const VOLUME_MUSICA_FUNDO = 0.34;
   const VOLUME_MUSICA_DURANTE_VOZ = 0.16;
@@ -893,28 +893,28 @@ export default function TvPage() {
 
     try {
       setCountdown(null);
-      setNumeroAnimado(null);
 
-      setMensagem("Girando o globo...");
-      setFaseAnimacao("spinning");
-
-      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-      await tocarAudio(machineAudioRef, VOLUME_MAQUINA);
-      await esperar(2200);
-
-      setMensagem("Bolinha saindo do globo...");
-
-      setNumeroAnimado(numeroNormalizado);
       setNumeroAtual(numeroNormalizado);
+      setNumeroAnimado(numeroNormalizado);
 
       setHistorico((prev) =>
         prev.includes(numeroNormalizado) ? prev : [...prev, numeroNormalizado]
       );
 
+      setMensagem(
+        `Bolinha sorteada: ${letraDoNumero(numeroNormalizado)} ${formatarNumero(
+          numeroNormalizado
+        )}`
+      );
+
       setFaseAnimacao("dropping");
 
-      await tocarAudio(dropAudioRef, VOLUME_QUEDA);
-      await esperar(850);
+      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
+
+      tocarAudio(machineAudioRef, VOLUME_MAQUINA);
+      tocarAudio(dropAudioRef, VOLUME_QUEDA);
+
+      await esperar(450);
 
       pararAudio(machineAudioRef);
 
@@ -928,12 +928,12 @@ export default function TvPage() {
 
       if (ultimoNumeroFaladoRef.current !== numeroNormalizado) {
         ultimoNumeroFaladoRef.current = numeroNormalizado;
-        await falarNumeroSorteado(numeroNormalizado);
+        falarNumeroSorteado(numeroNormalizado);
       }
 
       ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
 
-      await esperar(500);
+      await esperar(250);
 
       setFaseAnimacao("idle");
     } finally {
@@ -1121,7 +1121,7 @@ export default function TvPage() {
         pararTodosAudios();
       }
     },
-    [premioAtual, rodadaId, premiacaoAtual]
+    [premioAtual, rodadaId]
   );
 
   useWebSocket({
@@ -1192,7 +1192,7 @@ export default function TvPage() {
       }
 
       atualizarPremiacaoDaTv();
-    }, 700);
+    }, 2000);
 
     window.addEventListener("premioAtualizado", atualizarPremio);
     window.addEventListener("premiacaoAtualizada", atualizarPremiacao);
