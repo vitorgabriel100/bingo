@@ -19,10 +19,15 @@ export default function LoginPage() {
     try {
       const user = await login(email, senha);
 
-      if (user.perfil === "OPERADOR") navigate("/operador");
-      else if (user.perfil === "JOGADOR") navigate("/jogador");
-      else if (user.perfil === "GERENTE" || user.perfil === "ADMIN") navigate("/operador");
-      else navigate("/");
+      if (user.perfil === "OPERADOR") {
+        navigate("/operador");
+      } else if (user.perfil === "JOGADOR") {
+        navigate("/jogador");
+      } else if (user.perfil === "GERENTE" || user.perfil === "ADMIN") {
+        navigate("/operador");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       setErro(error?.response?.data?.mensagem || "Falha no login.");
     } finally {
@@ -31,31 +36,88 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={handleSubmit}>
-        <h1>Sistema de Bingo</h1>
-        <p>Acesse sua conta</p>
+    <div className="login-app-page">
+      <div className="login-app-bg-light login-app-bg-light-one" />
+      <div className="login-app-bg-light login-app-bg-light-two" />
 
-        <input
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <main className="login-app-shell">
+        <section className="login-app-brand">
+          <div className="login-app-logo">
+            <span>🎱</span>
+          </div>
 
-        <input
-          type="password"
-          placeholder="Senha"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-        />
+          <span className="login-app-eyebrow">Sistema oficial</span>
 
-        {erro && <p className="error-text">{erro}</p>}
+          <h1>Bingo Beneficente</h1>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
+          <p>
+            Controle de sorteio, cartelas, configurações, histórico de rodadas
+            e transmissão da TV em tempo real.
+          </p>
+
+          <div className="login-app-features">
+            <div>
+              <strong>Sorteio</strong>
+              <span>Painel do operador</span>
+            </div>
+
+            <div>
+              <strong>TV</strong>
+              <span>Globo e números</span>
+            </div>
+
+            <div>
+              <strong>Relatórios</strong>
+              <span>Histórico das rodadas</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="login-app-card">
+          <div className="login-app-card-header">
+            <span>Acesso ao aplicativo</span>
+            <strong>Entrar</strong>
+            <small>Informe seu e-mail e senha para continuar.</small>
+          </div>
+
+          <form onSubmit={handleSubmit} className="login-app-form">
+            <label>
+              E-mail
+              <input
+                type="email"
+                placeholder="Digite seu e-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+            </label>
+
+            <label>
+              Senha
+              <input
+                type="password"
+                placeholder="Digite sua senha"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+
+            {erro && <p className="error-text login-error-text">{erro}</p>}
+
+            <button type="submit" disabled={loading}>
+              {loading ? "Entrando..." : "Entrar no sistema"}
+            </button>
+          </form>
+
+          <div className="login-app-footer">
+            <strong>Praça Moema 2</strong>
+            <span></span>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

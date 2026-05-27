@@ -31,7 +31,6 @@ export default function TvPage() {
 
   const machineAudioRef = useRef(null);
   const dropAudioRef = useRef(null);
-  const voiceAudioRef = useRef(null);
   const countdownAudioRef = useRef(null);
   const somLiberadoRef = useRef(false);
 
@@ -41,7 +40,6 @@ export default function TvPage() {
   const ultimoNumeroFaladoRef = useRef(null);
   const contagemCanceladaRef = useRef(false);
 
-  const VOICE_PLAYBACK_RATE = 0.65;
   const VOLUME_MUSICA_CONTAGEM = 0.72;
   const VOLUME_MUSICA_FUNDO = 0.34;
   const VOLUME_MUSICA_DURANTE_VOZ = 0.16;
@@ -146,7 +144,8 @@ export default function TvPage() {
   function valorPremioAtual(premio = premioAtual) {
     if (premio === "PRIMEIRA_LINHA") return formatarMoeda(premiacaoAtual.linha);
     if (premio === "CARTELA_CHEIA") return formatarMoeda(premiacaoAtual.bingo);
-    if (premio === "DUPLA_LINHA") return formatarMoeda(premiacaoAtual.duploBingo);
+    if (premio === "DUPLA_LINHA")
+      return formatarMoeda(premiacaoAtual.duploBingo);
 
     if (premio === "SEGUNDA_LINHA" || premio === "BOLA_MAX") {
       return premiacaoAtual.bolaMax
@@ -436,21 +435,6 @@ export default function TvPage() {
     }
   }
 
-  function caminhosAudioNumero(numero) {
-    const letraMaiuscula = letraDoNumero(numero);
-    const letraMinuscula = letraMaiuscula.toLowerCase();
-
-    const numeroComZero = formatarNumero(numero);
-    const numeroSemZero = String(Number(numero));
-
-    return [
-      `/sounds/bingo-voice/${letraMaiuscula}_${numeroSemZero}.mp3`,
-      `/sounds/bingo-voice/${letraMinuscula}_${numeroSemZero}.mp3`,
-      `/sounds/bingo-voice/${letraMaiuscula}_${numeroComZero}.mp3`,
-      `/sounds/bingo-voice/${letraMinuscula}_${numeroComZero}.mp3`,
-    ];
-  }
-
   function ajustarVolume(audioRef, volume) {
     if (!audioRef.current) return;
 
@@ -472,71 +456,156 @@ export default function TvPage() {
     }
   }
 
-  function tocarAudioArquivo(src, playbackRate = 1) {
-    return new Promise((resolve) => {
-      if (!somLiberadoRef.current) {
-        resolve(false);
-        return;
-      }
+  function numeroPorExtenso(numero) {
+    const n = Number(numero);
 
-      if (voiceAudioRef.current) {
-        voiceAudioRef.current.pause();
-        voiceAudioRef.current.currentTime = 0;
-      }
+    const unidades = {
+      0: "zero",
+      1: "um",
+      2: "dois",
+      3: "três",
+      4: "quatro",
+      5: "cinco",
+      6: "seis",
+      7: "sete",
+      8: "oito",
+      9: "nove",
+      10: "dez",
+      11: "onze",
+      12: "doze",
+      13: "treze",
+      14: "quatorze",
+      15: "quinze",
+      16: "dezesseis",
+      17: "dezessete",
+      18: "dezoito",
+      19: "dezenove",
+    };
 
-      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_DURANTE_VOZ);
+    const dezenas = {
+      20: "vinte",
+      30: "trinta",
+      40: "quarenta",
+      50: "cinquenta",
+      60: "sessenta",
+      70: "setenta",
+    };
 
-      const audio = new Audio();
-      audio.src = src;
-      audio.volume = 1;
-      audio.playbackRate = playbackRate;
-      audio.preload = "auto";
+    if (unidades[n]) return unidades[n];
 
-      voiceAudioRef.current = audio;
+    const dezena = Math.floor(n / 10) * 10;
+    const unidade = n % 10;
 
-      let finalizado = false;
+    if (unidade === 0) return dezenas[dezena] || String(n);
 
-      const finalizar = (tocou) => {
-        if (finalizado) return;
-        finalizado = true;
-        ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-        resolve(tocou);
-      };
+    return `${dezenas[dezena]} e ${unidades[unidade]}`;
+  }
 
-      audio.onended = () => finalizar(true);
+  function digitoPorExtenso(digito) {
+    const mapa = {
+      "0": "zero",
+      "1": "um",
+      "2": "dois",
+      "3": "três",
+      "4": "quatro",
+      "5": "cinco",
+      "6": "seis",
+      "7": "sete",
+      "8": "oito",
+      "9": "nove",
+    };
 
-      audio.onerror = () => {
-        console.error("Erro ao encontrar/tocar áudio:", src);
-        finalizar(false);
-      };
+    return mapa[String(digito)] || String(digito);
+  }
 
-      audio
-        .play()
-        .then(() => {
-          console.log("Áudio tocando:", src, "velocidade:", playbackRate);
-        })
-        .catch((error) => {
-          console.error("Erro ao tocar áudio:", src, error);
-          finalizar(false);
-        });
-    });
+  function montarTextoLocucao(numero) {
+    const numeroNormalizado = Number(numero);
+
+    if (!Number.isFinite(numeroNormalizado)) return "";
+
+    const numeroTexto = numeroPorExtenso(numeroNormalizado);
+    const digitos = String(numeroNormalizado)
+      .split("")
+      .map((digito) => digitoPorExtenso(digito));
+
+    if (digitos.length === 1) {
+      return `${numeroTexto}. ${numeroTexto}.`;
+    }
+
+    return `${numeroTexto}. ${digitos.join(". ")}.`;
+  }
+
+  function escolherVozFemininaPtBr() {
+    if (!window.speechSynthesis) return null;
+
+    const vozes = window.speechSynthesis.getVoices();
+
+    const prioridadePorNome = [
+      "Google português do Brasil",
+      "Microsoft Francisca",
+      "Microsoft Maria",
+      "Francisca",
+      "Maria",
+      "Google",
+    ];
+
+    for (const nome of prioridadePorNome) {
+      const voz = vozes.find(
+        (item) =>
+          item.lang?.toLowerCase().includes("pt-br") &&
+          item.name?.toLowerCase().includes(nome.toLowerCase())
+      );
+
+      if (voz) return voz;
+    }
+
+    return (
+      vozes.find((voz) => voz.lang?.toLowerCase().includes("pt-br")) ||
+      vozes.find((voz) => voz.lang?.toLowerCase().startsWith("pt")) ||
+      null
+    );
   }
 
   async function falarNumeroSorteado(numero) {
     if (!somLiberadoRef.current) return;
     if (!numero && numero !== 0) return;
+    if (!window.speechSynthesis) return;
 
-    const caminhos = caminhosAudioNumero(numero);
+    const texto = montarTextoLocucao(numero);
 
-    for (const caminho of caminhos) {
-      const tocou = await tocarAudioArquivo(caminho, VOICE_PLAYBACK_RATE);
+    if (!texto) return;
 
-      if (tocou) {
-        return;
+    try {
+      window.speechSynthesis.cancel();
+
+      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_DURANTE_VOZ);
+
+      const fala = new SpeechSynthesisUtterance(texto);
+
+      fala.lang = "pt-BR";
+      fala.rate = 1.28;
+      fala.pitch = 1.12;
+      fala.volume = 1;
+
+      const voz = escolherVozFemininaPtBr();
+
+      if (voz) {
+        fala.voice = voz;
       }
-    }
 
-    console.error("Nenhum áudio encontrado para o número:", numero);
+      fala.onend = () => {
+        ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
+      };
+
+      fala.onerror = () => {
+        ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
+      };
+
+      window.speechSynthesis.speak(fala);
+    } catch (error) {
+      console.error("Erro na locução do número:", error);
+      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
+    }
   }
 
   function esperar(ms) {
@@ -578,9 +647,8 @@ export default function TvPage() {
     pararAudio(dropAudioRef);
     pararAudio(countdownAudioRef);
 
-    if (voiceAudioRef.current) {
-      voiceAudioRef.current.pause();
-      voiceAudioRef.current.currentTime = 0;
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
     }
   }
 
@@ -683,6 +751,11 @@ export default function TvPage() {
         console.warn(
           "A TV não confirmou o desbloqueio dos áudios, mas o som foi liberado no sistema."
         );
+      }
+
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.getVoices();
       }
     } catch (error) {
       somLiberadoRef.current = true;
@@ -1135,6 +1208,22 @@ export default function TvPage() {
   }, [somLiberado]);
 
   useEffect(() => {
+    if (!window.speechSynthesis) return;
+
+    window.speechSynthesis.getVoices();
+
+    const carregarVozes = () => {
+      window.speechSynthesis.getVoices();
+    };
+
+    window.speechSynthesis.onvoiceschanged = carregarVozes;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  useEffect(() => {
     async function iniciarTv() {
       const premioSalvo = localStorage.getItem("premioAtualOperador");
 
@@ -1245,72 +1334,107 @@ export default function TvPage() {
         </div>
       )}
 
-      <main className="gold-tv-layout">
-        <section className="gold-left-panel">
-          <div className="gold-benefit-title">
+      <main className="gold-tv-layout gold-tv-layout-beneficente">
+        <section className="gold-left-panel gold-left-panel-beneficente">
+          <header className="gold-benefit-title gold-benefit-title-main">
             <strong>Bingo Beneficente</strong>
             <span>
               Rodada {numeroRodada || rodadaId || "--"} •{" "}
               {formatarStatusRodada(statusRodada)}
             </span>
-          </div>
+          </header>
 
-          <div className="gold-number-board">
-            {numerosPainel.map((linha, linhaIndex) => (
-              <div className="gold-board-row" key={letrasBingo[linhaIndex]}>
-                <div className="gold-board-letter">
-                  {letrasBingo[linhaIndex]}
-                </div>
-
-                {linha.map((numero) => {
-                  const sorteado = historico.includes(numero);
-                  const atual = numeroAtual === numero;
-
-                  return (
-                    <div
-                      key={numero}
-                      className={`gold-board-cell ${sorteado ? "drawn" : ""} ${
-                        atual ? "current" : ""
-                      }`}
-                    >
-                      {formatarNumero(numero)}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          <section className="gold-prize-showcase">
-            <div className="gold-prize-now">
-              <span className="gold-prize-eyebrow">Concorrendo agora</span>
-
-              <div className="gold-prize-now-main">
-                <strong>{formatarPremio(premioAtual)}</strong>
-                <em>{valorPremioAtual(premioAtual)}</em>
-              </div>
-
-              <small>Prêmio em destaque da rodada</small>
+          <section className="gold-section-card gold-section-numbers">
+            <div className="gold-section-header">
+              <span>Relação de números sorteados</span>
+              <strong>
+                {historico.length}
+                <small>/75</small>
+              </strong>
             </div>
 
-            <div className="gold-prize-list">
-              {premiosDaRodada.map((premio) => (
-                <div
-                  key={premio.codigo}
-                  className={`gold-prize-mini-card ${
-                    premio.codigo === premioAtual ? "active" : ""
-                  }`}
-                >
-                  <span>{premio.titulo}</span>
-                  <strong>{premio.valor}</strong>
-                  <small>{premio.descricao}</small>
+            <div className="gold-number-board gold-number-board-beneficente">
+              {numerosPainel.map((linha, linhaIndex) => (
+                <div className="gold-board-row" key={letrasBingo[linhaIndex]}>
+                  <div className="gold-board-letter">
+                    {letrasBingo[linhaIndex]}
+                  </div>
+
+                  {linha.map((numero) => {
+                    const sorteado = historico.includes(numero);
+                    const atual = numeroAtual === numero;
+
+                    return (
+                      <div
+                        key={numero}
+                        className={`gold-board-cell ${
+                          sorteado ? "drawn" : ""
+                        } ${atual ? "current" : ""}`}
+                      >
+                        {formatarNumero(numero)}
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
           </section>
 
-          <div className="gold-info-card gold-current-card">
-            <span className="gold-info-label">NÚMERO ATUAL</span>
+          <section className="gold-section-card gold-section-prizes">
+            <div className="gold-section-header">
+              <span>Relação de prêmios</span>
+              <strong>{formatarPremio(premioAtual)}</strong>
+            </div>
+
+            <div className="gold-prize-showcase gold-prize-showcase-beneficente">
+              <div className="gold-prize-now">
+                <span className="gold-prize-eyebrow">Concorrendo agora</span>
+
+                <div className="gold-prize-now-main">
+                  <strong>{formatarPremio(premioAtual)}</strong>
+                  <em>{valorPremioAtual(premioAtual)}</em>
+                </div>
+
+                <small>Prêmio em destaque da rodada</small>
+              </div>
+
+              <div className="gold-prize-list gold-prize-list-beneficente">
+                {premiosDaRodada.map((premio, index) => (
+                  <div
+                    key={premio.codigo}
+                    className={`gold-prize-mini-card ${
+                      premio.codigo === premioAtual ? "active" : ""
+                    }`}
+                  >
+                    <span>
+                      {index + 1}º prêmio • {premio.titulo}
+                    </span>
+                    <strong>{premio.valor}</strong>
+                    <small>{premio.descricao}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <div className="gold-message-card gold-message-card-beneficente">
+            {mensagem || "Boa sorte a todos!"}
+          </div>
+        </section>
+
+        <section className="gold-right-panel gold-right-panel-beneficente">
+          <div className="gold-globe-area">
+            <BingoGlobe3D
+              numeroAtual={numeroAtual}
+              numeroAnimado={numeroAnimado}
+              faseAnimacao={faseAnimacao}
+              historico={historico}
+            />
+          </div>
+
+          <div className="gold-info-card gold-current-card gold-current-card-beneficente">
+            <span className="gold-info-label">BOLA CANTADA</span>
+
             <strong>
               {numeroAtual ? (
                 <>
@@ -1323,29 +1447,8 @@ export default function TvPage() {
             </strong>
           </div>
 
-          <div className="gold-info-card gold-order-card">
-            <span className="gold-info-label">ORDEM DAS BOLAS CANTADAS</span>
-            <strong>
-              {historico.length}
-              <small>/75</small>
-            </strong>
-          </div>
-
-          <div className="gold-message-card">
-            {mensagem || "Boa sorte a todos!"}
-          </div>
-        </section>
-
-        <section className="gold-right-panel">
-          <BingoGlobe3D
-            numeroAtual={numeroAtual}
-            numeroAnimado={numeroAnimado}
-            faseAnimacao={faseAnimacao}
-            historico={historico}
-          />
-
-          <div className="gold-info-card gold-last-card gold-globe-last-card">
-            <span className="gold-info-label">ÚLTIMAS BOLAS CANTADAS</span>
+          <div className="gold-info-card gold-last-card gold-globe-last-card gold-last-card-beneficente">
+            <span className="gold-info-label">ÚLTIMOS NÚMEROS SORTEADOS</span>
 
             <div className={`gold-last-balls ${classeTamanhoUltimas}`}>
               {ultimasBolas.length > 0 ? (
