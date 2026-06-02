@@ -1,0 +1,13 @@
+{$DOMAIN} {
+    encode gzip
+    reverse_proxy bingo-frontend:80
+}
+
+www.{$DOMAIN} {
+    redir https://{$DOMAIN}{uri} permanent
+}
+
+api.{$DOMAIN} {
+    encode gzip
+    reverse_proxy bingo-backend:10000
+}

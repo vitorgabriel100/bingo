@@ -8,6 +8,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableMethodSecurity
@@ -35,11 +38,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
-    private static final Set<String> ALLOWED_ORIGINS = Set.of(
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "https://bingo-mocha-rho.vercel.app"
-    );
+    @Value("${cors.allowed.origins:*}")
+    private String corsAllowedOrigins;
 
     @Bean
     public FilterRegistrationBean<Filter> corsFilterRegistration() {
@@ -85,9 +85,23 @@ public class SecurityConfig {
         return registration;
     }
 
-    private static boolean isAllowedOrigin(String origin) {
-        return ALLOWED_ORIGINS.contains(origin)
+    private boolean isAllowedOrigin(String origin) {
+        Set<String> allowedOrigins = getAllowedOrigins();
+
+        return allowedOrigins.contains("*")
+                || allowedOrigins.contains(origin)
                 || origin.endsWith(".vercel.app");
+    }
+
+    private Set<String> getAllowedOrigins() {
+        if (corsAllowedOrigins == null || corsAllowedOrigins.isBlank()) {
+            return Set.of("*");
+        }
+
+        return Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toSet());
     }
 
     @Bean
@@ -100,15 +114,11 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/ws/info/**").permitAll()
-
                         .requestMatchers(HttpMethod.GET, "/rodadas/*/numeros").permitAll()
-
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

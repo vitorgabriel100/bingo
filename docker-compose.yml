@@ -1,0 +1,86 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bingo-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: bingo_db
+      POSTGRES_USER: bingo_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - bingo_postgres_data:/var/lib/postgresql/data
+    networks:
+      - bingo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bingo_user -d bingo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bingo-backend
+    restart: always
+    environment:
+      PORT: 10000
+
+      DATABASE_URL: jdbc:postgresql://postgres:5432/bingo_db?sslmode=disable
+      DATABASE_USERNAME: bingo_user
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: 86400000
+
+      CORS_ALLOWED_ORIGINS: https://${DOMAIN},https://www.${DOMAIN}
+
+      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_BOOT_ALLOW_JDBC_METADATA_ACCESS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bingo-network
+
+  frontend:
+    build:
+      context: ./bingo-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://api.${DOMAIN}
+    container_name: bingo-frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - bingo-network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: bingo-caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - bingo_caddy_data:/data
+      - bingo_caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - bingo-network
+
+volumes:
+  bingo_postgres_data:
+  bingo_caddy_data:
+  bingo_caddy_config:
+
+networks:
+  bingo-network:
+    driver: bridge
