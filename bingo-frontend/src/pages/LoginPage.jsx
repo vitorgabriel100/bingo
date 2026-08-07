@@ -20,11 +20,11 @@ export default function LoginPage() {
       const user = await login(email, senha);
 
       if (user.perfil === "OPERADOR") {
-        navigate("/operador");
+        navigate("/dashboard");
       } else if (user.perfil === "JOGADOR") {
         navigate("/jogador");
       } else if (user.perfil === "GERENTE" || user.perfil === "ADMIN") {
-        navigate("/operador");
+        navigate("/dashboard");
       } else {
         navigate("/");
       }
@@ -43,7 +43,7 @@ export default function LoginPage() {
       <main className="login-app-shell">
         <section className="login-app-brand">
           <div className="login-app-logo">
-            <span>🎱</span>
+            <span>B</span>
           </div>
 
           <span className="login-app-eyebrow">Sistema oficial</span>

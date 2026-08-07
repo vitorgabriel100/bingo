@@ -6,6 +6,7 @@ C:\bingo-app\src\main\java\com\empresa\bingo\controller\AdminClienteController.j
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\AuthController.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\CadastroPublicoController.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\CartelaController.java
+C:\bingo-app\src\main\java\com\empresa\bingo\controller\JogoCartelaController.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\ParticipanteController.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\RodadaController.java
 C:\bingo-app\src\main\java\com\empresa\bingo\controller\SalaController.java
@@ -17,6 +18,12 @@ C:\bingo-app\src\main\java\com\empresa\bingo\dto\cartela\CartelaResponse.java
 C:\bingo-app\src\main\java\com\empresa\bingo\dto\cartela\GeracaoCartelasResponse.java
 C:\bingo-app\src\main\java\com\empresa\bingo\dto\cartela\GerarCartelasRequest.java
 C:\bingo-app\src\main\java\com\empresa\bingo\dto\CriarClienteRequest.java
+C:\bingo-app\src\main\java\com\empresa\bingo\dto\jogo\CartelaSessaoResponse.java
+C:\bingo-app\src\main\java\com\empresa\bingo\dto\jogo\ProgressoCartelaResponse.java
+C:\bingo-app\src\main\java\com\empresa\bingo\dto\jogo\RankingParticipanteResponse.java
+C:\bingo-app\src\main\java\com\empresa\bingo\dto\jogo\ValidarVencedorRequest.java
+C:\bingo-app\src\main\java\com\empresa\bingo\dto\jogo\VencedorRodadaResponse.java
+C:\bingo-app\src\main\java\com\empresa\bingo\dto\jogo\VincularCartelasRequest.java
 C:\bingo-app\src\main\java\com\empresa\bingo\dto\participante\CadastrarParticipanteRequest.java
 C:\bingo-app\src\main\java\com\empresa\bingo\dto\participante\ParticipanteResponse.java
 C:\bingo-app\src\main\java\com\empresa\bingo\dto\rodada\NumeroSorteadoResponse.java
@@ -31,6 +38,7 @@ C:\bingo-app\src\main\java\com\empresa\bingo\entity\AuditoriaLog.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\BingoSolicitacao.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\Cartela.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\CartelaNumero.java
+C:\bingo-app\src\main\java\com\empresa\bingo\entity\CartelaSessao.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\ConfiguracaoSistema.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\NumeroSorteado.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\Participante.java
@@ -40,12 +48,14 @@ C:\bingo-app\src\main\java\com\empresa\bingo\entity\Sala.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\SessaoBingo.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\Usuario.java
 C:\bingo-app\src\main\java\com\empresa\bingo\entity\UsuarioSala.java
+C:\bingo-app\src\main\java\com\empresa\bingo\entity\VencedorRodada.java
 C:\bingo-app\src\main\java\com\empresa\bingo\enums\NomePerfil.java
 C:\bingo-app\src\main\java\com\empresa\bingo\enums\PerfilUsuario.java
 C:\bingo-app\src\main\java\com\empresa\bingo\enums\StatusAssinatura.java
 C:\bingo-app\src\main\java\com\empresa\bingo\enums\StatusRodada.java
 C:\bingo-app\src\main\java\com\empresa\bingo\enums\StatusSessao.java
 C:\bingo-app\src\main\java\com\empresa\bingo\enums\StatusSolicitacaoBingo.java
+C:\bingo-app\src\main\java\com\empresa\bingo\enums\TipoPremioCartela.java
 C:\bingo-app\src\main\java\com\empresa\bingo\exception\GlobalExceptionHandler.java
 C:\bingo-app\src\main\java\com\empresa\bingo\exception\RegraNegocioException.java
 C:\bingo-app\src\main\java\com\empresa\bingo\model\Assinatura.java
@@ -54,6 +64,7 @@ C:\bingo-app\src\main\java\com\empresa\bingo\repository\AssinaturaRepository.jav
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\AuditoriaLogRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\BingoSolicitacaoRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\CartelaRepository.java
+C:\bingo-app\src\main\java\com\empresa\bingo\repository\CartelaSessaoRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\ClienteRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\NumeroSorteadoRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\ParticipanteRepository.java
@@ -63,6 +74,7 @@ C:\bingo-app\src\main\java\com\empresa\bingo\repository\SalaRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\SessaoBingoRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\UsuarioRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\repository\UsuarioSalaRepository.java
+C:\bingo-app\src\main\java\com\empresa\bingo\repository\VencedorRodadaRepository.java
 C:\bingo-app\src\main\java\com\empresa\bingo\security\JwtAuthenticationFilter.java
 C:\bingo-app\src\main\java\com\empresa\bingo\security\JwtService.java
 C:\bingo-app\src\main\java\com\empresa\bingo\security\SecurityConfig.java
@@ -72,6 +84,7 @@ C:\bingo-app\src\main\java\com\empresa\bingo\service\AuditoriaService.java
 C:\bingo-app\src\main\java\com\empresa\bingo\service\AuthService.java
 C:\bingo-app\src\main\java\com\empresa\bingo\service\CartelaGerador.java
 C:\bingo-app\src\main\java\com\empresa\bingo\service\CartelaService.java
+C:\bingo-app\src\main\java\com\empresa\bingo\service\JogoCartelaService.java
 C:\bingo-app\src\main\java\com\empresa\bingo\service\ParticipanteService.java
 C:\bingo-app\src\main\java\com\empresa\bingo\service\RodadaService.java
 C:\bingo-app\src\main\java\com\empresa\bingo\service\SalaAcessoService.java

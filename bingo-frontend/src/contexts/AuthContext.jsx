@@ -1,21 +1,26 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { loginRequest } from "../services/authService";
 import api from "../services/api";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
+  const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
 
     if (savedUser && token) {
-      setUser(JSON.parse(savedUser));
-      api.defaults.headers.common.Authorization = `Bearer ${token}`;
+      try {
+        api.defaults.headers.common.Authorization = `Bearer ${token}`;
+        return JSON.parse(savedUser);
+      } catch {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+      }
     }
-  }, []);
+
+    return null;
+  });
 
   async function login(email, senha) {
     const data = await loginRequest(email, senha);
@@ -69,6 +74,8 @@ export function AuthProvider({ children }) {
   );
 }
 
+// O hook fica junto do provider para manter a API pública do contexto.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }

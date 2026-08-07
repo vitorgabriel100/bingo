@@ -4,7 +4,7 @@ import Layout from "../components/Layout";
 import api from "../services/api";
 import useWebSocket from "../hooks/useWebSocket";
 
-export default function OperadorPage() {
+export default function OperadorPage({ view = "sorteio" }) {
   const navigate = useNavigate();
 
   const [salas, setSalas] = useState([]);
@@ -22,8 +22,6 @@ export default function OperadorPage() {
   const [autoSorteio, setAutoSorteio] = useState(false);
   const [sorteando, setSorteando] = useState(false);
   const [sorteioLiberado, setSorteioLiberado] = useState(false);
-
-  const [abaAtiva, setAbaAtiva] = useState("configuracoes");
 
   const [premioAtual, setPremioAtual] = useState("PRIMEIRA_LINHA");
   const [premiosPagos, setPremiosPagos] = useState([]);
@@ -118,12 +116,6 @@ export default function OperadorPage() {
     if (premio === "DOACAO") return formatarMoeda(premiacaoRodada.doacao);
 
     return "--";
-  }
-
-  function proximoPremio(premio) {
-    const index = opcoesPremio.findIndex((p) => p.value === premio);
-    const proximo = opcoesPremio[index + 1];
-    return proximo ? proximo.value : premio;
   }
 
   function statusFinalizado(status) {
@@ -751,9 +743,12 @@ export default function OperadorPage() {
     const lista = extrairLista(response.data);
     setSalas(lista);
 
-    const primeiraSala = lista[0] || null;
+    const salaSalvaId = Number(localStorage.getItem("bingo_sala_selecionada"));
+    const salaSalva = lista.find((sala) => sala.id === salaSalvaId);
+    const primeiraSala = salaSalva || lista[0] || null;
     if (primeiraSala) {
-      setSalaSelecionadaId((atual) => atual || primeiraSala.id);
+      setSalaSelecionadaId(primeiraSala.id);
+      localStorage.setItem("bingo_sala_selecionada", String(primeiraSala.id));
     }
 
     return primeiraSala;
@@ -996,13 +991,21 @@ export default function OperadorPage() {
   }, []);
 
   useEffect(() => {
-    carregarHistorico(rodadaId);
-    carregarDadosRodada(rodadaId);
+    let ativo = true;
+    Promise.resolve().then(() => {
+      if (!ativo) return;
+      carregarHistorico(rodadaId);
+      carregarDadosRodada(rodadaId);
+    });
+    return () => {
+      ativo = false;
+    };
   }, [rodadaId]);
 
   async function trocarSala(event) {
     const idSala = Number(event.target.value);
     setSalaSelecionadaId(idSala);
+    localStorage.setItem("bingo_sala_selecionada", String(idSala));
     setSessaoId(null);
     setNumeroAtual(null);
     setHistorico([]);
@@ -1360,7 +1363,7 @@ export default function OperadorPage() {
       setPremioAtual("PRIMEIRA_LINHA");
       setPremiosPagos([]);
       setMostrarModalPremiacao(false);
-      setAbaAtiva("sorteio");
+      navigate("/rodada");
 
       await carregarDadosRodada(novaRodadaId);
 
@@ -1381,33 +1384,6 @@ export default function OperadorPage() {
 
   async function selecionarPremioAtual(premio) {
     await atualizarPremioAtualBackend(premio);
-  }
-
-  async function marcarGanhador(premio) {
-    if (premiosPagos.includes(premio)) {
-      setMensagem(`${formatarPremio(premio)} já foi marcado como pago.`);
-      return;
-    }
-
-    const novosPremiosPagos = [...premiosPagos, premio];
-    const proximo = proximoPremio(premio);
-
-    const novoPremioAtual =
-      proximo !== premio && !novosPremiosPagos.includes(proximo)
-        ? proximo
-        : premioAtual;
-
-    await atualizarPremiosPagosBackend(novosPremiosPagos, novoPremioAtual, false);
-
-    if (novoPremioAtual !== premioAtual) {
-      setMensagem(
-        `${formatarPremio(premio)} pago. Agora concorrendo a: ${formatarPremio(
-          novoPremioAtual
-        )}.`
-      );
-    } else {
-      setMensagem(`${formatarPremio(premio)} pago.`);
-    }
   }
 
   async function desfazerPremios() {
@@ -1471,8 +1447,8 @@ export default function OperadorPage() {
     if (sorteando) return;
 
     if (historico.length >= 75) {
-      setAutoSorteio(false);
-      return;
+      timeoutAutoRef.current = setTimeout(() => setAutoSorteio(false), 0);
+      return () => clearTimeout(timeoutAutoRef.current);
     }
 
     timeoutAutoRef.current = setTimeout(() => {
@@ -1531,7 +1507,14 @@ export default function OperadorPage() {
     salas.find((sala) => sala.id === salaSelecionadaId) || null;
 
   return (
-    <Layout title="Operador">
+    <Layout
+      title={view === "configuracoes" ? "Preparação da rodada" : "Rodada ao vivo"}
+      subtitle={
+        view === "configuracoes"
+          ? "Defina premiação e abra a próxima rodada antes do sorteio."
+          : "Controle o sorteio e acompanhe os números em tempo real."
+      }
+    >
       <div className="operator-app-page">
         <header className="operator-app-header">
           <div>
@@ -1578,33 +1561,7 @@ export default function OperadorPage() {
           </div>
         </header>
 
-        <nav className="operator-app-tabs">
-          <button
-            type="button"
-            className={abaAtiva === "sorteio" ? "active" : ""}
-            onClick={() => setAbaAtiva("sorteio")}
-          >
-            🎲 Sorteio
-          </button>
-
-          <button
-            type="button"
-            className={abaAtiva === "configuracoes" ? "active" : ""}
-            onClick={() => setAbaAtiva("configuracoes")}
-          >
-            ⚙️ Configurações
-          </button>
-
-          <button
-            type="button"
-            className={abaAtiva === "historico" ? "active" : ""}
-            onClick={() => setAbaAtiva("historico")}
-          >
-            📋 Histórico de Rodadas
-          </button>
-        </nav>
-
-        {abaAtiva === "sorteio" && (
+        {view === "sorteio" && (
           <main className="operator-app-grid">
             <section className="operator-app-card operator-app-board-card">
               <div className="operator-app-card-title">
@@ -1733,7 +1690,7 @@ export default function OperadorPage() {
           </main>
         )}
 
-        {abaAtiva === "configuracoes" && (
+        {view === "configuracoes" && (
           <main className="operator-config-grid">
             <section className="operator-app-card operator-config-highlight">
               <div className="operator-app-card-title">
@@ -1845,31 +1802,26 @@ export default function OperadorPage() {
 
             <section className="operator-app-card operator-mobile-prizes operator-config-payments">
               <div className="operator-app-card-title">
-                <span>Marcar ganhador/pagamento</span>
+                <span>Validação de vencedor</span>
                 <strong>{premiosPagos.length}</strong>
               </div>
 
-              <div className="operator-prize-grid">
-                {opcoesPremio.map((opcao) => (
-                  <button
-                    key={opcao.value}
-                    className={`operator-prize-btn payment-prize ${
-                      premiosPagos.includes(opcao.value) ? "paid" : ""
-                    }`}
-                    onClick={() => marcarGanhador(opcao.value)}
-                    disabled={!rodadaId}
-                  >
-                    {premiosPagos.includes(opcao.value)
-                      ? `${opcao.label} ✓`
-                      : opcao.label}
-                  </button>
-                ))}
-              </div>
+              <p>
+                A confirmação agora é feita pela cartela do participante. O sistema
+                confere os números, registra o vencedor e atualiza o ranking.
+              </p>
+              <button
+                className="operator-action-btn primary"
+                type="button"
+                onClick={() => navigate("/participantes")}
+              >
+                Abrir validação de cartelas
+              </button>
             </section>
           </main>
         )}
 
-        {abaAtiva === "historico" && (
+        {view === "historico" && (
           <main className="operator-app-card operator-history-app">
             <div className="operator-app-card-title">
               <span>Histórico da rodada atual</span>
@@ -1925,7 +1877,7 @@ export default function OperadorPage() {
                 Abrir histórico completo
               </button>
 
-              <button onClick={() => setAbaAtiva("sorteio")}>
+              <button onClick={() => navigate("/rodada")}>
                 Voltar para sorteio
               </button>
             </div>

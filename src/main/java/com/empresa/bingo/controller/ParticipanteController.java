@@ -1,10 +1,13 @@
 package com.empresa.bingo.controller;
 
 import com.empresa.bingo.dto.participante.ParticipanteResponse;
+import com.empresa.bingo.dto.participante.CadastrarParticipanteRequest;
 import com.empresa.bingo.entity.Usuario;
 import com.empresa.bingo.repository.UsuarioRepository;
 import com.empresa.bingo.service.ParticipanteService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +21,21 @@ public class ParticipanteController {
 
     private final ParticipanteService participanteService;
     private final UsuarioRepository usuarioRepository;
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
+    public ParticipanteResponse cadastrar(
+            @PathVariable Long salaId,
+            @RequestBody @Valid CadastrarParticipanteRequest request,
+            Authentication authentication
+    ) {
+        return participanteService.cadastrar(
+                salaId,
+                request,
+                getUsuarioAutenticado(authentication)
+        );
+    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")

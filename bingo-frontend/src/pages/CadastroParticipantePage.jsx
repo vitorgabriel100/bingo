@@ -67,7 +67,7 @@ export default function CadastroParticipantePage() {
   return (
     <main className="public-registration-page">
       <section className="public-registration-card">
-        <div className="public-registration-brand">🎱</div>
+        <div className="public-registration-brand">B</div>
 
         {carregando ? (
           <p>Carregando sala...</p>

@@ -173,9 +173,9 @@ export default function BingoGlobe3D({
       numeroExibido !== "";
 
     if (!numeroValido) {
-      setBolaCaindo(null);
       ultimoNumeroAnimadoRef.current = null;
-      return;
+      const resetTimer = setTimeout(() => setBolaCaindo(null), 0);
+      return () => clearTimeout(resetTimer);
     }
 
     if (faseAnimacao !== "dropping") {

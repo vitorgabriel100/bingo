@@ -1244,7 +1244,13 @@ export default function TvPage() {
   }, []);
 
   useEffect(() => {
-    carregarHistorico(rodadaId);
+    let ativo = true;
+    Promise.resolve().then(() => {
+      if (ativo) carregarHistorico(rodadaId);
+    });
+    return () => {
+      ativo = false;
+    };
   }, [rodadaId]);
 
   useEffect(() => {

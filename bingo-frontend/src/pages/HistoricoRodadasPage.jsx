@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import SalaSelector from "../components/SalaSelector";
+import useSalas from "../hooks/useSalas";
 import api from "../services/api";
 
 export default function HistoricoRodadasPage() {
   const navigate = useNavigate();
+  const {
+    salas,
+    salaSelecionadaId,
+    selecionarSala,
+    carregandoSalas,
+  } = useSalas();
 
   const [sessaoId, setSessaoId] = useState(null);
   const [rodadas, setRodadas] = useState([]);
@@ -310,10 +318,12 @@ export default function HistoricoRodadasPage() {
     };
   }, [rodadasFiltradas, detalhesRodadas]);
 
-  async function carregarOuCriarSessao() {
+  async function carregarOuCriarSessao(idSala) {
     try {
       try {
-        const ativa = await api.get("/sessoes/ativa");
+        const ativa = await api.get("/sessoes/ativa", {
+          params: { salaId: idSala },
+        });
 
         if (ativa.data?.id) {
           setSessaoId(ativa.data.id);
@@ -324,7 +334,9 @@ export default function HistoricoRodadasPage() {
       }
 
       const response = await api.get("/sessoes");
-      const sessoes = extrairLista(response.data);
+      const sessoes = extrairLista(response.data).filter(
+        (sessao) => sessao.salaId === idSala
+      );
 
       if (sessoes.length > 0) {
         const sessao =
@@ -517,11 +529,11 @@ export default function HistoricoRodadasPage() {
       rodada.numeroRodada || rodada.numero_rodada || ""
     );
 
-    navigate("/operador");
+    navigate("/rodada");
   }
 
-  async function iniciarTela() {
-    const idSessao = await carregarOuCriarSessao();
+  async function iniciarTela(idSala) {
+    const idSessao = await carregarOuCriarSessao(idSala);
 
     if (idSessao) {
       await carregarRodadas(idSessao);
@@ -529,11 +541,29 @@ export default function HistoricoRodadasPage() {
   }
 
   useEffect(() => {
-    iniciarTela();
-  }, []);
+    if (!salaSelecionadaId) return;
+    let ativo = true;
+    Promise.resolve().then(() => {
+      if (ativo) iniciarTela(salaSelecionadaId);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [salaSelecionadaId]);
 
   return (
-    <Layout title="Histórico de Rodadas">
+    <Layout
+      title="Sessões e histórico"
+      subtitle="Consulte as rodadas e os números sorteados de uma sala por vez."
+      actions={
+        <SalaSelector
+          salas={salas}
+          value={salaSelecionadaId}
+          onChange={selecionarSala}
+          disabled={carregandoSalas}
+        />
+      }
+    >
       <div className="round-history-page">
         <header className="round-history-header">
           <div

@@ -34,6 +34,32 @@ public class ParticipanteService {
             throw new RegraNegocioException("Esta sala não está recebendo cadastros.");
         }
 
+        return cadastrarNaSala(sala, request);
+    }
+
+    @Transactional
+    public ParticipanteResponse cadastrar(
+            Long salaId,
+            CadastrarParticipanteRequest request,
+            Usuario usuarioLogado
+    ) {
+        salaAcessoService.exigirAcesso(usuarioLogado, salaId);
+
+        Sala sala = salaRepository.findById(salaId)
+                .orElseThrow(() -> new RegraNegocioException("Sala não encontrada."));
+
+        if (!Boolean.TRUE.equals(sala.getAtiva())) {
+            throw new RegraNegocioException("A sala informada está inativa.");
+        }
+
+        return cadastrarNaSala(sala, request);
+    }
+
+    private ParticipanteResponse cadastrarNaSala(
+            Sala sala,
+            CadastrarParticipanteRequest request
+    ) {
+
         String telefone = normalizarTelefone(request.getTelefone());
 
         if (participanteRepository.existsBySalaIdAndTelefone(sala.getId(), telefone)) {
