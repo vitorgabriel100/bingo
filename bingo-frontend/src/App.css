@@ -6190,3 +6190,450 @@ button:disabled {
     height: 52px;
   }
 }
+
+/* ========================= */
+/* SALAS E CADASTRO PÚBLICO */
+/* ========================= */
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-actions a {
+  color: #f8fafc;
+  font-weight: 800;
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.operator-room-select {
+  min-width: 210px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  border-radius: 12px;
+  background: #0b1325;
+  color: #f8fafc;
+  font-weight: 850;
+}
+
+.rooms-page {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.room-create-card,
+.room-management-card {
+  background: #111c33;
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.28);
+}
+
+.room-create-card > div:first-child span,
+.room-management-header span,
+.room-summary-grid span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.room-create-card h2,
+.room-management-card h2 {
+  margin: 4px 0 0;
+  color: #f8fafc;
+}
+
+.room-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.room-form-grid label,
+.public-registration-form label {
+  display: grid;
+  gap: 8px;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.room-form-grid input,
+.room-management-header select,
+.public-registration-form input {
+  min-height: 48px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  background: #0b1325;
+  color: #f8fafc;
+  padding: 0 14px;
+  outline: none;
+}
+
+.room-form-grid input:focus,
+.public-registration-form input:focus {
+  border-color: #facc15;
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.12);
+}
+
+.room-create-card > button,
+.room-registration-link button,
+.public-registration-form button {
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #facc15, #f59e0b);
+  color: #2b1700;
+  font-weight: 950;
+  padding: 13px 18px;
+}
+
+.room-feedback,
+.registration-message {
+  margin: 0;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.room-feedback.error,
+.registration-message.error {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.room-feedback.success,
+.registration-message.success {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.room-management-header,
+.room-registration-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.room-management-header select {
+  min-width: 220px;
+}
+
+.room-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.room-summary-grid > div {
+  display: grid;
+  gap: 7px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.room-summary-grid strong {
+  font-size: 24px;
+  color: #facc15;
+}
+
+.room-registration-link {
+  background: #07101f;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.room-registration-link code {
+  color: #cbd5e1;
+  overflow-wrap: anywhere;
+}
+
+.room-access-form {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 0.7fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.room-access-form > div {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+}
+
+.room-access-form span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.room-access-form strong {
+  color: #f8fafc;
+  font-size: 18px;
+}
+
+.room-access-form input,
+.room-access-form select {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  background: #07101f;
+  color: #f8fafc;
+}
+
+.room-access-form button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: #38bdf8;
+  color: #082f49;
+  font-weight: 950;
+}
+
+.room-cards-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.room-cards-toolbar > div {
+  display: grid;
+  gap: 4px;
+}
+
+.room-cards-toolbar span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.room-cards-toolbar strong {
+  color: #f8fafc;
+}
+
+.room-cards-toolbar button {
+  min-height: 42px;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  border-radius: 10px;
+  padding: 0 15px;
+  background: rgba(250, 204, 21, 0.1);
+  color: #fde68a;
+  font-weight: 900;
+}
+
+.generated-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+  max-height: 680px;
+  overflow: auto;
+  margin-top: 14px;
+  padding: 4px;
+}
+
+.generated-bingo-card {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 2px solid #d99b14;
+  background: #fffdf5;
+  color: #1f2937;
+}
+
+.generated-bingo-card header {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 10px;
+  background: #7c2d12;
+  color: #fff7ed;
+  font-size: 12px;
+}
+
+.generated-card-letters,
+.generated-card-numbers {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.generated-card-letters b {
+  padding: 6px;
+  background: #facc15;
+  color: #422006;
+  text-align: center;
+  font-size: 18px;
+}
+
+.generated-card-numbers span {
+  min-height: 35px;
+  display: grid;
+  place-items: center;
+  border-top: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  font-weight: 900;
+}
+
+.generated-card-numbers span.free {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.participants-table-wrap {
+  margin-top: 22px;
+  overflow-x: auto;
+}
+
+.participants-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e2e8f0;
+}
+
+.participants-table th,
+.participants-table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  text-align: left;
+}
+
+.participants-table th {
+  color: #94a3b8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.participants-empty {
+  margin: 18px 0 0;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.public-registration-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.18), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.16), transparent 35%),
+    #020617;
+}
+
+.public-registration-card {
+  width: min(480px, 100%);
+  padding: 30px;
+  border-radius: 26px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(250, 204, 21, 0.24);
+  color: #e2e8f0;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4);
+}
+
+.public-registration-brand {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #facc15, #f59e0b);
+  font-size: 32px;
+  margin-bottom: 18px;
+}
+
+.public-registration-eyebrow {
+  color: #facc15;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.public-registration-card h1 {
+  margin: 7px 0;
+  color: #f8fafc;
+  font-size: clamp(28px, 7vw, 42px);
+}
+
+.public-registration-card > p {
+  color: #94a3b8;
+}
+
+.public-registration-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.public-registration-form button {
+  min-height: 52px;
+  margin-top: 4px;
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .room-form-grid,
+  .room-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-management-header,
+  .room-registration-link {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .room-management-header select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .room-access-form {
+    grid-template-columns: 1fr;
+  }
+
+  .room-cards-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

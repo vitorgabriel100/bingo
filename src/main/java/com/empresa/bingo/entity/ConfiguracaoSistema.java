@@ -1,26 +1,25 @@
 package com.empresa.bingo.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "configuracoes_sistema")
 public class ConfiguracaoSistema {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String chave;
-    private String valor;
+    @Column(name = "tempo_entre_sorteios_segundos", nullable = false)
+    private Integer tempoEntreSorteiosSegundos;
+
+    @Column(name = "quantidade_rodadas", nullable = false)
+    private Integer quantidadeRodadas = 20;
+
+    @Column(nullable = false)
+    private Boolean ativo = true;
 
     public ConfiguracaoSistema() {
-    }
-
-    public ConfiguracaoSistema(String chave, String valor) {
-        this.chave = chave;
-        this.valor = valor;
     }
 
     public Long getId() {
@@ -31,19 +30,27 @@ public class ConfiguracaoSistema {
         this.id = id;
     }
 
-    public String getChave() {
-        return chave;
+    public Integer getTempoEntreSorteiosSegundos() {
+        return tempoEntreSorteiosSegundos;
     }
 
-    public void setChave(String chave) {
-        this.chave = chave;
+    public void setTempoEntreSorteiosSegundos(Integer tempoEntreSorteiosSegundos) {
+        this.tempoEntreSorteiosSegundos = tempoEntreSorteiosSegundos;
     }
 
-    public String getValor() {
-        return valor;
+    public Integer getQuantidadeRodadas() {
+        return quantidadeRodadas;
     }
 
-    public void setValor(String valor) {
-        this.valor = valor;
+    public void setQuantidadeRodadas(Integer quantidadeRodadas) {
+        this.quantidadeRodadas = quantidadeRodadas;
+    }
+
+    public Boolean getAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(Boolean ativo) {
+        this.ativo = ativo;
     }
 }

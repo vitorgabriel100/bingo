@@ -5,12 +5,18 @@ import JogadorPage from "../pages/JogadorPage";
 import TvPage from "../pages/TvPage";
 import HistoricoRodadasPage from "../pages/HistoricoRodadasPage";
 import ProtectedRoute from "../components/ProtectedRoute";
+import SalasPage from "../pages/SalasPage";
+import CadastroParticipantePage from "../pages/CadastroParticipantePage";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
+        <Route
+          path="/sala/:slug/cadastro"
+          element={<CadastroParticipantePage />}
+        />
 
         <Route
           path="/operador"
@@ -32,6 +38,15 @@ export default function AppRoutes() {
 
         <Route path="/tv" element={<TvPage />} />
         <Route path="/historico-rodadas" element={<HistoricoRodadasPage />} />
+
+        <Route
+          path="/salas"
+          element={
+            <ProtectedRoute allowedRoles={["OPERADOR", "GERENTE", "ADMIN"]}>
+              <SalasPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

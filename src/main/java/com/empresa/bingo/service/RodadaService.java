@@ -34,6 +34,7 @@ public class RodadaService {
     private final NumeroSorteadoRepository numeroSorteadoRepository;
     private final AuditoriaService auditoriaService;
     private final BingoEventPublisher bingoEventPublisher;
+    private final SalaAcessoService salaAcessoService;
 
     @Transactional
     public RodadaResponse iniciarRodada(Long rodadaId, Usuario usuarioLogado) {
@@ -43,6 +44,8 @@ public class RodadaService {
         if (sessao == null) {
             throw new RegraNegocioException("A rodada não possui sessão vinculada.");
         }
+
+        salaAcessoService.exigirAcesso(usuarioLogado, sessao.getSala().getId());
 
         Long sessaoId = sessao.getId();
         Long rodadaAtualId = rodada.getId();
@@ -129,6 +132,7 @@ public class RodadaService {
     @Transactional
     public RodadaResponse pausarRodada(Long rodadaId, Usuario usuarioLogado) {
         Rodada rodada = buscarRodada(rodadaId);
+        exigirAcesso(rodada, usuarioLogado);
 
         if (rodada.getStatus() != StatusRodada.EM_ANDAMENTO) {
             throw new RegraNegocioException("A rodada só pode ser pausada se estiver em andamento.");
@@ -154,6 +158,8 @@ public class RodadaService {
 public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
     Rodada rodada = buscarRodada(rodadaId);
     SessaoBingo sessao = rodada.getSessao();
+
+    exigirAcesso(rodada, usuarioLogado);
 
     if (rodada.getStatus() != StatusRodada.PAUSADA) {
         throw new RegraNegocioException("A rodada só pode ser continuada se estiver pausada.");
@@ -199,6 +205,7 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
     @Transactional
     public RodadaResponse encerrarRodada(Long rodadaId, Usuario usuarioLogado) {
         Rodada rodada = buscarRodada(rodadaId);
+        exigirAcesso(rodada, usuarioLogado);
 
         if (rodada.getStatus() != StatusRodada.EM_ANDAMENTO
                 && rodada.getStatus() != StatusRodada.PAUSADA) {
@@ -229,23 +236,33 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
         SessaoBingo sessao = sessaoBingoRepository.findById(sessaoId)
                 .orElseThrow(() -> new RegraNegocioException("Sessão não encontrada."));
 
+        salaAcessoService.exigirAcesso(usuarioLogado, sessao.getSala().getId());
+
         if (sessao.getStatus() == StatusSessao.FINALIZADA) {
             throw new RegraNegocioException("Não é possível criar rodada em sessão finalizada.");
         }
 
-        Integer ultimoNumero = rodadaRepository
-                .findTopBySessaoIdOrderByNumeroRodadaDesc(sessaoId)
-                .map(Rodada::getNumeroRodada)
-                .orElse(0);
+        Rodada novaRodada = rodadaRepository
+                .findFirstBySessaoIdAndStatusOrderByNumeroRodadaAsc(
+                        sessaoId,
+                        StatusRodada.AGUARDANDO
+                )
+                .orElseGet(() -> {
+                    Integer ultimoNumero = rodadaRepository
+                            .findTopBySessaoIdOrderByNumeroRodadaDesc(sessaoId)
+                            .map(Rodada::getNumeroRodada)
+                            .orElse(0);
 
-        Rodada novaRodada = Rodada.builder()
-                .sessao(sessao)
-                .numeroRodada(ultimoNumero + 1)
-                .status(StatusRodada.CRIADA)
-                .premioAtual("PRIMEIRA_LINHA")
-                .premiosPagos("")
-                .bolaMax(60)
-                .build();
+                    return Rodada.builder()
+                            .sessao(sessao)
+                            .numeroRodada(ultimoNumero + 1)
+                            .build();
+                });
+
+        novaRodada.setStatus(StatusRodada.CRIADA);
+        novaRodada.setPremioAtual("PRIMEIRA_LINHA");
+        novaRodada.setPremiosPagos("");
+        novaRodada.setBolaMax(60);
 
         novaRodada = rodadaRepository.save(novaRodada);
 
@@ -265,6 +282,7 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
     @Transactional
     public Map<String, Object> sortearNumero(Long rodadaId, Usuario usuarioLogado) {
         Rodada rodada = buscarRodada(rodadaId);
+        exigirAcesso(rodada, usuarioLogado);
 
         if (rodada.getStatus() != StatusRodada.EM_ANDAMENTO) {
             throw new RegraNegocioException("A rodada não está em andamento.");
@@ -349,7 +367,6 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
                 .stream()
                 .filter(rodada -> rodada.getStatus() == StatusRodada.EM_ANDAMENTO
                         || rodada.getStatus() == StatusRodada.CRIADA
-                        || rodada.getStatus() == StatusRodada.AGUARDANDO
                         || rodada.getStatus() == StatusRodada.PAUSADA)
                 .findFirst()
                 .map(this::toResponse)
@@ -379,6 +396,7 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
             Usuario usuarioLogado
     ) {
         Rodada rodada = buscarRodada(rodadaId);
+        exigirAcesso(rodada, usuarioLogado);
 
         aplicarPremiacaoNaRodada(rodada, payload);
         aplicarPremioAtualNaRodada(rodada, payload);
@@ -406,6 +424,7 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
             Usuario usuarioLogado
     ) {
         Rodada rodada = buscarRodada(rodadaId);
+        exigirAcesso(rodada, usuarioLogado);
 
         aplicarPremiacaoNaRodada(rodada, payload);
 
@@ -431,6 +450,7 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
             Usuario usuarioLogado
     ) {
         Rodada rodada = buscarRodada(rodadaId);
+        exigirAcesso(rodada, usuarioLogado);
 
         aplicarPremioAtualNaRodada(rodada, payload);
 
@@ -457,6 +477,7 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
             Usuario usuarioLogado
     ) {
         Rodada rodada = buscarRodada(rodadaId);
+        exigirAcesso(rodada, usuarioLogado);
 
         aplicarPremiosPagosNaRodada(rodada, payload);
         aplicarPremioAtualNaRodada(rodada, payload);
@@ -850,6 +871,14 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
         }
 
         bingoEventPublisher.publicarRodada(rodada.getId(), payload);
+    }
+
+    private void exigirAcesso(Rodada rodada, Usuario usuarioLogado) {
+        if (rodada.getSessao() == null || rodada.getSessao().getSala() == null) {
+            throw new RegraNegocioException("A rodada não está vinculada a uma sala.");
+        }
+
+        salaAcessoService.exigirAcesso(usuarioLogado, rodada.getSessao().getSala().getId());
     }
 
     private RodadaResponse toResponse(Rodada rodada) {

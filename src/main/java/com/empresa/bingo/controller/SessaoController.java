@@ -30,15 +30,18 @@ public class SessaoController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
-    public List<SessaoResponse> listar() {
-        return sessaoService.listarSessoes();
+    public List<SessaoResponse> listar(Authentication authentication) {
+        return sessaoService.listarSessoes(getUsuarioAutenticado(authentication));
     }
 
     @GetMapping("/ativa")
     @PreAuthorize("hasAnyRole('OPERADOR', 'GERENTE', 'ADMIN')")
-    public SessaoResponse buscarSessaoAtiva(Authentication authentication) {
+    public SessaoResponse buscarSessaoAtiva(
+            @RequestParam(required = false) Long salaId,
+            Authentication authentication
+    ) {
         Usuario usuario = getUsuarioAutenticado(authentication);
-        return sessaoService.buscarOuCriarSessaoAtiva(usuario);
+        return sessaoService.buscarOuCriarSessaoAtiva(salaId, usuario);
     }
 
     @PatchMapping("/{id}/iniciar")
@@ -63,7 +66,7 @@ public class SessaoController {
     }
 
     private Usuario getUsuarioAutenticado(Authentication authentication) {
-        return usuarioRepository.findByEmail(authentication.getName())
+        return usuarioRepository.findWithPerfilByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
     }
 }

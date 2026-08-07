@@ -17,6 +17,11 @@ public interface RodadaRepository extends JpaRepository<Rodada, Long> {
 
     Optional<Rodada> findBySessaoIdAndStatus(Long sessaoId, StatusRodada status);
 
+    Optional<Rodada> findFirstBySessaoIdAndStatusOrderByNumeroRodadaAsc(
+            Long sessaoId,
+            StatusRodada status
+    );
+
     boolean existsBySessaoIdAndStatus(Long sessaoId, StatusRodada status);
 
     Optional<Rodada> findTopBySessaoIdOrderByNumeroRodadaDesc(Long sessaoId);

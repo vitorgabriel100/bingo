@@ -186,7 +186,7 @@ public class RodadaController {
     }
 
     private Usuario getUsuarioAutenticado(Authentication authentication) {
-        return usuarioRepository.findByEmail(authentication.getName())
+        return usuarioRepository.findWithPerfilByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
     }
 }
