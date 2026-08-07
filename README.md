@@ -79,6 +79,9 @@ bingo-app
 
 ## Features
 - **User Authentication**: Users can log in and register through the AuthController.
+- **Multiple Rooms**: Each bingo point has its own room, logins, participants and sessions.
+- **Public Registration**: Each room has a public link at `/sala/{slug}/cadastro`.
+- **75-ball Cards**: Rooms start with series 8 and cards 701–800 by default. Each card has 24 numbers and a free center.
 - **Session Management**: Manage bingo sessions with the SessaoController.
 - **Round Management**: Handle rounds of the game using the RodadaController.
 - **Lottery Drawing**: Conduct lottery drawings with the SorteioController.
@@ -103,6 +106,15 @@ bingo-app
 
 ## Configuration
 Configuration properties can be found in `src/main/resources/application.properties` and `src/main/resources/application.yml`.
+
+Flyway applies the database migrations automatically. On an existing database without Flyway history, version 1 is baselined and `V2__multissalas_participantes_cartelas.sql` is applied.
+
+After logging in as `ADMIN`, open `/salas` to:
+
+- create a room and generate its configured card interval;
+- create or link an operator/manager login;
+- copy the room's public registration link;
+- view participants registered in that room.
 
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.

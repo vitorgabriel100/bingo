@@ -12,11 +12,13 @@ import com.empresa.bingo.exception.RegraNegocioException;
 import com.empresa.bingo.repository.RodadaRepository;
 import com.empresa.bingo.repository.SalaRepository;
 import com.empresa.bingo.repository.SessaoBingoRepository;
+import com.empresa.bingo.repository.UsuarioSalaRepository;
 import com.empresa.bingo.websocket.BingoEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -28,16 +30,15 @@ public class SessaoService {
     private final RodadaRepository rodadaRepository;
     private final AuditoriaService auditoriaService;
     private final BingoEventPublisher bingoEventPublisher;
+    private final SalaAcessoService salaAcessoService;
+    private final UsuarioSalaRepository usuarioSalaRepository;
 
     @Transactional
     public SessaoResponse criarSessao(CriarSessaoRequest request, Usuario usuarioLogado) {
-        Sala sala = salaRepository.findAll().stream().findFirst()
-        .orElseGet(() -> {
-            Sala nova = new Sala();
-            nova.setNome("Sala Principal");
-            nova.setAtiva(true);
-            return salaRepository.save(nova);
-        });
+        Sala sala = salaRepository.findById(request.getSalaId())
+                .orElseThrow(() -> new RegraNegocioException("Sala não encontrada."));
+
+        salaAcessoService.exigirAcesso(usuarioLogado, sala.getId());
 
         if (!Boolean.TRUE.equals(sala.getAtiva())) {
             throw new RegraNegocioException("A sala informada está inativa.");
@@ -83,6 +84,7 @@ public class SessaoService {
     @Transactional
     public SessaoResponse iniciarSessao(Long sessaoId, Usuario usuarioLogado) {
         SessaoBingo sessao = buscarSessao(sessaoId);
+        salaAcessoService.exigirAcesso(usuarioLogado, sessao.getSala().getId());
 
         if (sessao.getStatus() != StatusSessao.AGENDADA && sessao.getStatus() != StatusSessao.PAUSADA) {
             throw new RegraNegocioException("A sessão só pode ser iniciada se estiver AGENDADA ou PAUSADA.");
@@ -117,6 +119,7 @@ public class SessaoService {
     @Transactional
     public SessaoResponse pausarSessao(Long sessaoId, Usuario usuarioLogado) {
         SessaoBingo sessao = buscarSessao(sessaoId);
+        salaAcessoService.exigirAcesso(usuarioLogado, sessao.getSala().getId());
 
         if (sessao.getStatus() != StatusSessao.EM_ANDAMENTO) {
             throw new RegraNegocioException("A sessão só pode ser pausada se estiver em andamento.");
@@ -145,6 +148,7 @@ public class SessaoService {
     @Transactional
     public SessaoResponse encerrarSessao(Long sessaoId, Usuario usuarioLogado) {
         SessaoBingo sessao = buscarSessao(sessaoId);
+        salaAcessoService.exigirAcesso(usuarioLogado, sessao.getSala().getId());
 
         if (sessao.getStatus() == StatusSessao.FINALIZADA || sessao.getStatus() == StatusSessao.CANCELADA) {
             throw new RegraNegocioException("A sessão já está encerrada ou cancelada.");
@@ -173,48 +177,39 @@ public class SessaoService {
     }
 
     @Transactional
-public SessaoResponse buscarOuCriarSessaoAtiva(Usuario usuarioLogado) {
-    var sessoes = sessaoBingoRepository.findAll();
+    public SessaoResponse buscarOuCriarSessaoAtiva(Long salaId, Usuario usuarioLogado) {
+        Sala sala = resolverSala(salaId, usuarioLogado);
 
-    var existente = sessoes.stream()
-            .filter(s -> s.getStatus() == StatusSessao.AGENDADA || s.getStatus() == StatusSessao.EM_ANDAMENTO)
-            .findFirst();
+        var existente = sessaoBingoRepository.findFirstBySalaIdAndStatusInOrderByIdDesc(
+                sala.getId(),
+                List.of(StatusSessao.AGENDADA, StatusSessao.EM_ANDAMENTO, StatusSessao.PAUSADA)
+        );
 
-    if (existente.isPresent()) {
-        return toResponse(existente.get());
-    }
+        if (existente.isPresent()) {
+            return toResponse(existente.get());
+        }
 
-    Sala sala = salaRepository.findAll()
-            .stream()
-            .findFirst()
-            .orElseGet(() -> {
-                Sala nova = new Sala();
-                nova.setNome("Sala Principal");
-                nova.setAtiva(true);
-                return salaRepository.save(nova);
-            });
-
-    SessaoBingo sessao = SessaoBingo.builder()
-            .sala(sala)
-            .descricao("Sessão Principal")
-            .status(StatusSessao.AGENDADA)
-            .criadaPor(usuarioLogado)
-            .build();
-
-    sessao = sessaoBingoRepository.save(sessao);
-
-    for (int i = 1; i <= 20; i++) {
-        Rodada rodada = Rodada.builder()
-                .sessao(sessao)
-                .numeroRodada(i)
-                .status(StatusRodada.AGUARDANDO)
+        SessaoBingo sessao = SessaoBingo.builder()
+                .sala(sala)
+                .descricao("Sessão Principal")
+                .status(StatusSessao.AGENDADA)
+                .criadaPor(usuarioLogado)
                 .build();
 
-        rodadaRepository.save(rodada);
-    }
+        sessao = sessaoBingoRepository.save(sessao);
 
-    return toResponse(sessao);
-}
+        for (int i = 1; i <= 20; i++) {
+            Rodada rodada = Rodada.builder()
+                    .sessao(sessao)
+                    .numeroRodada(i)
+                    .status(StatusRodada.AGUARDANDO)
+                    .build();
+
+            rodadaRepository.save(rodada);
+        }
+
+        return toResponse(sessao);
+    }
 
     public SessaoBingo buscarSessao(Long sessaoId) {
         return sessaoBingoRepository.findById(sessaoId)
@@ -233,20 +228,61 @@ public SessaoResponse buscarOuCriarSessaoAtiva(Usuario usuarioLogado) {
                 .build();
     }
 
-    public java.util.List<SessaoResponse> listarSessoes() {
-    return sessaoBingoRepository.findAll()
-            .stream()
-            .map(this::toResponse)
-            .toList();
-}
+    @Transactional(readOnly = true)
+    public java.util.List<SessaoResponse> listarSessoes(Usuario usuarioLogado) {
+        List<SessaoBingo> sessoes;
 
-public SessaoResponse buscarSessaoAtiva() {
-    var lista = sessaoBingoRepository.findAll();
+        if (usuarioLogado.getPerfil().getNome() == com.empresa.bingo.enums.NomePerfil.ADMIN) {
+            sessoes = sessaoBingoRepository.findAll();
+        } else {
+            List<Long> salaIds = usuarioSalaRepository
+                    .findByUsuarioIdAndAtivoTrueOrderBySalaNomeAsc(usuarioLogado.getId())
+                    .stream()
+                    .map(vinculo -> vinculo.getSala().getId())
+                    .toList();
 
-    return lista.stream()
-            .filter(s -> s.getStatus().name().equals("EM_ANDAMENTO"))
-            .findFirst()
-            .map(this::toResponse)
-            .orElseThrow(() -> new RuntimeException("Nenhuma sessão ativa encontrada."));
-}
+            sessoes = salaIds.isEmpty()
+                    ? List.of()
+                    : sessaoBingoRepository.findBySalaIdInOrderByIdDesc(salaIds);
+        }
+
+        return sessoes
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SessaoResponse buscarSessaoAtiva() {
+        var lista = sessaoBingoRepository.findAll();
+
+        return lista.stream()
+                .filter(s -> s.getStatus().name().equals("EM_ANDAMENTO"))
+                .findFirst()
+                .map(this::toResponse)
+                .orElseThrow(() -> new RuntimeException("Nenhuma sessão ativa encontrada."));
+    }
+
+    private Sala resolverSala(Long salaId, Usuario usuarioLogado) {
+        if (salaId != null) {
+            salaAcessoService.exigirAcesso(usuarioLogado, salaId);
+            return salaRepository.findById(salaId)
+                    .orElseThrow(() -> new RegraNegocioException("Sala não encontrada."));
+        }
+
+        if (usuarioLogado.getPerfil().getNome() == com.empresa.bingo.enums.NomePerfil.ADMIN) {
+            return salaRepository.findAll().stream()
+                    .filter(sala -> Boolean.TRUE.equals(sala.getAtiva()))
+                    .findFirst()
+                    .orElseThrow(() -> new RegraNegocioException("Cadastre uma sala antes de criar uma sessão."));
+        }
+
+        return usuarioSalaRepository
+                .findByUsuarioIdAndAtivoTrueOrderBySalaNomeAsc(usuarioLogado.getId())
+                .stream()
+                .map(vinculo -> vinculo.getSala())
+                .filter(sala -> Boolean.TRUE.equals(sala.getAtiva()))
+                .findFirst()
+                .orElseThrow(() -> new RegraNegocioException("Usuário não está vinculado a uma sala ativa."));
+    }
 }

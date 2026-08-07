@@ -30,7 +30,7 @@ public class SorteioController {
             throw new RegraNegocioException("Usuário não autenticado.");
         }
 
-        Usuario operador = usuarioRepository.findByEmail(authentication.getName())
+        Usuario operador = usuarioRepository.findWithPerfilByEmail(authentication.getName())
                 .orElseThrow(() -> new RegraNegocioException("Usuário autenticado não encontrado."));
 
         return sorteioService.sortearProximoNumero(id, operador);

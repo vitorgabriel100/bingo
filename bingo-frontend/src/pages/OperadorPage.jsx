@@ -7,6 +7,9 @@ import useWebSocket from "../hooks/useWebSocket";
 export default function OperadorPage() {
   const navigate = useNavigate();
 
+  const [salas, setSalas] = useState([]);
+  const [salaSelecionadaId, setSalaSelecionadaId] = useState(null);
+
   const [sessaoId, setSessaoId] = useState(null);
   const [rodadaId, setRodadaId] = useState(null);
   const [numeroRodada, setNumeroRodada] = useState(null);
@@ -743,63 +746,38 @@ export default function OperadorPage() {
     setMensagem(`Saiu o ${String(numeroNormalizado).padStart(2, "0")}!`);
   }
 
-  async function criarSessaoAutomatica() {
-    const tentativas = [
-      () => api.post("/sessoes", { nome: "Sessão Principal" }),
-      () => api.post("/sessoes", { descricao: "Sessão Principal" }),
-      () => api.post("/sessoes"),
-    ];
+  async function carregarSalas() {
+    const response = await api.get("/salas");
+    const lista = extrairLista(response.data);
+    setSalas(lista);
 
-    for (const tentativa of tentativas) {
-      try {
-        const response = await tentativa();
-        if (response.data?.id) return response.data;
-      } catch {
-        // tenta o próximo formato
-      }
+    const primeiraSala = lista[0] || null;
+    if (primeiraSala) {
+      setSalaSelecionadaId((atual) => atual || primeiraSala.id);
     }
 
-    throw new Error("Não foi possível criar sessão automaticamente.");
+    return primeiraSala;
   }
 
-  async function carregarOuCriarSessao() {
+  async function carregarOuCriarSessao(idSala = salaSelecionadaId) {
+    if (!idSala) {
+      setMensagem("Cadastre ou vincule uma sala antes de iniciar.");
+      return null;
+    }
+
     try {
       setMensagem("Buscando sessão...");
 
-      try {
-        const ativa = await api.get("/sessoes/ativa");
+      const response = await api.get("/sessoes/ativa", {
+        params: { salaId: idSala },
+      });
 
-        if (ativa.data?.id) {
-          setSessaoId(ativa.data.id);
-          return ativa.data.id;
-        }
-      } catch {
-        // continua
+      if (!response.data?.id) {
+        throw new Error("O backend não retornou uma sessão válida.");
       }
 
-      const response = await api.get("/sessoes");
-      const sessoes = extrairLista(response.data);
-
-      if (sessoes.length > 0) {
-        const sessao =
-          sessoes.find(
-            (s) =>
-              s.status === "ATIVA" ||
-              s.status === "EM_ANDAMENTO" ||
-              s.status === "AGENDADA" ||
-              s.ativa === true
-          ) || sessoes[0];
-
-        setSessaoId(sessao.id);
-        return sessao.id;
-      }
-
-      const novaSessao = await criarSessaoAutomatica();
-
-      setSessaoId(novaSessao.id);
-      setMensagem("Sessão criada automaticamente.");
-
-      return novaSessao.id;
+      setSessaoId(response.data.id);
+      return response.data.id;
     } catch (error) {
       console.error("Erro ao carregar/criar sessão:", error);
 
@@ -994,11 +972,24 @@ export default function OperadorPage() {
 
   useEffect(() => {
     async function iniciarTela() {
-      const idSessao = await carregarOuCriarSessao();
+      try {
+        const sala = await carregarSalas();
 
-      if (!idSessao) return;
+        if (!sala) {
+          setMensagem("Nenhuma sala disponível. Acesse Salas para cadastrar uma.");
+          return;
+        }
 
-      await carregarRodadaAtiva(idSessao);
+        const idSessao = await carregarOuCriarSessao(sala.id);
+
+        if (!idSessao) return;
+
+        await carregarRodadaAtiva(idSessao);
+      } catch (error) {
+        setMensagem(
+          error?.response?.data?.mensagem || "Erro ao carregar as salas."
+        );
+      }
     }
 
     iniciarTela();
@@ -1008,6 +999,20 @@ export default function OperadorPage() {
     carregarHistorico(rodadaId);
     carregarDadosRodada(rodadaId);
   }, [rodadaId]);
+
+  async function trocarSala(event) {
+    const idSala = Number(event.target.value);
+    setSalaSelecionadaId(idSala);
+    setSessaoId(null);
+    setNumeroAtual(null);
+    setHistorico([]);
+    limparRodadaSelecionada();
+
+    const idSessao = await carregarOuCriarSessao(idSala);
+    if (idSessao) {
+      await carregarRodadaAtiva(idSessao);
+    }
+  }
 
   function abrirModalNovaRodada() {
     setPremiacaoRodada({
@@ -1305,11 +1310,10 @@ export default function OperadorPage() {
     let idSessao = sessaoId;
 
     if (!idSessao) {
-      idSessao = await carregarOuCriarSessao();
+      idSessao = await carregarOuCriarSessao(salaSelecionadaId);
     }
 
     if (!idSessao) {
-      setMensagem("Não foi possível localizar ou criar uma sessão.");
       return;
     }
 
@@ -1523,6 +1527,8 @@ export default function OperadorPage() {
 
   const ultimosNove = historico.slice(-9).reverse();
   const ordemAtual = historico.length;
+  const salaSelecionada =
+    salas.find((sala) => sala.id === salaSelecionadaId) || null;
 
   return (
     <Layout title="Operador">
@@ -1530,9 +1536,23 @@ export default function OperadorPage() {
         <header className="operator-app-header">
           <div>
             <span>Painel do Operador</span>
-            <strong>Praça Moema 2</strong>
+            <strong>{salaSelecionada?.nome || "Selecione uma sala"}</strong>
             <small>{mensagem}</small>
           </div>
+
+          {salas.length > 1 && (
+            <select
+              className="operator-room-select"
+              value={salaSelecionadaId || ""}
+              onChange={trocarSala}
+            >
+              {salas.map((sala) => (
+                <option value={sala.id} key={sala.id}>
+                  {sala.nome}
+                </option>
+              ))}
+            </select>
+          )}
 
           <div className="operator-app-status-row">
             <div>
@@ -1742,8 +1762,12 @@ export default function OperadorPage() {
               </div>
 
               <div className="operator-config-footer">
-                <strong>Praça Moema 2</strong>
-                <span>Nome do evento / benefício configurado</span>
+                <strong>{salaSelecionada?.nome || "Sala não selecionada"}</strong>
+                <span>
+                  Série {salaSelecionada?.serieCartela || "--"} · cartelas{" "}
+                  {salaSelecionada?.cartelaInicial || "--"}–
+                  {salaSelecionada?.cartelaFinal || "--"}
+                </span>
               </div>
             </section>
 

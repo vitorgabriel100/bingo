@@ -1,4 +1,5 @@
 import { useAuth } from "../contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function Layout({ title, children }) {
   const { user, logout } = useAuth();
@@ -16,9 +17,17 @@ export default function Layout({ title, children }) {
         </div>
 
         {user && (
-          <button onClick={logout} className="danger-btn">
-            Sair
-          </button>
+          <div className="topbar-actions">
+            {["OPERADOR", "GERENTE", "ADMIN"].includes(user.perfil) && (
+              <>
+                <Link to="/operador">Operador</Link>
+                <Link to="/salas">Salas</Link>
+              </>
+            )}
+            <button onClick={logout} className="danger-btn">
+              Sair
+            </button>
+          </div>
         )}
       </header>
 

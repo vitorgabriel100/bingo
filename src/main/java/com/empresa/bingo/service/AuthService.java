@@ -8,6 +8,7 @@ import com.empresa.bingo.enums.StatusAssinatura;
 import com.empresa.bingo.model.Assinatura;
 import com.empresa.bingo.repository.AssinaturaRepository;
 import com.empresa.bingo.repository.UsuarioRepository;
+import com.empresa.bingo.repository.UsuarioSalaRepository;
 import com.empresa.bingo.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,6 +29,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuditoriaService auditoriaService;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioSalaRepository usuarioSalaRepository;
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
@@ -54,37 +56,44 @@ public class AuthService {
 
         if (!usuarioAdmin) {
             if (usuario.getCliente() == null) {
-                throw new LockedException("Usuário não vinculado a nenhum cliente.");
-            }
+                boolean possuiSala = usuarioSalaRepository
+                        .findByUsuarioIdAndAtivoTrueOrderBySalaNomeAsc(usuario.getId())
+                        .stream()
+                        .anyMatch(vinculo -> Boolean.TRUE.equals(vinculo.getSala().getAtiva()));
 
-            clienteId = usuario.getCliente().getId();
-            clienteNome = usuario.getCliente().getNome();
+                if (!possuiSala) {
+                    throw new LockedException("Usuário não vinculado a uma sala ativa.");
+                }
+            } else {
+                clienteId = usuario.getCliente().getId();
+                clienteNome = usuario.getCliente().getNome();
 
-            if (!Boolean.TRUE.equals(usuario.getCliente().getAtivo())) {
-                throw new LockedException("Cliente inativo.");
-            }
+                if (!Boolean.TRUE.equals(usuario.getCliente().getAtivo())) {
+                    throw new LockedException("Cliente inativo.");
+                }
 
-            Assinatura assinatura = assinaturaRepository.findByCliente(usuario.getCliente())
-                    .orElseThrow(() -> new LockedException("Cliente sem assinatura cadastrada."));
+                Assinatura assinatura = assinaturaRepository.findByCliente(usuario.getCliente())
+                        .orElseThrow(() -> new LockedException("Cliente sem assinatura cadastrada."));
 
-            assinaturaVencimento = assinatura.getDataVencimento();
+                assinaturaVencimento = assinatura.getDataVencimento();
 
-            boolean vencidaPorData = assinatura.getDataVencimento() != null
-                    && assinatura.getDataVencimento().isBefore(LocalDate.now());
+                boolean vencidaPorData = assinatura.getDataVencimento() != null
+                        && assinatura.getDataVencimento().isBefore(LocalDate.now());
 
-            if (vencidaPorData && assinatura.getStatus() != StatusAssinatura.VENCIDA) {
-                assinatura.setStatus(StatusAssinatura.VENCIDA);
-                assinaturaRepository.save(assinatura);
-            }
+                if (vencidaPorData && assinatura.getStatus() != StatusAssinatura.VENCIDA) {
+                    assinatura.setStatus(StatusAssinatura.VENCIDA);
+                    assinaturaRepository.save(assinatura);
+                }
 
-            assinaturaStatus = assinatura.getStatus().name();
+                assinaturaStatus = assinatura.getStatus().name();
 
-            assinaturaAtiva =
-                    assinatura.getStatus() == StatusAssinatura.ATIVA
-                            || assinatura.getStatus() == StatusAssinatura.TESTE;
+                assinaturaAtiva =
+                        assinatura.getStatus() == StatusAssinatura.ATIVA
+                                || assinatura.getStatus() == StatusAssinatura.TESTE;
 
-            if (vencidaPorData || !assinaturaAtiva) {
-                throw new LockedException("Assinatura vencida ou inativa.");
+                if (vencidaPorData || !assinaturaAtiva) {
+                    throw new LockedException("Assinatura vencida ou inativa.");
+                }
             }
         }
 
