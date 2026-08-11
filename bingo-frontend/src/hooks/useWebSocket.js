@@ -4,6 +4,8 @@ import { Client } from "@stomp/stompjs";
 
 export default function useWebSocket(configOrTopics, maybeOnMessage) {
   const clientRef = useRef(null);
+  const onMessageRef = useRef(null);
+  const mensagensRecentesRef = useRef(new Map());
 
   const modoAntigo = Array.isArray(configOrTopics);
 
@@ -22,8 +24,12 @@ export default function useWebSocket(configOrTopics, maybeOnMessage) {
   const topicsKey = topics.join("|");
 
   useEffect(() => {
-    if (!onMessage) return;
-    if (!topics || topics.length === 0) return;
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  useEffect(() => {
+    if (!onMessageRef.current) return;
+    if (!topicsKey) return;
 
     let apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -48,16 +54,30 @@ export default function useWebSocket(configOrTopics, maybeOnMessage) {
       onConnect: () => {
         console.log("WebSocket conectado:", socketUrl);
 
-        const topicosUnicos = [...new Set(topics)];
+        const topicosUnicos = [...new Set(topicsKey.split("|").filter(Boolean))];
 
         topicosUnicos.forEach((topic) => {
           client.subscribe(topic, (message) => {
             if (!message.body) return;
 
             try {
+              const agora = Date.now();
+              const recebidaEm = mensagensRecentesRef.current.get(message.body);
+
+              if (recebidaEm && agora - recebidaEm < 1200) {
+                return;
+              }
+
+              mensagensRecentesRef.current.set(message.body, agora);
+              mensagensRecentesRef.current.forEach((timestamp, chave) => {
+                if (agora - timestamp > 5000) {
+                  mensagensRecentesRef.current.delete(chave);
+                }
+              });
+
               const event = JSON.parse(message.body);
               console.log("Evento recebido:", topic, event);
-              onMessage(event);
+              onMessageRef.current?.(event);
             } catch (error) {
               console.error("Erro ao processar mensagem WebSocket:", error);
             }
@@ -82,5 +102,5 @@ export default function useWebSocket(configOrTopics, maybeOnMessage) {
         clientRef.current.deactivate();
       }
     };
-  }, [topicsKey, onMessage]);
+  }, [topicsKey]);
 }

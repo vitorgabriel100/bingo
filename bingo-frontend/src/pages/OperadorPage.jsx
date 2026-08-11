@@ -1506,6 +1506,19 @@ export default function OperadorPage({ view = "sorteio" }) {
   const salaSelecionada =
     salas.find((sala) => sala.id === salaSelecionadaId) || null;
 
+  function abrirTvDaSala() {
+    if (!salaSelecionadaId) {
+      setMensagem("Selecione uma sala antes de abrir a TV.");
+      return;
+    }
+
+    window.open(
+      `/tv/sala/${salaSelecionadaId}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
   return (
     <Layout
       title={view === "configuracoes" ? "Preparação da rodada" : "Rodada ao vivo"}
@@ -1513,6 +1526,16 @@ export default function OperadorPage({ view = "sorteio" }) {
         view === "configuracoes"
           ? "Defina premiação e abra a próxima rodada antes do sorteio."
           : "Controle o sorteio e acompanhe os números em tempo real."
+      }
+      actions={
+        <button
+          type="button"
+          className="ui-button ghost"
+          onClick={abrirTvDaSala}
+          disabled={!salaSelecionadaId}
+        >
+          Abrir TV desta sala
+        </button>
       }
     >
       <div className="operator-app-page">

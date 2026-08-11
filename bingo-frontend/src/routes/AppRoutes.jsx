@@ -62,6 +62,7 @@ export default function AppRoutes() {
         />
 
         <Route path="/tv" element={<TvPage />} />
+        <Route path="/tv/sala/:salaId" element={<TvPage />} />
         <Route
           path="/historico-rodadas"
           element={

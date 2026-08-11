@@ -1,1499 +1,1199 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import useWebSocket from "../hooks/useWebSocket";
 import BingoGlobe3D from "../components/BingoGlobe3D";
+import "./TvPage.css";
 
-export default function TvPage() {
-  const [sessaoId, setSessaoId] = useState(null);
-  const [rodadaId, setRodadaId] = useState(null);
+const LETRAS_BINGO = ["B", "I", "N", "G", "O"];
+const STATUS_SESSAO_ATIVA = new Set(["CRIADA", "AGENDADA", "EM_ANDAMENTO", "PAUSADA"]);
+const TIPOS_PREMIACAO = new Set([
+  "PRIZE_UPDATED",
+  "PRIZES_UPDATED",
+  "PREMIO_ATUALIZADO",
+  "PREMIACAO_ATUALIZADA",
+  "PREMIOS_ATUALIZADOS",
+  "ROUND_PRIZE_UPDATED",
+  "ROUND_PRIZES_UPDATED",
+  "ROUND_UPDATED",
+]);
 
-  const [numeroAtual, setNumeroAtual] = useState(null);
-  const [numeroAnimado, setNumeroAnimado] = useState(null);
-  const [historico, setHistorico] = useState([]);
-  const [mensagem, setMensagem] = useState("Preparando transmissão...");
-  const [statusRodada, setStatusRodada] = useState("AGUARDANDO");
-  const [numeroRodada, setNumeroRodada] = useState(null);
+const NOMES_PREMIO = {
+  PRIMEIRA_LINHA: "Linha",
+  CARTELA_CHEIA: "Bingo",
+  DUPLA_LINHA: "Duplo Bingo",
+  SEGUNDA_LINHA: "Bola Max",
+  BOLA_MAX: "Bola Max",
+  DOACAO: "Doação",
+};
 
-  const [premioAtual, setPremioAtual] = useState("PRIMEIRA_LINHA");
+const PREMIACAO_INICIAL = {
+  linha: "",
+  bingo: "",
+  duploBingo: "",
+  bolaMax: "60",
+  doacao: "",
+};
 
-  const [premiacaoAtual, setPremiacaoAtual] = useState({
-    linha: "",
-    bingo: "",
-    duploBingo: "",
-    bolaMax: "60",
-    doacao: "",
-  });
-
-  const [faseAnimacao, setFaseAnimacao] = useState("idle");
-  const [countdown, setCountdown] = useState(null);
-
-  const [somLiberado, setSomLiberado] = useState(false);
-
-  const machineAudioRef = useRef(null);
-  const dropAudioRef = useRef(null);
-  const countdownAudioRef = useRef(null);
-  const somLiberadoRef = useRef(false);
-
-  const animandoRef = useRef(false);
-  const filaRef = useRef([]);
-  const countdownRodadaRef = useRef(null);
-  const ultimoNumeroFaladoRef = useRef(null);
-  const contagemCanceladaRef = useRef(false);
-
-  const VOLUME_MUSICA_CONTAGEM = 0.72;
-  const VOLUME_MUSICA_FUNDO = 0.34;
-  const VOLUME_MUSICA_DURANTE_VOZ = 0.16;
-  const VOLUME_MAQUINA = 0.9;
-  const VOLUME_QUEDA = 1;
-
-  const nomesPremio = {
-    PRIMEIRA_LINHA: "Linha",
-    CARTELA_CHEIA: "Bingo",
-    DUPLA_LINHA: "Duplo Bingo",
-    SEGUNDA_LINHA: "Bola Max",
-    BOLA_MAX: "Bola Max",
-    DOACAO: "Doação",
+const FAIXAS_NUMEROS = LETRAS_BINGO.map(function montarFaixa(letra, indice) {
+  return {
+    letra: letra,
+    numeros: Array.from({ length: 15 }, function criarNumero(_, numero) {
+      return indice * 15 + numero + 1;
+    }),
   };
+});
 
-  const letrasBingo = ["B", "I", "N", "G", "O"];
+function extrairLista(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data && data.content)) return data.content;
+  if (Array.isArray(data && data.data)) return data.data;
+  return [];
+}
 
-  const numerosPainel = [
-    Array.from({ length: 15 }, (_, i) => i + 1),
-    Array.from({ length: 15 }, (_, i) => i + 16),
-    Array.from({ length: 15 }, (_, i) => i + 31),
-    Array.from({ length: 15 }, (_, i) => i + 46),
-    Array.from({ length: 15 }, (_, i) => i + 61),
-  ];
+function formatarNumero(numero) {
+  if (numero === null || numero === undefined || numero === "") return "--";
+  return String(Number(numero)).padStart(2, "0");
+}
 
-  const quantidadeUltimasBolas =
-    historico.length <= 12 ? 6 : historico.length <= 35 ? 8 : 10;
+function letraDoNumero(numero) {
+  const indice = Math.min(4, Math.max(0, Math.ceil(Number(numero) / 15) - 1));
+  return LETRAS_BINGO[indice];
+}
 
-  const ultimasBolas = historico.slice(-quantidadeUltimasBolas).reverse();
+function formatarStatus(status) {
+  return String(status || "AGUARDANDO").replaceAll("_", " ");
+}
 
-  const classeTamanhoUltimas =
-    historico.length <= 12
-      ? "last-balls-large"
-      : historico.length <= 35
-      ? "last-balls-medium"
-      : historico.length <= 55
-      ? "last-balls-small"
-      : "last-balls-mini";
+function formatarMoeda(valor) {
+  if (valor === null || valor === undefined || valor === "") return "--";
+  const numero = Number(String(valor).replace(",", "."));
+  if (!Number.isFinite(numero)) return "R$ " + valor;
+  return numero.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
 
-  const premiosDaRodada = [
-    {
-      codigo: "PRIMEIRA_LINHA",
-      titulo: "Linha",
-      valor: formatarMoeda(premiacaoAtual.linha),
-      descricao: "Primeiro prêmio",
-    },
-    {
-      codigo: "CARTELA_CHEIA",
-      titulo: "Bingo",
-      valor: formatarMoeda(premiacaoAtual.bingo),
-      descricao: "Cartela cheia",
-    },
-    {
-      codigo: "DUPLA_LINHA",
-      titulo: "Duplo Bingo",
-      valor: formatarMoeda(premiacaoAtual.duploBingo),
-      descricao: "Prêmio especial",
-    },
-    {
-      codigo: "SEGUNDA_LINHA",
-      titulo: "Bola Max",
-      valor: premiacaoAtual.bolaMax
-        ? `Até a bola ${premiacaoAtual.bolaMax}`
-        : "--",
-      descricao: "Desafio da rodada",
-    },
-    {
-      codigo: "DOACAO",
-      titulo: "Doação",
-      valor: formatarMoeda(premiacaoAtual.doacao),
-      descricao: "Valor beneficente",
-    },
-  ];
+function montarFontes(data) {
+  return [
+    data,
+    data && data.data,
+    data && data.payload,
+    data && data.body,
+    data && data.rodada,
+    data && data.round,
+    data && data.premiacao,
+    data && data.premiacaoAtual,
+    data && data.premios,
+    data && data.valoresPremio,
+  ].filter(Boolean);
+}
 
-  function formatarNumero(numero) {
-    if (numero === null || numero === undefined || numero === "") return "--";
-    return String(Number(numero)).padStart(2, "0");
-  }
-
-  function formatarStatusRodada(status) {
-    if (!status) return "AGUARDANDO";
-    return String(status).replaceAll("_", " ");
-  }
-
-  function formatarPremio(premio) {
-    return nomesPremio[premio] || premio || "Linha";
-  }
-
-  function formatarMoeda(valor) {
-    if (valor === null || valor === undefined || valor === "") return "--";
-
-    const numero = Number(String(valor).replace(",", "."));
-
-    if (!Number.isFinite(numero)) return `R$ ${valor}`;
-
-    return numero.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  }
-
-  function valorPremioAtual(premio = premioAtual) {
-    if (premio === "PRIMEIRA_LINHA") return formatarMoeda(premiacaoAtual.linha);
-    if (premio === "CARTELA_CHEIA") return formatarMoeda(premiacaoAtual.bingo);
-    if (premio === "DUPLA_LINHA")
-      return formatarMoeda(premiacaoAtual.duploBingo);
-
-    if (premio === "SEGUNDA_LINHA" || premio === "BOLA_MAX") {
-      return premiacaoAtual.bolaMax
-        ? `Até a bola ${premiacaoAtual.bolaMax}`
-        : "--";
+function buscarValor(fontes, chaves) {
+  for (const fonte of fontes) {
+    if (!fonte || typeof fonte !== "object") continue;
+    for (const chave of chaves) {
+      const valor = fonte[chave];
+      if (valor !== undefined && valor !== null && valor !== "") return valor;
     }
-
-    if (premio === "DOACAO") return formatarMoeda(premiacaoAtual.doacao);
-
-    return "--";
   }
+  return undefined;
+}
 
-  function textoPremioAtual(premio = premioAtual) {
-    return `${formatarPremio(premio)} • ${valorPremioAtual(premio)}`;
-  }
+function normalizarPremio(valor) {
+  if (!valor) return null;
+  const texto = String(valor)
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
-  function letraDoNumero(numero) {
-    const n = Number(numero);
+  if (texto === "LINHA" || texto.includes("PRIMEIRA")) return "PRIMEIRA_LINHA";
+  if (texto === "BINGO" || texto.includes("CARTELA")) return "CARTELA_CHEIA";
+  if (texto.includes("DUPLO") || texto.includes("DUPLA")) return "DUPLA_LINHA";
+  if (texto.includes("BOLA") || texto.includes("ACUMULADO")) return "SEGUNDA_LINHA";
+  if (texto.includes("DOACAO")) return "DOACAO";
+  return valor;
+}
 
-    if (n <= 15) return "B";
-    if (n <= 30) return "I";
-    if (n <= 45) return "N";
-    if (n <= 60) return "G";
-
-    return "O";
-  }
-
-  function extrairLista(data) {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.content)) return data.content;
-    if (Array.isArray(data?.data)) return data.data;
-    return [];
-  }
-
-  function extrairNumeroSorteado(data) {
-    if (typeof data === "number") return data;
-
-    return (
-      data?.numero ??
-      data?.numeroSorteado ??
-      data?.valor ??
-      data?.bola ??
-      data?.numeroAtual ??
-      data?.number ??
-      data?.data?.numero ??
-      data?.data?.numeroSorteado ??
-      null
-    );
-  }
-
-  function montarFontes(data) {
-    return [
-      data,
-      data?.data,
-      data?.payload,
-      data?.body,
-      data?.rodada,
-      data?.round,
-      data?.premiacao,
-      data?.premiacaoAtual,
-      data?.premios,
-      data?.valoresPremio,
-    ].filter(Boolean);
-  }
-
-  function buscarValorEmFontes(fontes, chaves) {
-    for (const fonte of fontes) {
-      if (!fonte || typeof fonte !== "object") continue;
-
-      for (const chave of chaves) {
-        const valor = fonte[chave];
-
-        if (valor !== undefined && valor !== null && valor !== "") {
-          return valor;
-        }
-      }
-    }
-
-    return undefined;
-  }
-
-  function normalizarPremiacaoFonte(data) {
-    if (!data) return null;
-
-    const fontes = montarFontes(data);
-
-    const linha = buscarValorEmFontes(fontes, [
-      "linha",
-      "premioLinha",
-      "valorLinha",
-      "primeiraLinha",
-      "valorPrimeiraLinha",
-      "premioPrimeiraLinha",
-    ]);
-
-    const bingo = buscarValorEmFontes(fontes, [
-      "bingo",
-      "premioBingo",
-      "valorBingo",
-      "cartelaCheia",
-      "valorCartelaCheia",
-      "premioCartelaCheia",
-    ]);
-
-    const duploBingo = buscarValorEmFontes(fontes, [
-      "duploBingo",
-      "duplo_bingo",
-      "premioDuploBingo",
-      "valorDuploBingo",
-      "duplaLinha",
-      "valorDuplaLinha",
-      "premioDuplaLinha",
-    ]);
-
-    const bolaMax = buscarValorEmFontes(fontes, [
-      "bolaMax",
-      "bola_max",
-      "premioBolaMax",
-      "numeroBolaMax",
-      "valorBolaMax",
-      "acumulado",
-    ]);
-
-    const doacao = buscarValorEmFontes(fontes, [
-      "doacao",
-      "doação",
-      "valorDoacao",
-      "valorDoação",
-      "premioDoacao",
-      "arrecadacao",
-    ]);
-
-    const premiacao = {};
-
-    if (linha !== undefined) premiacao.linha = linha;
-    if (bingo !== undefined) premiacao.bingo = bingo;
-    if (duploBingo !== undefined) premiacao.duploBingo = duploBingo;
-    if (bolaMax !== undefined) premiacao.bolaMax = bolaMax;
-    if (doacao !== undefined) premiacao.doacao = doacao;
-
-    return Object.keys(premiacao).length > 0 ? premiacao : null;
-  }
-
-  function normalizarPremioAtual(valor) {
-    if (!valor) return null;
-
-    const texto = String(valor)
-      .trim()
-      .toUpperCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-
-    if (
-      texto === "PRIMEIRA_LINHA" ||
-      texto === "LINHA" ||
-      texto.includes("PRIMEIRA")
-    ) {
-      return "PRIMEIRA_LINHA";
-    }
-
-    if (
-      texto === "CARTELA_CHEIA" ||
-      texto === "BINGO" ||
-      texto.includes("CARTELA")
-    ) {
-      return "CARTELA_CHEIA";
-    }
-
-    if (
-      texto === "DUPLA_LINHA" ||
-      texto === "DUPLO_BINGO" ||
-      texto.includes("DUPLO") ||
-      texto.includes("DUPLA")
-    ) {
-      return "DUPLA_LINHA";
-    }
-
-    if (
-      texto === "SEGUNDA_LINHA" ||
-      texto === "BOLA_MAX" ||
-      texto.includes("BOLA") ||
-      texto.includes("ACUMULADO")
-    ) {
-      return "SEGUNDA_LINHA";
-    }
-
-    if (texto === "DOACAO" || texto.includes("DOACAO")) {
-      return "DOACAO";
-    }
-
-    return valor;
-  }
-
-  function extrairPremioAtual(data) {
-    const fontes = montarFontes(data);
-
-    const premio = buscarValorEmFontes(fontes, [
+function extrairPremioAtual(data) {
+  return normalizarPremio(
+    buscarValor(montarFontes(data), [
       "premioAtual",
       "premio",
       "tipoPremio",
       "premioDaVez",
       "concorrendoAgora",
       "etapaPremio",
-      "fasePremio",
-    ]);
+    ])
+  );
+}
 
-    return normalizarPremioAtual(premio);
-  }
+function extrairNumeroSorteado(data) {
+  if (typeof data === "number") return data;
+  return (
+    (data && data.numero) ||
+    (data && data.numeroSorteado) ||
+    (data && data.valor) ||
+    (data && data.bola) ||
+    (data && data.numeroAtual) ||
+    (data && data.data && data.data.numero) ||
+    null
+  );
+}
 
-  function salvarPremiacaoLocal(premiacao) {
-    try {
-      localStorage.setItem("premiacaoRodadaAtual", JSON.stringify(premiacao));
-    } catch {
-      // ignora erro de localStorage
-    }
-  }
+function normalizarPremiacao(data) {
+  if (!data) return null;
+  const fontes = montarFontes(data);
+  const premiacao = {};
+  const linha = buscarValor(fontes, [
+    "linha",
+    "premioLinha",
+    "valorLinha",
+    "primeiraLinha",
+    "valorPrimeiraLinha",
+  ]);
+  const bingo = buscarValor(fontes, [
+    "bingo",
+    "premioBingo",
+    "valorBingo",
+    "cartelaCheia",
+    "valorCartelaCheia",
+  ]);
+  const duploBingo = buscarValor(fontes, [
+    "duploBingo",
+    "duplo_bingo",
+    "premioDuploBingo",
+    "valorDuploBingo",
+    "duplaLinha",
+  ]);
+  const bolaMax = buscarValor(fontes, [
+    "bolaMax",
+    "bola_max",
+    "premioBolaMax",
+    "numeroBolaMax",
+    "valorBolaMax",
+    "acumulado",
+  ]);
+  const doacao = buscarValor(fontes, [
+    "doacao",
+    "doação",
+    "valorDoacao",
+    "valorDoação",
+    "premioDoacao",
+    "arrecadacao",
+  ]);
 
-  function aplicarPremiacao(data, salvarLocalmente = false) {
-    const premiacaoNormalizada = normalizarPremiacaoFonte(data);
+  if (linha !== undefined) premiacao.linha = linha;
+  if (bingo !== undefined) premiacao.bingo = bingo;
+  if (duploBingo !== undefined) premiacao.duploBingo = duploBingo;
+  if (bolaMax !== undefined) premiacao.bolaMax = bolaMax;
+  if (doacao !== undefined) premiacao.doacao = doacao;
+  return Object.keys(premiacao).length ? premiacao : null;
+}
 
-    if (!premiacaoNormalizada) return;
+function montarTextoLocucao(numero) {
+  const valor = Number(numero);
+  if (!Number.isFinite(valor)) return "";
+  const digitos = String(valor).split("").join(". ");
+  return String(valor) + ". " + digitos + ".";
+}
 
-    setPremiacaoAtual((atual) => {
-      const novaPremiacao = {
-        ...atual,
-        ...premiacaoNormalizada,
-      };
+function escolherVozFeminina() {
+  if (!("speechSynthesis" in window)) return null;
+  const vozes = window.speechSynthesis.getVoices();
+  const prioridades = [
+    "Google português do Brasil",
+    "Microsoft Francisca",
+    "Microsoft Maria",
+    "Francisca",
+    "Maria",
+    "Google",
+  ];
 
-      if (salvarLocalmente) {
-        salvarPremiacaoLocal(novaPremiacao);
-      }
-
-      return novaPremiacao;
+  for (const nome of prioridades) {
+    const voz = vozes.find(function encontrar(item) {
+      return (
+        item.lang &&
+        item.lang.toLowerCase().includes("pt-br") &&
+        item.name &&
+        item.name.toLowerCase().includes(nome.toLowerCase())
+      );
     });
+    if (voz) return voz;
   }
 
-  function aplicarPremioAtual(valor, salvarLocalmente = false) {
-    const premioNormalizado = normalizarPremioAtual(valor);
+  return (
+    vozes.find(function ptBr(voz) {
+      return voz.lang && voz.lang.toLowerCase().includes("pt-br");
+    }) ||
+    vozes.find(function pt(voz) {
+      return voz.lang && voz.lang.toLowerCase().startsWith("pt");
+    }) ||
+    null
+  );
+}
 
-    if (!premioNormalizado) return;
+function esperar(ms) {
+  return new Promise(function aguardar(resolve) {
+    window.setTimeout(resolve, ms);
+  });
+}
 
-    setPremioAtual(premioNormalizado);
+export default function TvPage() {
+  const navigate = useNavigate();
+  const params = useParams();
+  const salaIdDaRota = params.salaId ? Number(params.salaId) : null;
 
-    if (salvarLocalmente) {
-      try {
-        localStorage.setItem("premioAtualOperador", premioNormalizado);
-      } catch {
-        // ignora erro de localStorage
-      }
+  const [salas, setSalas] = useState([]);
+  const [salaSelecionada, setSalaSelecionada] = useState(null);
+  const [selecionandoSala, setSelecionandoSala] = useState(false);
+  const [erroInicial, setErroInicial] = useState("");
+  const [carregando, setCarregando] = useState(true);
+
+  const [sessaoId, setSessaoId] = useState(null);
+  const [rodadaId, setRodadaId] = useState(null);
+  const [numeroRodada, setNumeroRodada] = useState(null);
+  const [statusRodada, setStatusRodada] = useState("AGUARDANDO");
+  const [numeroAtual, setNumeroAtual] = useState(null);
+  const [numeroAnimado, setNumeroAnimado] = useState(null);
+  const [historico, setHistorico] = useState([]);
+  const [mensagem, setMensagem] = useState("Preparando transmissão...");
+  const [premioAtual, setPremioAtual] = useState("PRIMEIRA_LINHA");
+  const [premiacao, setPremiacao] = useState(PREMIACAO_INICIAL);
+  const [faseAnimacao, setFaseAnimacao] = useState("idle");
+  const [countdown, setCountdown] = useState(null);
+  const [somLiberado, setSomLiberado] = useState(false);
+  const [ativandoSom, setAtivandoSom] = useState(false);
+
+  const voiceAudioRef = useRef(null);
+  const countdownAudioRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const somLiberadoRef = useRef(false);
+  const animandoRef = useRef(false);
+  const filaRef = useRef([]);
+  const numeroEmAnimacaoRef = useRef(null);
+  const eventosProcessadosRef = useRef(new Map());
+  const countdownRodadaRef = useRef(null);
+  const contagemCanceladaRef = useRef(false);
+  const sessaoIdRef = useRef(null);
+  const rodadaIdRef = useRef(null);
+  const premioAtualRef = useRef("PRIMEIRA_LINHA");
+  const carregarSessaoDaSalaRef = useRef(null);
+  const carregarRodadaAtivaRef = useRef(null);
+
+  const historicoSet = useMemo(function criarSetHistorico() {
+    return new Set(historico);
+  }, [historico]);
+
+  const ultimasBolas = useMemo(function obterUltimas() {
+    return historico.slice(-8).reverse();
+  }, [historico]);
+
+  const premios = useMemo(function montarPremios() {
+    return [
+      { codigo: "PRIMEIRA_LINHA", titulo: "Linha", valor: formatarMoeda(premiacao.linha) },
+      { codigo: "CARTELA_CHEIA", titulo: "Bingo", valor: formatarMoeda(premiacao.bingo) },
+      { codigo: "DUPLA_LINHA", titulo: "Duplo Bingo", valor: formatarMoeda(premiacao.duploBingo) },
+      {
+        codigo: "SEGUNDA_LINHA",
+        titulo: "Bola Max",
+        valor: premiacao.bolaMax ? "Até a bola " + premiacao.bolaMax : "--",
+      },
+      { codigo: "DOACAO", titulo: "Doação", valor: formatarMoeda(premiacao.doacao) },
+    ];
+  }, [premiacao]);
+
+  function valorPremioAtual(codigo) {
+    const premio = codigo || premioAtual;
+    if (premio === "PRIMEIRA_LINHA") return formatarMoeda(premiacao.linha);
+    if (premio === "CARTELA_CHEIA") return formatarMoeda(premiacao.bingo);
+    if (premio === "DUPLA_LINHA") return formatarMoeda(premiacao.duploBingo);
+    if (premio === "DOACAO") return formatarMoeda(premiacao.doacao);
+    if (premio === "SEGUNDA_LINHA" || premio === "BOLA_MAX") {
+      return premiacao.bolaMax ? "Até a bola " + premiacao.bolaMax : "--";
     }
+    return "--";
   }
 
-  function lerPremiacaoSalva() {
-    try {
-      const salvo = localStorage.getItem("premiacaoRodadaAtual");
+  function aplicarDadosRodada(data) {
+    if (!data) return;
+    const novaPremiacao = normalizarPremiacao(data);
+    const novoPremio = extrairPremioAtual(data);
+    const fontes = montarFontes(data);
+    const id = buscarValor(fontes, ["rodadaId", "id"]);
+    const numero = buscarValor(fontes, ["numeroRodada", "numero_rodada"]);
+    const status = buscarValor(fontes, ["status", "situacao"]);
 
-      if (!salvo) return null;
-
-      const dados = JSON.parse(salvo);
-
-      return {
-        linha: dados?.linha || "",
-        bingo: dados?.bingo || "",
-        duploBingo: dados?.duploBingo || "",
-        bolaMax: dados?.bolaMax || "60",
-        doacao: dados?.doacao || "",
-      };
-    } catch {
-      return null;
+    if (id) {
+      setRodadaId(Number(id));
+      rodadaIdRef.current = Number(id);
     }
-  }
-
-  function atualizarPremiacaoDaTv() {
-    const premiacaoSalva = lerPremiacaoSalva();
-
-    if (premiacaoSalva) {
-      setPremiacaoAtual((atual) => {
-        const novaPremiacao = {
-          ...atual,
-          ...premiacaoSalva,
-        };
-
-        return JSON.stringify(atual) === JSON.stringify(novaPremiacao)
-          ? atual
-          : novaPremiacao;
+    if (numero) setNumeroRodada(numero);
+    if (status) setStatusRodada(status);
+    if (novaPremiacao) {
+      setPremiacao(function atualizar(atual) {
+        return Object.assign({}, atual, novaPremiacao);
       });
     }
+    if (novoPremio) {
+      setPremioAtual(novoPremio);
+      premioAtualRef.current = novoPremio;
+    }
   }
 
-  function ajustarVolume(audioRef, volume) {
-    if (!audioRef.current) return;
-
-    const volumeSeguro = Math.max(0, Math.min(1, volume));
-    audioRef.current.volume = volumeSeguro;
+  function obterAudioContext() {
+    if (audioContextRef.current) return audioContextRef.current;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+    audioContextRef.current = new AudioContext();
+    return audioContextRef.current;
   }
 
-  async function tocarTrilhaDeFundo(volume = VOLUME_MUSICA_FUNDO) {
-    if (!somLiberadoRef.current || !countdownAudioRef.current) return;
-
+  async function desbloquearElemento(audio, src) {
+    if (!audio) return false;
     try {
-      countdownAudioRef.current.pause();
-      countdownAudioRef.current.currentTime = 0;
-      countdownAudioRef.current.volume = volume;
-      countdownAudioRef.current.loop = false;
-      await countdownAudioRef.current.play();
+      audio.pause();
+      audio.src = src;
+      audio.volume = 0.001;
+      audio.muted = false;
+      audio.load();
+      await audio.play();
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 1;
+      return true;
     } catch (error) {
-      console.warn("Não foi possível tocar a vinheta/trilha:", error);
+      console.warn("Não foi possível pré-liberar um áudio da TV:", error);
+      audio.volume = 1;
+      return false;
     }
   }
 
-  function numeroPorExtenso(numero) {
-    const n = Number(numero);
-
-    const unidades = {
-      0: "zero",
-      1: "um",
-      2: "dois",
-      3: "três",
-      4: "quatro",
-      5: "cinco",
-      6: "seis",
-      7: "sete",
-      8: "oito",
-      9: "nove",
-      10: "dez",
-      11: "onze",
-      12: "doze",
-      13: "treze",
-      14: "quatorze",
-      15: "quinze",
-      16: "dezesseis",
-      17: "dezessete",
-      18: "dezoito",
-      19: "dezenove",
-    };
-
-    const dezenas = {
-      20: "vinte",
-      30: "trinta",
-      40: "quarenta",
-      50: "cinquenta",
-      60: "sessenta",
-      70: "setenta",
-    };
-
-    if (unidades[n]) return unidades[n];
-
-    const dezena = Math.floor(n / 10) * 10;
-    const unidade = n % 10;
-
-    if (unidade === 0) return dezenas[dezena] || String(n);
-
-    return `${dezenas[dezena]} e ${unidades[unidade]}`;
-  }
-
-  function digitoPorExtenso(digito) {
-    const mapa = {
-      "0": "zero",
-      "1": "um",
-      "2": "dois",
-      "3": "três",
-      "4": "quatro",
-      "5": "cinco",
-      "6": "seis",
-      "7": "sete",
-      "8": "oito",
-      "9": "nove",
-    };
-
-    return mapa[String(digito)] || String(digito);
-  }
-
-  function montarTextoLocucao(numero) {
-    const numeroNormalizado = Number(numero);
-
-    if (!Number.isFinite(numeroNormalizado)) return "";
-
-    const numeroTexto = numeroPorExtenso(numeroNormalizado);
-    const digitos = String(numeroNormalizado)
-      .split("")
-      .map((digito) => digitoPorExtenso(digito));
-
-    if (digitos.length === 1) {
-      return `${numeroTexto}. ${numeroTexto}.`;
-    }
-
-    return `${numeroTexto}. ${digitos.join(". ")}.`;
-  }
-
-  function escolherVozFemininaPtBr() {
-    if (!window.speechSynthesis) return null;
-
-    const vozes = window.speechSynthesis.getVoices();
-
-    const prioridadePorNome = [
-      "Google português do Brasil",
-      "Microsoft Francisca",
-      "Microsoft Maria",
-      "Francisca",
-      "Maria",
-      "Google",
-    ];
-
-    for (const nome of prioridadePorNome) {
-      const voz = vozes.find(
-        (item) =>
-          item.lang?.toLowerCase().includes("pt-br") &&
-          item.name?.toLowerCase().includes(nome.toLowerCase())
-      );
-
-      if (voz) return voz;
-    }
-
-    return (
-      vozes.find((voz) => voz.lang?.toLowerCase().includes("pt-br")) ||
-      vozes.find((voz) => voz.lang?.toLowerCase().startsWith("pt")) ||
-      null
-    );
-  }
-
-  async function falarNumeroSorteado(numero) {
-    if (!somLiberadoRef.current) return;
-    if (!numero && numero !== 0) return;
-    if (!window.speechSynthesis) return;
-
-    const texto = montarTextoLocucao(numero);
-
-    if (!texto) return;
-
+  async function liberarSom() {
+    setAtivandoSom(true);
+    setMensagem("Ativando áudio da transmissão...");
     try {
+      const contexto = obterAudioContext();
+      if (contexto && contexto.state === "suspended") await contexto.resume();
+
+      await Promise.allSettled([
+        desbloquearElemento(
+          voiceAudioRef.current,
+          "/sounds/bingo-voice/B_1.mp3"
+        ),
+        desbloquearElemento(
+          countdownAudioRef.current,
+          "/sounds/countdown-vignette.mp3"
+        ),
+      ]);
+
+      somLiberadoRef.current = true;
+      setSomLiberado(true);
+      setMensagem("Som ativado. Transmissão pronta.");
+      if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
+    } finally {
+      setAtivandoSom(false);
+    }
+  }
+
+  function tocarEfeitoBolinheira() {
+    if (!somLiberadoRef.current) return;
+    const contexto = obterAudioContext();
+    if (!contexto) return;
+
+    const inicio = contexto.currentTime;
+    const oscilador = contexto.createOscillator();
+    const ganho = contexto.createGain();
+    oscilador.type = "sawtooth";
+    oscilador.frequency.setValueAtTime(92, inicio);
+    oscilador.frequency.exponentialRampToValueAtTime(54, inicio + 0.65);
+    ganho.gain.setValueAtTime(0.0001, inicio);
+    ganho.gain.exponentialRampToValueAtTime(0.075, inicio + 0.04);
+    ganho.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.7);
+    oscilador.connect(ganho);
+    ganho.connect(contexto.destination);
+    oscilador.start(inicio);
+    oscilador.stop(inicio + 0.72);
+  }
+
+  function tocarEfeitoQueda() {
+    if (!somLiberadoRef.current) return;
+    const contexto = obterAudioContext();
+    if (!contexto) return;
+
+    const inicio = contexto.currentTime;
+    const oscilador = contexto.createOscillator();
+    const ganho = contexto.createGain();
+    oscilador.type = "sine";
+    oscilador.frequency.setValueAtTime(720, inicio);
+    oscilador.frequency.exponentialRampToValueAtTime(210, inicio + 0.22);
+    ganho.gain.setValueAtTime(0.18, inicio);
+    ganho.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.25);
+    oscilador.connect(ganho);
+    ganho.connect(contexto.destination);
+    oscilador.start(inicio);
+    oscilador.stop(inicio + 0.26);
+  }
+
+  function falarComVozDoNavegador(numero) {
+    return new Promise(function criarFala(resolve) {
+      if (!somLiberadoRef.current || !("speechSynthesis" in window)) {
+        resolve();
+        return;
+      }
+
       window.speechSynthesis.cancel();
-
-      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_DURANTE_VOZ);
-
-      const fala = new SpeechSynthesisUtterance(texto);
-
+      const fala = new SpeechSynthesisUtterance(montarTextoLocucao(numero));
       fala.lang = "pt-BR";
       fala.rate = 1.28;
       fala.pitch = 1.12;
       fala.volume = 1;
-
-      const voz = escolherVozFemininaPtBr();
-
-      if (voz) {
-        fala.voice = voz;
-      }
-
-      fala.onend = () => {
-        ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-      };
-
-      fala.onerror = () => {
-        ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-      };
-
+      const voz = escolherVozFeminina();
+      if (voz) fala.voice = voz;
+      fala.onend = resolve;
+      fala.onerror = resolve;
       window.speechSynthesis.speak(fala);
-    } catch (error) {
-      console.error("Erro na locução do número:", error);
-      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-    }
-  }
-
-  function esperar(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  async function tocarAudio(audioRef, volume = 1) {
-    if (!somLiberadoRef.current || !audioRef.current) return;
-
-    try {
-      const audio = audioRef.current;
-
-      audio.pause();
-
-      try {
-        audio.currentTime = 0;
-      } catch {
-        // algumas TVs travam ao mexer no currentTime antes do áudio carregar
-      }
-
-      audio.muted = false;
-      audio.volume = Math.max(0, Math.min(1, volume));
-
-      await audio.play();
-    } catch (error) {
-      console.warn("Áudio bloqueado, ausente ou incompatível:", error);
-    }
-  }
-
-  function pararAudio(audioRef) {
-    if (!audioRef.current) return;
-
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-  }
-
-  function pararTodosAudios() {
-    pararAudio(machineAudioRef);
-    pararAudio(dropAudioRef);
-    pararAudio(countdownAudioRef);
-
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  }
-
-  function desbloquearAudioElemento(audioRef, nome = "áudio") {
-    return new Promise((resolve) => {
-      const audio = audioRef.current;
-
-      if (!audio) {
-        resolve(false);
-        return;
-      }
-
-      let finalizado = false;
-
-      const volumeOriginal = audio.volume;
-      const mutedOriginal = audio.muted;
-      const loopOriginal = audio.loop;
-      const playbackRateOriginal = audio.playbackRate;
-
-      function finalizar(resultado) {
-        if (finalizado) return;
-
-        finalizado = true;
-
-        try {
-          audio.pause();
-          audio.currentTime = 0;
-        } catch {
-          // ignora erro de reset em navegador de TV
-        }
-
-        audio.volume = volumeOriginal;
-        audio.muted = mutedOriginal;
-        audio.loop = loopOriginal;
-        audio.playbackRate = playbackRateOriginal;
-
-        resolve(resultado);
-      }
-
-      try {
-        audio.pause();
-
-        try {
-          audio.currentTime = 0;
-        } catch {
-          // ignora
-        }
-
-        audio.volume = 0.001;
-        audio.muted = false;
-        audio.loop = false;
-        audio.playbackRate = 1;
-
-        const playPromise = audio.play();
-
-        if (playPromise && typeof playPromise.then === "function") {
-          playPromise
-            .then(() => {
-              setTimeout(() => finalizar(true), 180);
-            })
-            .catch((error) => {
-              console.warn(`Não foi possível liberar ${nome}:`, error);
-              finalizar(false);
-            });
-        } else {
-          setTimeout(() => finalizar(true), 180);
-        }
-      } catch (error) {
-        console.warn(`Erro ao tentar liberar ${nome}:`, error);
-        finalizar(false);
-      }
+      window.setTimeout(resolve, 6500);
     });
   }
 
-  async function liberarSom() {
-    try {
-      somLiberadoRef.current = true;
-      setMensagem("Ativando som da TV...");
-
-      const resultados = await Promise.allSettled([
-        desbloquearAudioElemento(machineAudioRef, "som da máquina"),
-        desbloquearAudioElemento(dropAudioRef, "som da bolinha"),
-        desbloquearAudioElemento(countdownAudioRef, "vinheta da contagem"),
-      ]);
-
-      const algumAudioLiberado = resultados.some(
-        (resultado) =>
-          resultado.status === "fulfilled" && resultado.value === true
-      );
-
-      setSomLiberado(true);
-
-      if (algumAudioLiberado) {
-        setMensagem("Som da TV ativado. Boa sorte a todos!");
-        console.log("Som da TV liberado.");
-      } else {
-        setMensagem(
-          "Som ativado. Se não tocar na próxima bola, verifique os arquivos de áudio."
-        );
-        console.warn(
-          "A TV não confirmou o desbloqueio dos áudios, mas o som foi liberado no sistema."
-        );
+  function tocarLocucaoGravada(numero) {
+    return new Promise(function reproduzir(resolve) {
+      if (!somLiberadoRef.current || !voiceAudioRef.current) {
+        resolve();
+        return;
       }
 
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.getVoices();
+      const audio = voiceAudioRef.current;
+      let terminou = false;
+      function finalizar() {
+        if (terminou) return;
+        terminou = true;
+        audio.onended = null;
+        audio.onerror = null;
+        resolve();
       }
-    } catch (error) {
-      somLiberadoRef.current = true;
-      setSomLiberado(true);
 
-      console.warn("Falha parcial ao liberar som, mantendo som ativado:", error);
-
-      setMensagem("Som ativado. Sorteie uma bola para testar o áudio da TV.");
-    }
+      audio.pause();
+      audio.src =
+        "/sounds/bingo-voice/" +
+        letraDoNumero(numero) +
+        "_" +
+        Number(numero) +
+        ".mp3";
+      audio.volume = 1;
+      audio.playbackRate = 1.12;
+      audio.preservesPitch = true;
+      audio.onended = finalizar;
+      audio.onerror = function usarFallback() {
+        falarComVozDoNavegador(numero).finally(finalizar);
+      };
+      audio.load();
+      audio.play().catch(function usarFallback() {
+        falarComVozDoNavegador(numero).finally(finalizar);
+      });
+      window.setTimeout(finalizar, 7000);
+    });
   }
 
-  async function criarSessaoAutomatica() {
-    const tentativas = [
-      () => api.post("/sessoes", { nome: "Sessão Principal" }),
-      () => api.post("/sessoes", { descricao: "Sessão Principal" }),
-      () => api.post("/sessoes"),
-    ];
-
-    for (const tentativa of tentativas) {
-      try {
-        const response = await tentativa();
-
-        if (response.data?.id) {
-          return response.data;
-        }
-      } catch {
-        // tenta o próximo formato
-      }
-    }
-
-    throw new Error("Não foi possível criar sessão automaticamente.");
-  }
-
-  async function carregarOuCriarSessao() {
-    try {
-      setMensagem("Buscando sessão...");
-
-      try {
-        const ativa = await api.get("/sessoes/ativa");
-
-        if (ativa.data?.id) {
-          setSessaoId(ativa.data.id);
-          return ativa.data.id;
-        }
-      } catch {
-        // continua
-      }
-
-      const response = await api.get("/sessoes");
-      const sessoes = extrairLista(response.data);
-
-      if (sessoes.length > 0) {
-        const sessao =
-          sessoes.find(
-            (s) =>
-              s.status === "ATIVA" ||
-              s.status === "EM_ANDAMENTO" ||
-              s.status === "AGENDADA" ||
-              s.ativa === true
-          ) || sessoes[0];
-
-        setSessaoId(sessao.id);
-        return sessao.id;
-      }
-
-      const novaSessao = await criarSessaoAutomatica();
-
-      setSessaoId(novaSessao.id);
-      setMensagem("Sessão criada automaticamente.");
-
-      return novaSessao.id;
-    } catch (error) {
-      console.error("Erro ao carregar/criar sessão:", error);
-      setMensagem(
-        error?.response?.data?.mensagem ||
-          error?.response?.data?.message ||
-          "Erro ao carregar ou criar sessão."
-      );
-      return null;
-    }
-  }
-
-  async function carregarRodadaAtiva(idSessao) {
-    if (!idSessao) return;
-
-    try {
-      const response = await api.get(`/rodadas/sessao/${idSessao}/ativa`);
-
-      if (response.data?.id) {
-        setRodadaId(response.data.id);
-        setStatusRodada(response.data.status || "AGUARDANDO");
-        setNumeroRodada(response.data.numeroRodada);
-
-        aplicarPremiacao(response.data, true);
-
-        const premioSalvo = localStorage.getItem("premioAtualOperador");
-        const premioDaApi = extrairPremioAtual(response.data);
-
-        aplicarPremioAtual(
-          premioSalvo || premioDaApi || "PRIMEIRA_LINHA",
-          false
-        );
-
-        atualizarPremiacaoDaTv();
-
-        setMensagem(
-          `Transmitindo rodada ${response.data.numeroRodada || response.data.id}`
-        );
-      } else {
-        setMensagem("Nenhuma rodada ativa no momento.");
-      }
-    } catch {
-      setMensagem("Nenhuma rodada ativa no momento.");
-    }
+  function limparTransmissao() {
+    setSessaoId(null);
+    setRodadaId(null);
+    setNumeroRodada(null);
+    setStatusRodada("AGUARDANDO");
+    setNumeroAtual(null);
+    setNumeroAnimado(null);
+    setHistorico([]);
+    setPremioAtual("PRIMEIRA_LINHA");
+    setPremiacao(PREMIACAO_INICIAL);
+    setFaseAnimacao("idle");
+    setCountdown(null);
+    sessaoIdRef.current = null;
+    rodadaIdRef.current = null;
+    premioAtualRef.current = "PRIMEIRA_LINHA";
+    filaRef.current = [];
+    animandoRef.current = false;
+    numeroEmAnimacaoRef.current = null;
+    eventosProcessadosRef.current.clear();
+    countdownRodadaRef.current = null;
+    contagemCanceladaRef.current = true;
   }
 
   async function carregarHistorico(idRodada) {
     if (!idRodada) return;
+    try {
+      const response = await api.get("/rodadas/" + idRodada + "/numeros");
+      const numeros = extrairLista(response.data)
+        .map(function obterNumero(item) {
+          return (item && (item.numero || item.numeroSorteado)) || item;
+        })
+        .map(Number)
+        .filter(Number.isFinite);
+      const semRepeticao = Array.from(new Set(numeros));
+      setHistorico(semRepeticao);
+      const ultimo = semRepeticao.length
+        ? semRepeticao[semRepeticao.length - 1]
+        : null;
+      setNumeroAtual(ultimo);
+      setNumeroAnimado(ultimo);
+    } catch (error) {
+      console.error("Erro ao carregar histórico da TV:", error);
+      setMensagem("Não foi possível sincronizar os números da rodada.");
+    }
+  }
+
+  async function carregarRodadaAtiva(idSessao) {
+    try {
+      const response = await api.get("/rodadas/sessao/" + idSessao + "/ativa");
+      if (!response.data || !response.data.id) {
+        setMensagem("Sala pronta. Aguardando o operador criar uma rodada.");
+        return;
+      }
+
+      aplicarDadosRodada(response.data);
+      setMensagem(
+        "Transmitindo rodada " +
+          (response.data.numeroRodada || response.data.id)
+      );
+      await carregarHistorico(response.data.id);
+    } catch {
+      setMensagem("Sala pronta. Aguardando o início da próxima rodada.");
+    }
+  }
+
+  async function carregarSessaoDaSala(sala) {
+    if (!sala) return;
+    limparTransmissao();
+    contagemCanceladaRef.current = false;
+    setCarregando(true);
+    setMensagem("Conectando à sala " + sala.nome + "...");
 
     try {
-      const response = await api.get(`/rodadas/${idRodada}/numeros`);
+      const response = await api.get("/sessoes");
+      const sessoes = extrairLista(response.data);
+      const sessao = sessoes.find(function buscar(item) {
+        return (
+          Number(item.salaId) === Number(sala.id) &&
+          STATUS_SESSAO_ATIVA.has(String(item.status || "").toUpperCase())
+        );
+      });
 
-      const numerosSorteados = extrairLista(response.data)
-        .map((item) => item?.numero ?? item?.numeroSorteado ?? item)
-        .filter((numero) => numero !== null && numero !== undefined)
-        .map(Number)
-        .filter((numero) => Number.isFinite(numero));
-
-      setHistorico(numerosSorteados);
-
-      if (numerosSorteados.length > 0) {
-        const ultimo = numerosSorteados[numerosSorteados.length - 1];
-
-        setNumeroAtual(ultimo);
-        setNumeroAnimado(ultimo);
-        setMensagem("Transmissão sincronizada.");
-      } else {
-        setNumeroAtual(null);
-        setNumeroAnimado(null);
+      if (!sessao) {
+        setMensagem("Sala pronta. Aguardando o operador iniciar a sessão.");
+        return;
       }
+
+      setSessaoId(sessao.id);
+      sessaoIdRef.current = Number(sessao.id);
+      await carregarRodadaAtiva(sessao.id);
     } catch (error) {
-      console.error("Erro ao carregar histórico da TV", error);
-      setMensagem("Erro ao sincronizar transmissão.");
+      const status = error && error.response && error.response.status;
+      if (status === 401 || status === 403) {
+        setErroInicial(
+          "Faça login neste aparelho com um acesso da sala e abra a TV novamente."
+        );
+      } else {
+        setErroInicial("Não foi possível conectar esta TV ao servidor do bingo.");
+      }
+    } finally {
+      setCarregando(false);
     }
   }
 
   async function iniciarContagemRodada(idRodada) {
-    const chaveRodada = idRodada || rodadaId || "JOGO";
-
-    if (countdownRodadaRef.current === chaveRodada) {
-      return;
-    }
-
-    countdownRodadaRef.current = chaveRodada;
+    const chave = idRodada || "RODADA";
+    if (countdownRodadaRef.current === chave) return;
+    countdownRodadaRef.current = chave;
     contagemCanceladaRef.current = false;
-
-    const sequencia = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-
     setNumeroAtual(null);
     setNumeroAnimado(null);
-    setMensagem("Rodada iniciada, boa sorte a todos!");
+    setHistorico([]);
     setFaseAnimacao("countdown");
+    setMensagem("Rodada iniciada. Boa sorte a todos!");
 
-    await tocarTrilhaDeFundo(VOLUME_MUSICA_CONTAGEM);
+    const musica = countdownAudioRef.current;
+    if (somLiberadoRef.current && musica) {
+      musica.pause();
+      musica.src = "/sounds/countdown-vignette.mp3";
+      musica.currentTime = 0;
+      musica.volume = 0.65;
+      musica.play().catch(function ignorar() {});
+    }
 
-    for (const item of sequencia) {
-      if (contagemCanceladaRef.current) {
-        pararAudio(countdownAudioRef);
-        setCountdown(null);
-        setFaseAnimacao("idle");
-        return;
-      }
-
-      setCountdown(item);
+    for (let valor = 10; valor >= 1; valor -= 1) {
+      if (contagemCanceladaRef.current) break;
+      setCountdown(valor);
       await esperar(1000);
     }
 
-    setCountdown("JÁ!");
-    await esperar(900);
+    if (!contagemCanceladaRef.current) {
+      setCountdown("JÁ!");
+      await esperar(850);
+    }
 
-    if (contagemCanceladaRef.current) {
-      pararAudio(countdownAudioRef);
-      setCountdown(null);
-      setFaseAnimacao("idle");
+    if (musica) {
+      musica.pause();
+      musica.currentTime = 0;
+    }
+    setCountdown(null);
+    setFaseAnimacao("idle");
+    if (!contagemCanceladaRef.current) {
+      setMensagem("Rodada pronta para o sorteio.");
+    }
+  }
+
+  async function iniciarSequenciaSorteio(numero, premio) {
+    const valor = Number(numero);
+    if (!Number.isFinite(valor)) return;
+
+    if (
+      numeroEmAnimacaoRef.current === valor ||
+      filaRef.current.some(function repetido(item) {
+        return item.numero === valor;
+      })
+    ) {
       return;
     }
 
-    ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-
-    setCountdown(null);
-    setFaseAnimacao("idle");
-    setMensagem("Rodada pronta para o sorteio.");
-  }
-
-  async function iniciarSequenciaSorteio(numero, premio = premioAtual) {
-    if (!numero && numero !== 0) return;
-
-    const numeroNormalizado = Number(numero);
-
-    if (!Number.isFinite(numeroNormalizado)) return;
-
     if (animandoRef.current) {
-      filaRef.current.push({ numero: numeroNormalizado, premio });
+      filaRef.current.push({ numero: valor, premio: premio });
       return;
     }
 
     animandoRef.current = true;
-
+    numeroEmAnimacaoRef.current = valor;
     try {
       setCountdown(null);
+      setFaseAnimacao("spinning");
+      setMensagem("Misturando as bolas...");
+      tocarEfeitoBolinheira();
+      await esperar(650);
 
-      setNumeroAtual(numeroNormalizado);
-      setNumeroAnimado(numeroNormalizado);
-
-      setHistorico((prev) =>
-        prev.includes(numeroNormalizado) ? prev : [...prev, numeroNormalizado]
-      );
-
-      setMensagem(
-        `Bolinha sorteada: ${letraDoNumero(numeroNormalizado)} ${formatarNumero(
-          numeroNormalizado
-        )}`
-      );
-
+      setNumeroAtual(valor);
+      setNumeroAnimado(valor);
       setFaseAnimacao("dropping");
+      tocarEfeitoQueda();
+      await esperar(520);
 
-      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-
-      tocarAudio(machineAudioRef, VOLUME_MAQUINA);
-      tocarAudio(dropAudioRef, VOLUME_QUEDA);
-
-      await esperar(450);
-
-      pararAudio(machineAudioRef);
-
-      setMensagem(
-        `${textoPremioAtual(premio)} • ${letraDoNumero(
-          numeroNormalizado
-        )} ${formatarNumero(numeroNormalizado)}`
-      );
-
+      setHistorico(function adicionar(anterior) {
+        return anterior.includes(valor) ? anterior : anterior.concat(valor);
+      });
       setFaseAnimacao("revealed");
-
-      if (ultimoNumeroFaladoRef.current !== numeroNormalizado) {
-        ultimoNumeroFaladoRef.current = numeroNormalizado;
-        falarNumeroSorteado(numeroNormalizado);
-      }
-
-      ajustarVolume(countdownAudioRef, VOLUME_MUSICA_FUNDO);
-
-      await esperar(250);
-
+      setMensagem(
+        (NOMES_PREMIO[premio] || NOMES_PREMIO[premioAtualRef.current]) +
+          " • " +
+          letraDoNumero(valor) +
+          " " +
+          formatarNumero(valor)
+      );
+      await tocarLocucaoGravada(valor);
+      await esperar(180);
       setFaseAnimacao("idle");
     } finally {
       animandoRef.current = false;
-
+      numeroEmAnimacaoRef.current = null;
       const proximo = filaRef.current.shift();
-
-      if (proximo) {
-        iniciarSequenciaSorteio(proximo.numero, proximo.premio);
-      }
+      if (proximo) iniciarSequenciaSorteio(proximo.numero, proximo.premio);
     }
   }
 
-  const handleWsMessage = useCallback(
-    (event) => {
-      if (!event?.type) return;
+  function eventoDaTransmissaoAtual(event) {
+    if (
+      event.sessaoId &&
+      sessaoIdRef.current &&
+      Number(event.sessaoId) !== Number(sessaoIdRef.current)
+    ) {
+      return false;
+    }
+    return true;
+  }
 
-      const tiposAtualizacaoPremio = [
-        "PRIZE_UPDATED",
-        "PRIZES_UPDATED",
-        "PREMIO_ATUALIZADO",
-        "PREMIACAO_ATUALIZADA",
-        "PREMIOS_ATUALIZADOS",
-        "ROUND_PRIZE_UPDATED",
-        "ROUND_PRIZES_UPDATED",
-        "ROUND_UPDATED",
-      ];
+  function eventoJaProcessado(event) {
+    const chave = [
+      event.type,
+      event.sessaoId || sessaoIdRef.current,
+      event.rodadaId || rodadaIdRef.current,
+      event.ordem || "",
+      extrairNumeroSorteado(event) || "",
+      event.status || "",
+    ].join(":");
+    const agora = Date.now();
+    const anterior = eventosProcessadosRef.current.get(chave);
+    eventosProcessadosRef.current.set(chave, agora);
 
-      if (tiposAtualizacaoPremio.includes(event.type)) {
-        aplicarPremiacao(event, true);
+    eventosProcessadosRef.current.forEach(function limpar(timestamp, item) {
+      if (agora - timestamp > 10000) eventosProcessadosRef.current.delete(item);
+    });
+    return anterior && agora - anterior < 1500;
+  }
 
-        const premioDoEvento = extrairPremioAtual(event);
+  const handleWsMessage = function receberEvento(event) {
+    if (!event || !event.type || !eventoDaTransmissaoAtual(event)) return;
+    if (eventoJaProcessado(event)) return;
 
-        if (premioDoEvento) {
-          aplicarPremioAtual(premioDoEvento, true);
-        }
+    if (TIPOS_PREMIACAO.has(event.type)) {
+      aplicarDadosRodada(event);
+      setMensagem("Premiação atualizada.");
+      return;
+    }
 
-        setMensagem("Premiação atualizada.");
+    if (event.type === "NUMBER_DRAWN") {
+      aplicarDadosRodada(event);
+      const numero = extrairNumeroSorteado(event);
+      const premio = extrairPremioAtual(event) || premioAtualRef.current;
+      iniciarSequenciaSorteio(numero, premio);
+      return;
+    }
 
-        return;
-      }
+    if (event.type === "ROUND_CREATED") {
+      aplicarDadosRodada(event);
+      setHistorico([]);
+      setNumeroAtual(null);
+      setNumeroAnimado(null);
+      setStatusRodada(event.status || "CRIADA");
+      filaRef.current = [];
+      countdownRodadaRef.current = null;
+      setMensagem(
+        "Rodada " +
+          (event.numeroRodada || event.rodadaId || event.id) +
+          " criada. Aguardando início."
+      );
+      return;
+    }
 
-      if (event.type === "NUMBER_DRAWN") {
-        aplicarPremiacao(event, true);
+    if (event.type === "ROUND_STARTED" || event.type === "GAME_STARTED") {
+      aplicarDadosRodada(event);
+      const id = event.rodadaId || event.id || rodadaIdRef.current;
+      setStatusRodada("EM_ANDAMENTO");
+      filaRef.current = [];
+      iniciarContagemRodada(id);
+      return;
+    }
 
-        const numero = extrairNumeroSorteado(event);
-        const premioDoEvento = extrairPremioAtual(event) || premioAtual;
+    if (event.type === "ROUND_PAUSED") {
+      setStatusRodada("PAUSADA");
+      setMensagem("Rodada pausada.");
+      setCountdown(null);
+      setFaseAnimacao("idle");
+      contagemCanceladaRef.current = true;
+      filaRef.current = [];
+      return;
+    }
 
-        if (premioDoEvento) {
-          aplicarPremioAtual(premioDoEvento, true);
-        }
+    if (
+      event.type === "ROUND_RESUMED" ||
+      event.type === "ROUND_CONTINUED" ||
+      event.type === "GAME_RESUMED"
+    ) {
+      aplicarDadosRodada(event);
+      setStatusRodada("EM_ANDAMENTO");
+      setMensagem("Rodada retomada. Boa sorte a todos!");
+      contagemCanceladaRef.current = false;
+      return;
+    }
 
-        iniciarSequenciaSorteio(numero, premioDoEvento);
-        return;
-      }
-
-      if (event.type === "ROUND_CREATED") {
-        const idRodada = event.rodadaId || event.id;
-
-        if (idRodada) {
-          setRodadaId(idRodada);
-        }
-
-        if (event.numeroRodada) {
-          setNumeroRodada(event.numeroRodada);
-        }
-
-        aplicarPremiacao(event, true);
-
-        const premioSalvo = localStorage.getItem("premioAtualOperador");
-        const premioDoEvento = extrairPremioAtual(event);
-
-        aplicarPremioAtual(
-          premioSalvo || premioDoEvento || "PRIMEIRA_LINHA",
-          false
-        );
-
-        setStatusRodada(event.status || "CRIADA");
-        setHistorico([]);
-        setNumeroAtual(null);
-        setNumeroAnimado(null);
-        setCountdown(null);
-        setFaseAnimacao("idle");
-
-        countdownRodadaRef.current = null;
-        filaRef.current = [];
-        animandoRef.current = false;
-        ultimoNumeroFaladoRef.current = null;
-        contagemCanceladaRef.current = false;
-
-        pararTodosAudios();
-
-        setMensagem(
-          event.numeroRodada
-            ? `Rodada ${event.numeroRodada} criada. Aguardando início...`
-            : "Nova rodada criada. Aguardando início..."
-        );
-
-        return;
-      }
-
-      if (event.type === "ROUND_STARTED" || event.type === "GAME_STARTED") {
-        const idRodada = event.rodadaId || event.id || rodadaId;
-
-        if (idRodada) {
-          setRodadaId(idRodada);
-        }
-
-        if (event.numeroRodada) {
-          setNumeroRodada(event.numeroRodada);
-        }
-
-        aplicarPremiacao(event, true);
-
-        const premioSalvo = localStorage.getItem("premioAtualOperador");
-        const premioDoEvento = extrairPremioAtual(event);
-
-        aplicarPremioAtual(
-          premioSalvo || premioDoEvento || "PRIMEIRA_LINHA",
-          false
-        );
-
-        setStatusRodada("EM_ANDAMENTO");
-        setMensagem("Rodada iniciada, boa sorte a todos!");
-
-        setHistorico([]);
-        setNumeroAtual(null);
-        setNumeroAnimado(null);
-        setCountdown(null);
-        setFaseAnimacao("idle");
-
-        countdownRodadaRef.current = null;
-        filaRef.current = [];
-        animandoRef.current = false;
-        ultimoNumeroFaladoRef.current = null;
-        contagemCanceladaRef.current = false;
-
-        pararTodosAudios();
-
-        iniciarContagemRodada(idRodada);
-
-        return;
-      }
-
-      if (event.type === "ROUND_PAUSED") {
-        setStatusRodada("PAUSADA");
-        setMensagem("Rodada pausada.");
-        setCountdown(null);
-        setFaseAnimacao("idle");
-
-        contagemCanceladaRef.current = true;
-        animandoRef.current = false;
-        filaRef.current = [];
-
-        pararTodosAudios();
-
-        return;
-      }
-
-      if (
-        event.type === "ROUND_RESUMED" ||
-        event.type === "ROUND_CONTINUED" ||
-        event.type === "GAME_RESUMED"
-      ) {
-        setStatusRodada("EM_ANDAMENTO");
-        setMensagem("Rodada retomada. Boa sorte a todos!");
-        setCountdown(null);
-        setFaseAnimacao("idle");
-
-        contagemCanceladaRef.current = false;
-
-        return;
-      }
-
-      if (event.type === "ROUND_FINISHED") {
-        setStatusRodada("FINALIZADA");
-        setMensagem("Rodada encerrada.");
-        setCountdown(null);
-        setFaseAnimacao("idle");
-
-        contagemCanceladaRef.current = true;
-        animandoRef.current = false;
-        filaRef.current = [];
-
-        pararTodosAudios();
-      }
-    },
-    [premioAtual, rodadaId]
-  );
+    if (event.type === "ROUND_FINISHED") {
+      setStatusRodada("FINALIZADA");
+      setMensagem("Rodada encerrada.");
+      setCountdown(null);
+      setFaseAnimacao("idle");
+      contagemCanceladaRef.current = true;
+      filaRef.current = [];
+    }
+  };
 
   useWebSocket({
-    sessaoId,
-    rodadaId,
+    sessaoId: sessaoId,
+    rodadaId: rodadaId,
     onMessage: handleWsMessage,
   });
 
-  useEffect(() => {
+  useEffect(function sincronizarRefs() {
     somLiberadoRef.current = somLiberado;
-  }, [somLiberado]);
+    sessaoIdRef.current = sessaoId;
+    rodadaIdRef.current = rodadaId;
+    premioAtualRef.current = premioAtual;
+  }, [somLiberado, sessaoId, rodadaId, premioAtual]);
 
-  useEffect(() => {
-    if (!window.speechSynthesis) return;
+  useEffect(function sincronizarCarregadores() {
+    carregarSessaoDaSalaRef.current = carregarSessaoDaSala;
+    carregarRodadaAtivaRef.current = carregarRodadaAtiva;
+  });
 
-    window.speechSynthesis.getVoices();
-
-    const carregarVozes = () => {
+  useEffect(function prepararVozes() {
+    if (!("speechSynthesis" in window)) return undefined;
+    const carregar = function carregar() {
       window.speechSynthesis.getVoices();
     };
-
-    window.speechSynthesis.onvoiceschanged = carregarVozes;
-
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
+    carregar();
+    window.speechSynthesis.addEventListener("voiceschanged", carregar);
+    return function remover() {
+      window.speechSynthesis.removeEventListener("voiceschanged", carregar);
     };
   }, []);
 
-  useEffect(() => {
-    async function iniciarTv() {
-      const premioSalvo = localStorage.getItem("premioAtualOperador");
+  useEffect(function carregarSalasDisponiveis() {
+    let ativo = true;
+    async function iniciar() {
+      setCarregando(true);
+      setErroInicial("");
+      try {
+        const response = await api.get("/salas");
+        if (!ativo) return;
+        const lista = extrairLista(response.data).filter(function somenteAtivas(sala) {
+          return sala.ativa !== false;
+        });
+        setSalas(lista);
 
-      if (premioSalvo) {
-        aplicarPremioAtual(premioSalvo, false);
-      }
+        const idSalvo = Number(localStorage.getItem("tvSalaSelecionadaId"));
+        const escolhida =
+          lista.find(function pelaRota(sala) {
+            return salaIdDaRota && Number(sala.id) === salaIdDaRota;
+          }) ||
+          lista.find(function pelaMemoria(sala) {
+            return !salaIdDaRota && idSalvo && Number(sala.id) === idSalvo;
+          }) ||
+          (lista.length === 1 ? lista[0] : null);
 
-      atualizarPremiacaoDaTv();
+        if (salaIdDaRota && !escolhida) {
+          setErroInicial("Esta sala não existe ou não está liberada para este acesso.");
+          return;
+        }
+        if (!escolhida) {
+          setSelecionandoSala(true);
+          setCarregando(false);
+          return;
+        }
 
-      const idSessao = await carregarOuCriarSessao();
-
-      if (idSessao) {
-        await carregarRodadaAtiva(idSessao);
+        setSelecionandoSala(false);
+        setSalaSelecionada(escolhida);
+        localStorage.setItem("tvSalaSelecionadaId", String(escolhida.id));
+        await carregarSessaoDaSalaRef.current(escolhida);
+      } catch (error) {
+        if (!ativo) return;
+        const status = error && error.response && error.response.status;
+        setErroInicial(
+          status === 401 || status === 403
+            ? "Faça login neste aparelho para escolher a sala da TV."
+            : "Não foi possível carregar as salas disponíveis."
+        );
+        setCarregando(false);
       }
     }
-
-    iniciarTv();
-  }, []);
-
-  useEffect(() => {
-    let ativo = true;
-    Promise.resolve().then(() => {
-      if (ativo) carregarHistorico(rodadaId);
-    });
-    return () => {
+    iniciar();
+    return function cancelar() {
       ativo = false;
     };
-  }, [rodadaId]);
+  }, [salaIdDaRota]);
 
-  useEffect(() => {
-    function atualizarPremio(event) {
-      if (event.detail) {
-        aplicarPremioAtual(event.detail, true);
-      }
-    }
-
-    function atualizarPremiacao(event) {
-      if (event.detail) {
-        aplicarPremiacao(event.detail, true);
-      }
-    }
-
-    function atualizarPorStorage(event) {
-      if (event.key === "premioAtualOperador" && event.newValue) {
-        aplicarPremioAtual(event.newValue, false);
-      }
-
-      if (event.key === "premiacaoRodadaAtual") {
-        atualizarPremiacaoDaTv();
-      }
-    }
-
-    const intervalo = setInterval(() => {
-      const premioSalvo = localStorage.getItem("premioAtualOperador");
-
-      if (premioSalvo) {
-        setPremioAtual((atual) => {
-          const premioNormalizado = normalizarPremioAtual(premioSalvo);
-          return atual === premioNormalizado ? atual : premioNormalizado;
+  useEffect(function aguardarSessaoDaSala() {
+    if (!salaSelecionada || sessaoId || erroInicial) return undefined;
+    const intervalo = window.setInterval(async function verificar() {
+      try {
+        const response = await api.get("/sessoes");
+        const sessao = extrairLista(response.data).find(function buscar(item) {
+          return (
+            Number(item.salaId) === Number(salaSelecionada.id) &&
+            STATUS_SESSAO_ATIVA.has(String(item.status || "").toUpperCase())
+          );
         });
+        if (!sessao) return;
+        setSessaoId(sessao.id);
+        sessaoIdRef.current = Number(sessao.id);
+        await carregarRodadaAtivaRef.current(sessao.id);
+      } catch {
+        // mantém a TV aguardando sem interromper a transmissão
       }
+    }, 6000);
+    return function parar() {
+      window.clearInterval(intervalo);
+    };
+  }, [salaSelecionada, sessaoId, erroInicial]);
 
-      atualizarPremiacaoDaTv();
-    }, 2000);
+  function selecionarSala(id) {
+    const sala = salas.find(function encontrar(item) {
+      return Number(item.id) === Number(id);
+    });
+    if (!sala) return;
+    localStorage.setItem("tvSalaSelecionadaId", String(sala.id));
+    setSalaSelecionada(sala);
+    setSelecionandoSala(false);
+    navigate("/tv/sala/" + sala.id, { replace: true });
+  }
 
-    window.addEventListener("premioAtualizado", atualizarPremio);
-    window.addEventListener("premiacaoAtualizada", atualizarPremiacao);
-    window.addEventListener("storage", atualizarPorStorage);
-
-    return () => {
-      clearInterval(intervalo);
-      window.removeEventListener("premioAtualizado", atualizarPremio);
-      window.removeEventListener("premiacaoAtualizada", atualizarPremiacao);
-      window.removeEventListener("storage", atualizarPorStorage);
+  useEffect(function limparAoSair() {
+    const voiceAudio = voiceAudioRef.current;
+    const countdownAudio = countdownAudioRef.current;
+    return function limpar() {
+      if (voiceAudio) voiceAudio.pause();
+      if (countdownAudio) countdownAudio.pause();
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
-      pararTodosAudios();
-    };
-  }, []);
+  if (erroInicial) {
+    return (
+      <main className="broadcast-launcher">
+        <section className="broadcast-launcher-card broadcast-error-card">
+          <span className="broadcast-launcher-kicker">Bingo Beneficente</span>
+          <h1>TV não conectada</h1>
+          <p>{erroInicial}</p>
+          <button type="button" onClick={function irLogin() { navigate("/"); }}>
+            Ir para o login
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  if (selecionandoSala) {
+    return (
+      <main className="broadcast-launcher">
+        <section className="broadcast-launcher-card">
+          <span className="broadcast-launcher-kicker">Bingo Beneficente</span>
+          <h1>Qual sala esta TV vai exibir?</h1>
+          <p>Cada aparelho recebe apenas os sorteios da sala escolhida.</p>
+          <div className="broadcast-room-grid">
+            {salas.map(function renderSala(sala) {
+              return (
+                <button
+                  type="button"
+                  className="broadcast-room-option"
+                  key={sala.id}
+                  onClick={function escolher() { selecionarSala(sala.id); }}
+                >
+                  <strong>{sala.nome}</strong>
+                  <span>{sala.local || "Sala " + sala.id}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (carregando && !salaSelecionada) {
+    return (
+      <main className="broadcast-launcher">
+        <div className="broadcast-loader" aria-label="Carregando transmissão" />
+      </main>
+    );
+  }
 
   return (
-    <div className={`tv-page bingo-tv-gold fase-${faseAnimacao}`}>
-      <audio
-        ref={machineAudioRef}
-        src="/sounds/bingo-machine.mp3"
-        preload="auto"
-        loop
-      />
-
-      <audio ref={dropAudioRef} src="/sounds/ball-drop.mp3" preload="auto" />
-
-      <audio
-        ref={countdownAudioRef}
-        src="/sounds/countdown-vignette.mp3"
-        preload="auto"
-      />
+    <main className={"broadcast-page phase-" + faseAnimacao}>
+      <audio ref={voiceAudioRef} preload="auto" />
+      <audio ref={countdownAudioRef} preload="auto" />
 
       {!somLiberado && (
-        <button className="tv-enable-sound" onClick={liberarSom}>
-          Ativar som da TV
-        </button>
-      )}
-
-      {faseAnimacao === "countdown" && countdown !== null && (
-        <div className="tv-countdown-overlay">
-          <div className="tv-countdown-content">
-            <span>PREPAREM-SE</span>
-            <strong>{countdown}</strong>
-            <small>RODADA VAI COMEÇAR</small>
-          </div>
+        <div className="broadcast-sound-gate">
+          <section>
+            <span>Transmissão da sala</span>
+            <h1>{salaSelecionada ? salaSelecionada.nome : "Bingo Beneficente"}</h1>
+            <p>
+              O navegador da TV exige uma confirmação antes de liberar a
+              locução das bolas.
+            </p>
+            <button type="button" onClick={liberarSom} disabled={ativandoSom}>
+              <span className="broadcast-sound-icon" aria-hidden="true">♪</span>
+              {ativandoSom ? "Ativando..." : "Ativar transmissão com som"}
+            </button>
+            <small>Use o controle remoto, mouse ou toque na tela.</small>
+          </section>
         </div>
       )}
 
-      <main className="gold-tv-layout gold-tv-layout-beneficente">
-        <section className="gold-left-panel gold-left-panel-beneficente">
-          <header className="gold-benefit-title gold-benefit-title-main">
-            <strong>Bingo Beneficente</strong>
-            <span>
-              Rodada {numeroRodada || rodadaId || "--"} •{" "}
-              {formatarStatusRodada(statusRodada)}
-            </span>
-          </header>
+      {faseAnimacao === "countdown" && countdown !== null && (
+        <div className="broadcast-countdown">
+          <span>Preparem-se</span>
+          <strong>{countdown}</strong>
+          <small>A rodada vai começar</small>
+        </div>
+      )}
 
-          <section className="gold-section-card gold-section-numbers">
-            <div className="gold-section-header">
-              <span>Relação de números sorteados</span>
-              <strong>
-                {historico.length}
-                <small>/75</small>
-              </strong>
-            </div>
+      <header className="broadcast-header">
+        <div className="broadcast-brand">
+          <span>Bingo</span>
+          <strong>Beneficente</strong>
+        </div>
 
-            <div className="gold-number-board gold-number-board-beneficente">
-              {numerosPainel.map((linha, linhaIndex) => (
-                <div className="gold-board-row" key={letrasBingo[linhaIndex]}>
-                  <div className="gold-board-letter">
-                    {letrasBingo[linhaIndex]}
-                  </div>
+        <div className="broadcast-room">
+          <span>Sala em transmissão</span>
+          <strong>{salaSelecionada ? salaSelecionada.nome : "--"}</strong>
+          <small>{salaSelecionada && salaSelecionada.local}</small>
+        </div>
 
-                  {linha.map((numero) => {
-                    const sorteado = historico.includes(numero);
-                    const atual = numeroAtual === numero;
+        <div className="broadcast-header-stat">
+          <span>Rodada</span>
+          <strong>{"#" + (numeroRodada || rodadaId || "--")}</strong>
+        </div>
 
-                    return (
-                      <div
-                        key={numero}
-                        className={`gold-board-cell ${
-                          sorteado ? "drawn" : ""
-                        } ${atual ? "current" : ""}`}
-                      >
-                        {formatarNumero(numero)}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </section>
+        <div className="broadcast-header-stat">
+          <span>Bolas cantadas</span>
+          <strong>{historico.length}<small>/75</small></strong>
+        </div>
 
-          <section className="gold-section-card gold-section-prizes">
-            <div className="gold-section-header">
-              <span>Relação de prêmios</span>
-              <strong>{formatarPremio(premioAtual)}</strong>
-            </div>
+        <div className={"broadcast-status status-" + String(statusRodada).toLowerCase()}>
+          <i />
+          <span>{formatarStatus(statusRodada)}</span>
+        </div>
+      </header>
 
-            <div className="gold-prize-showcase gold-prize-showcase-beneficente">
-              <div className="gold-prize-now">
-                <span className="gold-prize-eyebrow">Concorrendo agora</span>
-
-                <div className="gold-prize-now-main">
-                  <strong>{formatarPremio(premioAtual)}</strong>
-                  <em>{valorPremioAtual(premioAtual)}</em>
-                </div>
-
-                <small>Prêmio em destaque da rodada</small>
+      <div className="broadcast-main-grid">
+        <section className="broadcast-left-column">
+          <article className="broadcast-panel broadcast-board-panel">
+            <div className="broadcast-panel-heading">
+              <div>
+                <span>Painel da rodada</span>
+                <strong>Números sorteados</strong>
               </div>
+              <small>Os números acesos já foram cantados</small>
+            </div>
 
-              <div className="gold-prize-list gold-prize-list-beneficente">
-                {premiosDaRodada.map((premio, index) => (
+            <div className="broadcast-number-board">
+              {FAIXAS_NUMEROS.map(function renderFaixa(faixa) {
+                return (
+                  <div className="broadcast-number-band" key={faixa.letra}>
+                    <strong className={"broadcast-letter letter-" + faixa.letra.toLowerCase()}>
+                      {faixa.letra}
+                    </strong>
+                    <div className="broadcast-band-numbers">
+                      {faixa.numeros.map(function renderNumero(numero) {
+                        const sorteado = historicoSet.has(numero);
+                        const atual = numeroAtual === numero;
+                        return (
+                          <span
+                            key={numero}
+                            className={(sorteado ? "drawn " : "") + (atual ? "current" : "")}
+                          >
+                            {formatarNumero(numero)}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className="broadcast-panel broadcast-prizes-panel">
+            <div className="broadcast-current-prize">
+              <span>Concorrendo agora</span>
+              <strong>{NOMES_PREMIO[premioAtual] || premioAtual}</strong>
+              <em>{valorPremioAtual(premioAtual)}</em>
+            </div>
+
+            <div className="broadcast-prize-list">
+              {premios.map(function renderPremio(premio) {
+                const ativo = premio.codigo === premioAtual;
+                return (
                   <div
                     key={premio.codigo}
-                    className={`gold-prize-mini-card ${
-                      premio.codigo === premioAtual ? "active" : ""
-                    }`}
+                    className={"broadcast-prize-card " + (ativo ? "active" : "")}
                   >
-                    <span>
-                      {index + 1}º prêmio • {premio.titulo}
-                    </span>
+                    <span>{premio.titulo}</span>
                     <strong>{premio.valor}</strong>
-                    <small>{premio.descricao}</small>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          </section>
-
-          <div className="gold-message-card gold-message-card-beneficente">
-            {mensagem || "Boa sorte a todos!"}
-          </div>
+          </article>
         </section>
 
-        <section className="gold-right-panel gold-right-panel-beneficente">
-          <div className="gold-globe-area">
+        <section className="broadcast-right-column">
+          <article className="broadcast-panel broadcast-machine-panel">
+            <div className="broadcast-machine-heading">
+              <span>Bolinheira oficial</span>
+              <i>{faseAnimacao === "spinning" ? "Sorteando..." : "Ao vivo"}</i>
+            </div>
             <BingoGlobe3D
               numeroAtual={numeroAtual}
               numeroAnimado={numeroAnimado}
               faseAnimacao={faseAnimacao}
-              historico={historico}
             />
-          </div>
+          </article>
 
-          <div className="gold-info-card gold-current-card gold-current-card-beneficente">
-            <span className="gold-info-label">BOLA CANTADA</span>
-
-            <strong>
-              {numeroAtual ? (
-                <>
-                  <em>{letraDoNumero(numeroAtual)}</em>{" "}
-                  {formatarNumero(numeroAtual)}
-                </>
-              ) : (
-                "--"
-              )}
-            </strong>
-          </div>
-
-          <div className="gold-info-card gold-last-card gold-globe-last-card gold-last-card-beneficente">
-            <span className="gold-info-label">ÚLTIMOS NÚMEROS SORTEADOS</span>
-
-            <div className={`gold-last-balls ${classeTamanhoUltimas}`}>
-              {ultimasBolas.length > 0 ? (
-                ultimasBolas.map((numero, index) => (
-                  <div
-                    className={`gold-small-ball ${
-                      numero === numeroAtual ? "active" : ""
-                    }`}
-                    key={`${numero}-${index}`}
-                  >
-                    <span>{formatarNumero(numero)}</span>
-                  </div>
-                ))
-              ) : (
-                <>
-                  <div className="gold-small-ball empty">
-                    <span>--</span>
-                  </div>
-                  <div className="gold-small-ball empty">
-                    <span>--</span>
-                  </div>
-                  <div className="gold-small-ball empty">
-                    <span>--</span>
-                  </div>
-                  <div className="gold-small-ball empty">
-                    <span>--</span>
-                  </div>
-                  <div className="gold-small-ball empty">
-                    <span>--</span>
-                  </div>
-                  <div className="gold-small-ball empty">
-                    <span>--</span>
-                  </div>
-                </>
-              )}
+          <article className="broadcast-now-card">
+            <div>
+              <span>Última bola cantada</span>
+              <strong>
+                {numeroAtual ? (
+                  <>
+                    <em>{letraDoNumero(numeroAtual)}</em>
+                    {formatarNumero(numeroAtual)}
+                  </>
+                ) : (
+                  "--"
+                )}
+              </strong>
             </div>
-          </div>
+            <small>{historico.length ? historico.length + "ª bola da rodada" : "Aguardando sorteio"}</small>
+          </article>
+
+          <article className="broadcast-panel broadcast-last-panel">
+            <div className="broadcast-last-heading">
+              <span>Últimos números</span>
+              <small>mais recente primeiro</small>
+            </div>
+            <div className="broadcast-last-balls">
+              {Array.from({ length: 8 }, function renderUltima(_, indice) {
+                const numero = ultimasBolas[indice];
+                return (
+                  <div
+                    className={
+                      "broadcast-mini-ball " +
+                      (indice === 0 && numero ? "active " : "") +
+                      (!numero ? "empty" : "")
+                    }
+                    key={numero || "empty-" + indice}
+                  >
+                    <small>{numero ? letraDoNumero(numero) : ""}</small>
+                    <strong>{numero ? formatarNumero(numero) : "--"}</strong>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
         </section>
-      </main>
-    </div>
+      </div>
+
+      <footer className="broadcast-footer">
+        <div className="broadcast-message">
+          <i />
+          <span>{mensagem || "Boa sorte a todos!"}</span>
+        </div>
+
+        <div className="broadcast-footer-actions">
+          {salas.length > 1 && (
+            <label>
+              <span>Sala</span>
+              <select
+                value={salaSelecionada ? salaSelecionada.id : ""}
+                onChange={function trocar(event) { selecionarSala(event.target.value); }}
+              >
+                {salas.map(function opcao(sala) {
+                  return <option value={sala.id} key={sala.id}>{sala.nome}</option>;
+                })}
+              </select>
+            </label>
+          )}
+          <button
+            type="button"
+            className={somLiberado ? "sound-on" : ""}
+            onClick={liberarSom}
+          >
+            {somLiberado ? "Som ativo" : "Ativar som"}
+          </button>
+        </div>
+      </footer>
+    </main>
   );
 }
