@@ -34,6 +34,7 @@ class JogoCartelaServiceTest {
     @Mock private ParticipanteRepository participanteRepository;
     @Mock private CartelaRepository cartelaRepository;
     @Mock private CartelaSessaoRepository cartelaSessaoRepository;
+    @Mock private CartelaRodadaRepository cartelaRodadaRepository;
     @Mock private VencedorRodadaRepository vencedorRodadaRepository;
     @Mock private NumeroSorteadoRepository numeroSorteadoRepository;
     @Mock private SalaAcessoService salaAcessoService;

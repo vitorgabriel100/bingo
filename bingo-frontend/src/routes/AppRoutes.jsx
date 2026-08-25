@@ -12,12 +12,15 @@ import ParticipantesPage from "../pages/ParticipantesPage";
 import CartelasPage from "../pages/CartelasPage";
 import RankingPage from "../pages/RankingPage";
 import AcessosPage from "../pages/AcessosPage";
+import ProgramacaoPage from "../pages/ProgramacaoPage";
+import CadastroJogadorPage from "../pages/CadastroJogadorPage";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
+        <Route path="/cadastro-jogador" element={<CadastroJogadorPage />} />
         <Route
           path="/sala/:slug/cadastro"
           element={<CadastroParticipantePage />}
@@ -55,7 +58,7 @@ export default function AppRoutes() {
         <Route
           path="/jogador"
           element={
-            <ProtectedRoute allowedRoles={["JOGADOR", "ADMIN", "OPERADOR", "GERENTE"]}>
+            <ProtectedRoute allowedRoles={["JOGADOR"]}>
               <JogadorPage />
             </ProtectedRoute>
           }
@@ -68,6 +71,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["OPERADOR", "GERENTE", "ADMIN"]}>
               <HistoricoRodadasPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/programacao"
+          element={
+            <ProtectedRoute allowedRoles={["OPERADOR", "GERENTE", "ADMIN"]}>
+              <ProgramacaoPage />
             </ProtectedRoute>
           }
         />

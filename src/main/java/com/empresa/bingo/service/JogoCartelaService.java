@@ -26,6 +26,7 @@ public class JogoCartelaService {
     private final ParticipanteRepository participanteRepository;
     private final CartelaRepository cartelaRepository;
     private final CartelaSessaoRepository cartelaSessaoRepository;
+    private final CartelaRodadaRepository cartelaRodadaRepository;
     private final VencedorRodadaRepository vencedorRodadaRepository;
     private final NumeroSorteadoRepository numeroSorteadoRepository;
     private final SalaAcessoService salaAcessoService;
@@ -150,9 +151,14 @@ public class JogoCartelaService {
                 .map(NumeroSorteado::getNumero)
                 .collect(Collectors.toSet());
 
-        return cartelaSessaoRepository.findDetalhadasBySessaoId(rodada.getSessao().getId())
+        return buscarCartelasEmJogo(rodada)
                 .stream()
-                .map(vinculacao -> calcularProgresso(vinculacao, numerosSorteados))
+                .map(vinculacao -> calcularProgresso(
+                        vinculacao.id,
+                        vinculacao.participante,
+                        vinculacao.cartela,
+                        numerosSorteados
+                ))
                 .sorted(Comparator
                         .comparing(ProgressoCartelaResponse::getFaltamParaBingo)
                         .thenComparing(ProgressoCartelaResponse::getLinhasCompletas, Comparator.reverseOrder())
@@ -170,11 +176,7 @@ public class JogoCartelaService {
         salaAcessoService.exigirAcesso(usuarioLogado, rodada.getSessao().getSala().getId());
 
         TipoPremioCartela tipoPremio = normalizarTipoPremio(request.getTipoPremio());
-        CartelaSessao vinculacao = cartelaSessaoRepository
-                .findDetalhadaBySessaoIdAndCartelaId(rodada.getSessao().getId(), request.getCartelaId())
-                .orElseThrow(() -> new RegraNegocioException(
-                        "A cartela não está vinculada a um participante nesta sessão."
-                ));
+        CartelaEmJogo vinculacao = resolverCartelaEmJogo(rodada, request.getCartelaId());
 
         if (vencedorRodadaRepository.existsByRodadaIdAndCartelaIdAndTipoPremio(
                 rodadaId,
@@ -190,13 +192,18 @@ public class JogoCartelaService {
                 .map(NumeroSorteado::getNumero)
                 .collect(Collectors.toSet());
 
-        ProgressoCartelaResponse progresso = calcularProgresso(vinculacao, numerosSorteados);
+        ProgressoCartelaResponse progresso = calcularProgresso(
+                vinculacao.id,
+                vinculacao.participante,
+                vinculacao.cartela,
+                numerosSorteados
+        );
         exigirPremioValido(tipoPremio, progresso);
 
         VencedorRodada vencedor = vencedorRodadaRepository.save(VencedorRodada.builder()
                 .rodada(rodada)
-                .participante(vinculacao.getParticipante())
-                .cartela(vinculacao.getCartela())
+                .participante(vinculacao.participante)
+                .cartela(vinculacao.cartela)
                 .tipoPremio(tipoPremio)
                 .quantidadeAcertos(progresso.getAcertos())
                 .validadoPor(usuarioLogado)
@@ -209,17 +216,17 @@ public class JogoCartelaService {
                 "VALIDAR_VENCEDOR",
                 "RODADA",
                 rodadaId,
-                vinculacao.getParticipante().getApelido()
+                vinculacao.participante.getApelido()
                         + " venceu " + tipoPremio.name()
-                        + " com a cartela " + vinculacao.getCartela().getNumero() + "."
+                        + " com a cartela " + vinculacao.cartela.getNumero() + "."
         );
 
         Map<String, Object> evento = new LinkedHashMap<>();
         evento.put("type", "WINNER_REGISTERED");
         evento.put("rodadaId", rodadaId);
         evento.put("sessaoId", rodada.getSessao().getId());
-        evento.put("participante", vinculacao.getParticipante().getApelido());
-        evento.put("cartela", vinculacao.getCartela().getNumero());
+        evento.put("participante", vinculacao.participante.getApelido());
+        evento.put("cartela", vinculacao.cartela.getNumero());
         evento.put("tipoPremio", tipoPremio.name());
         bingoEventPublisher.publicarNumeroSorteado(
                 rodada.getSessao().getId(),
@@ -318,13 +325,15 @@ public class JogoCartelaService {
     }
 
     private ProgressoCartelaResponse calcularProgresso(
-            CartelaSessao vinculacao,
+            Long vinculacaoId,
+            Participante participante,
+            Cartela cartela,
             Set<Integer> numerosSorteados
     ) {
-        Map<Integer, Integer> numeroPorPosicao = vinculacao.getCartela().getNumeros().stream()
+        Map<Integer, Integer> numeroPorPosicao = cartela.getNumeros().stream()
                 .collect(Collectors.toMap(CartelaNumero::getPosicao, CartelaNumero::getNumero));
 
-        List<Integer> faltantes = vinculacao.getCartela().getNumeros().stream()
+        List<Integer> faltantes = cartela.getNumeros().stream()
                 .map(CartelaNumero::getNumero)
                 .filter(numero -> !numerosSorteados.contains(numero))
                 .sorted()
@@ -334,13 +343,13 @@ public class JogoCartelaService {
         int linhasCompletas = contarLinhasCompletas(numeroPorPosicao, numerosSorteados);
 
         return ProgressoCartelaResponse.builder()
-                .vinculacaoId(vinculacao.getId())
-                .participanteId(vinculacao.getParticipante().getId())
-                .participanteNome(vinculacao.getParticipante().getNomeCompleto())
-                .participanteApelido(vinculacao.getParticipante().getApelido())
-                .cartelaId(vinculacao.getCartela().getId())
-                .cartelaNumero(vinculacao.getCartela().getNumero())
-                .serie(vinculacao.getCartela().getSerie())
+                .vinculacaoId(vinculacaoId)
+                .participanteId(participante.getId())
+                .participanteNome(participante.getNomeCompleto())
+                .participanteApelido(participante.getApelido())
+                .cartelaId(cartela.getId())
+                .cartelaNumero(cartela.getNumero())
+                .serie(cartela.getSerie())
                 .acertos(acertos)
                 .faltamParaBingo(faltantes.size())
                 .linhasCompletas(linhasCompletas)
@@ -379,6 +388,117 @@ public class JogoCartelaService {
         }
 
         return completas;
+    }
+
+    @Transactional(readOnly = true)
+    public List<RankingAoVivoResponse> buscarRankingAoVivo(Long rodadaId) {
+        Rodada rodada = buscarRodadaDetalhada(rodadaId);
+        Set<Integer> numerosSorteados = numeroSorteadoRepository
+                .findByRodadaIdOrderByOrdemAsc(rodadaId)
+                .stream()
+                .map(NumeroSorteado::getNumero)
+                .collect(Collectors.toSet());
+
+        String premioAtual = rodada.getPremioAtual() == null
+                ? "PRIMEIRA_LINHA"
+                : rodada.getPremioAtual();
+        Map<Long, RankingAoVivoItem> melhorPorParticipante = new LinkedHashMap<>();
+
+        for (CartelaEmJogo item : buscarCartelasEmJogo(rodada)) {
+            int acertos = (int) item.cartela.getNumeros().stream()
+                    .filter(numero -> numerosSorteados.contains(numero.getNumero()))
+                    .count();
+            int faltam = faltamParaPremio(item.cartela, numerosSorteados, premioAtual);
+            RankingAoVivoItem candidato = new RankingAoVivoItem(item, acertos, faltam);
+            RankingAoVivoItem atual = melhorPorParticipante.get(item.participante.getId());
+            if (atual == null || candidato.compareTo(atual) < 0) {
+                melhorPorParticipante.put(item.participante.getId(), candidato);
+            }
+        }
+
+        List<RankingAoVivoItem> ordenados = melhorPorParticipante.values().stream()
+                .sorted()
+                .limit(10)
+                .toList();
+        List<RankingAoVivoResponse> resultado = new ArrayList<>();
+        for (int indice = 0; indice < ordenados.size(); indice++) {
+            RankingAoVivoItem item = ordenados.get(indice);
+            resultado.add(RankingAoVivoResponse.builder()
+                    .posicao(indice + 1)
+                    .participanteId(item.vinculacao.participante.getId())
+                    .apelido(item.vinculacao.participante.getApelido())
+                    .cartelaNumero(item.vinculacao.cartela.getNumero())
+                    .acertos(item.acertos)
+                    .faltamParaPremio(item.faltam)
+                    .progressoPercentual((int) Math.round(item.acertos * 100.0 / TOTAL_NUMEROS_CARTELA))
+                    .premioAtual(premioAtual)
+                    .build());
+        }
+        return resultado;
+    }
+
+    private int faltamParaPremio(Cartela cartela, Set<Integer> sorteados, String premioAtual) {
+        if ("CARTELA_CHEIA".equals(premioAtual) || "BINGO".equals(premioAtual)) {
+            return (int) cartela.getNumeros().stream()
+                    .filter(numero -> !sorteados.contains(numero.getNumero()))
+                    .count();
+        }
+
+        Map<Integer, Integer> numeroPorPosicao = cartela.getNumeros().stream()
+                .collect(Collectors.toMap(CartelaNumero::getPosicao, CartelaNumero::getNumero));
+        List<Integer> faltasPorLinha = new ArrayList<>();
+        for (int linha = 0; linha < 5; linha++) {
+            int faltam = 0;
+            for (int coluna = 0; coluna < 5; coluna++) {
+                int posicao = linha * 5 + coluna;
+                if (posicao == 12) continue;
+                Integer numero = numeroPorPosicao.get(posicao);
+                if (numero == null || !sorteados.contains(numero)) faltam++;
+            }
+            faltasPorLinha.add(faltam);
+        }
+        Collections.sort(faltasPorLinha);
+        if ("DUPLA_LINHA".equals(premioAtual) || "DUPLO_BINGO".equals(premioAtual)) {
+            return faltasPorLinha.get(0) + faltasPorLinha.get(1);
+        }
+        return faltasPorLinha.get(0);
+    }
+
+    private List<CartelaEmJogo> buscarCartelasEmJogo(Rodada rodada) {
+        Map<Long, CartelaEmJogo> cartelas = new LinkedHashMap<>();
+
+        cartelaSessaoRepository.findDetalhadasBySessaoId(rodada.getSessao().getId())
+                .forEach(item -> cartelas.put(
+                        item.getCartela().getId(),
+                        new CartelaEmJogo(
+                                item.getId(), item.getParticipante(), item.getCartela()
+                        )
+                ));
+
+        cartelaRodadaRepository.findAtivasDetalhadasByRodadaId(rodada.getId())
+                .forEach(item -> cartelas.put(
+                        item.getCartela().getId(),
+                        new CartelaEmJogo(
+                                item.getId(), item.getParticipante(), item.getCartela()
+                        )
+                ));
+
+        return new ArrayList<>(cartelas.values());
+    }
+
+    private CartelaEmJogo resolverCartelaEmJogo(Rodada rodada, Long cartelaId) {
+        Optional<CartelaRodada> comprada = cartelaRodadaRepository
+                .findAtivaDetalhadaByRodadaIdAndCartelaId(rodada.getId(), cartelaId);
+        if (comprada.isPresent()) {
+            CartelaRodada item = comprada.get();
+            return new CartelaEmJogo(item.getId(), item.getParticipante(), item.getCartela());
+        }
+        CartelaSessao item = cartelaSessaoRepository
+                .findDetalhadaBySessaoIdAndCartelaId(rodada.getSessao().getId(), cartelaId)
+                .orElseThrow(() -> new RegraNegocioException(
+                        "A cartela não está ativa para esta rodada."
+                ));
+        return new CartelaEmJogo(item.getId(), item.getParticipante(), item.getCartela());
     }
 
     private void exigirPremioValido(
@@ -479,6 +599,31 @@ public class JogoCartelaService {
 
         private RankingAcumulado(Participante participante) {
             this.participante = participante;
+        }
+    }
+
+    private record CartelaEmJogo(Long id, Participante participante, Cartela cartela) {}
+
+    private static class RankingAoVivoItem implements Comparable<RankingAoVivoItem> {
+        private final CartelaEmJogo vinculacao;
+        private final int acertos;
+        private final int faltam;
+
+        private RankingAoVivoItem(CartelaEmJogo vinculacao, int acertos, int faltam) {
+            this.vinculacao = vinculacao;
+            this.acertos = acertos;
+            this.faltam = faltam;
+        }
+
+        @Override
+        public int compareTo(RankingAoVivoItem outro) {
+            int porFaltas = Integer.compare(faltam, outro.faltam);
+            if (porFaltas != 0) return porFaltas;
+            int porAcertos = Integer.compare(outro.acertos, acertos);
+            if (porAcertos != 0) return porAcertos;
+            return vinculacao.participante.getApelido().compareToIgnoreCase(
+                    outro.vinculacao.participante.getApelido()
+            );
         }
     }
 }

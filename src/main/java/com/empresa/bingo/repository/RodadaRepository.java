@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public interface RodadaRepository extends JpaRepository<Rodada, Long> {
 
@@ -32,4 +33,23 @@ public interface RodadaRepository extends JpaRepository<Rodada, Long> {
     boolean existsBySessaoIdAndStatus(Long sessaoId, StatusRodada status);
 
     Optional<Rodada> findTopBySessaoIdOrderByNumeroRodadaDesc(Long sessaoId);
+
+    @EntityGraph(attributePaths = {"sessao", "sessao.sala"})
+    @Query("""
+            SELECT rodada FROM Rodada rodada
+            WHERE rodada.agendadaPara IS NOT NULL
+              AND rodada.sessao.sala.ativa = true
+              AND rodada.agendadaPara >= :inicio
+            ORDER BY rodada.especial DESC, rodada.agendadaPara ASC
+            """)
+    List<Rodada> findProgramacaoPublica(@Param("inicio") LocalDateTime inicio);
+
+    @EntityGraph(attributePaths = {"sessao", "sessao.sala"})
+    @Query("""
+            SELECT rodada FROM Rodada rodada
+            WHERE rodada.sessao.sala.id = :salaId
+              AND rodada.agendadaPara IS NOT NULL
+            ORDER BY rodada.agendadaPara ASC
+            """)
+    List<Rodada> findProgramacaoDaSala(@Param("salaId") Long salaId);
 }

@@ -64,4 +64,30 @@ public class Rodada {
 
     @Column(name = "premios_pagos", length = 255)
     private String premiosPagos;
+
+    @Column(length = 150)
+    private String titulo;
+
+    @Column(name = "agendada_para")
+    private LocalDateTime agendadaPara;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean especial = false;
+
+    @Column(name = "preco_antecipado", precision = 10, scale = 2)
+    private BigDecimal precoAntecipado;
+
+    @Column(name = "preco_no_dia", precision = 10, scale = 2)
+    private BigDecimal precoNoDia;
+
+    @Column(name = "fim_preco_antecipado")
+    private LocalDateTime fimPrecoAntecipado;
+
+    @Column(name = "limite_cartelas")
+    private Integer limiteCartelas;
+
+    @Column(name = "venda_aberta", nullable = false)
+    @Builder.Default
+    private Boolean vendaAberta = false;
 }

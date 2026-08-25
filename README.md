@@ -85,6 +85,10 @@ bingo-app
 - **Session Management**: Manage bingo sessions with the SessaoController.
 - **Round Management**: Handle rounds of the game using the RodadaController.
 - **Lottery Drawing**: Conduct lottery drawings with the SorteioController.
+- **Configurable schedule**: Operators define the title, date/time, prizes, special-event highlight, card limit and sale window for every round.
+- **Online card orders**: Players register, reserve cards on the website and receive the configured Pix instructions.
+- **Payment confirmation**: Operators confirm or cancel pending Pix orders in `/programacao`.
+- **Live TV ranking**: The TV shows the five players closest to the current prize and refreshes after every drawn ball.
 
 ## Getting Started
 1. Clone the repository:
@@ -108,6 +112,24 @@ bingo-app
 Configuration properties can be found in `src/main/resources/application.properties` and `src/main/resources/application.yml`.
 
 Flyway applies the database migrations automatically. On an existing database without Flyway history, version 1 is baselined and `V2__multissalas_participantes_cartelas.sql` is applied.
+
+### Programação e compras
+
+1. Entre como operador, gerente ou administrador e abra `/programacao`.
+2. Escolha a sala e configure a partida. Datas, horários, premiações e preços são livres.
+3. A partida fica com status `AGENDADA`; use **Iniciar na TV** somente quando ela realmente começar.
+4. O jogador cria uma conta em `/cadastro-jogador`, entra no sistema e acessa `/jogador` para reservar cartelas.
+5. O pedido fica aguardando pagamento. Depois de conferir o Pix, o operador usa **Confirmar Pix** e as cartelas passam a valer na rodada e no ranking.
+
+Configure no ambiente do backend:
+
+```properties
+BINGO_PIX_KEY=sua-chave-pix
+BINGO_PIX_RECEIVER=Nome do recebedor
+BINGO_PAYMENT_INSTRUCTIONS=Texto exibido ao jogador depois da reserva
+```
+
+O fluxo entregue usa confirmação manual do Pix. Para confirmação automática, conecte um gateway que ofereça API e webhook e mantenha o mesmo ciclo de estados `AGUARDANDO_PAGAMENTO`, `PAGO` e `CANCELADO`.
 
 After logging in as `ADMIN`, open `/salas` to:
 

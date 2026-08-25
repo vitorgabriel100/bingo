@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/public/salas")
 @RequiredArgsConstructor
@@ -17,6 +19,11 @@ public class CadastroPublicoController {
 
     private final SalaService salaService;
     private final ParticipanteService participanteService;
+
+    @GetMapping
+    public List<SalaResponse> listarSalas() {
+        return salaService.listarPublicas();
+    }
 
     @GetMapping("/{slug}")
     public SalaResponse buscarSala(@PathVariable String slug) {

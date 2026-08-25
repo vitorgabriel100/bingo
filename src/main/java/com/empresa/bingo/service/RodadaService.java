@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -61,10 +62,11 @@ public class RodadaService {
 
         if (rodada.getStatus() != StatusRodada.CRIADA
                 && rodada.getStatus() != StatusRodada.AGUARDANDO
+                && rodada.getStatus() != StatusRodada.AGENDADA
                 && rodada.getStatus() != StatusRodada.PAUSADA
                 && rodada.getStatus() != StatusRodada.EM_ANDAMENTO) {
             throw new RegraNegocioException(
-                    "A rodada só pode ser iniciada se estiver CRIADA, AGUARDANDO, PAUSADA ou EM_ANDAMENTO."
+                    "A rodada só pode ser iniciada se estiver CRIADA, AGUARDANDO, AGENDADA, PAUSADA ou EM_ANDAMENTO."
             );
         }
 
@@ -109,6 +111,7 @@ public class RodadaService {
         }
 
         rodada.setStatus(StatusRodada.EM_ANDAMENTO);
+        rodada.setVendaAberta(false);
 
         if (rodada.getIniciouEm() == null) {
             rodada.setIniciouEm(LocalDateTime.now());
@@ -401,6 +404,7 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
         aplicarPremiacaoNaRodada(rodada, payload);
         aplicarPremioAtualNaRodada(rodada, payload);
         aplicarPremiosPagosNaRodada(rodada, payload);
+        aplicarProgramacaoNaRodada(rodada, payload);
 
         rodada = rodadaRepository.save(rodada);
 
@@ -562,6 +566,64 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
 
         if (valorDoacao != null) {
             rodada.setValorDoacao(valorDoacao);
+        }
+    }
+
+    private void aplicarProgramacaoNaRodada(Rodada rodada, Map<String, Object> payload) {
+        String titulo = extrairString(payload, "titulo", "nome", "descricao");
+        LocalDateTime agendadaPara = extrairDataHora(payload, "agendadaPara", "dataHora", "data");
+        LocalDateTime fimAntecipado = extrairDataHora(
+                payload,
+                "fimPrecoAntecipado",
+                "limiteAntecipacao",
+                "vendaAntecipadaAte"
+        );
+        BigDecimal precoAntecipado = extrairDecimal(
+                payload,
+                "precoAntecipado",
+                "valorAntecipado"
+        );
+        BigDecimal precoNoDia = extrairDecimal(
+                payload,
+                "precoNoDia",
+                "valorNoDia",
+                "precoCartela"
+        );
+        Integer limiteCartelas = extrairInteger(payload, "limiteCartelas", "quantidadeCartelas");
+        Boolean especial = extrairBoolean(payload, "especial", "rodadaEspecial");
+        Boolean vendaAberta = extrairBoolean(payload, "vendaAberta", "disponivelParaCompra");
+
+        if (titulo != null) rodada.setTitulo(titulo.length() > 150 ? titulo.substring(0, 150) : titulo);
+        if (agendadaPara != null) rodada.setAgendadaPara(agendadaPara);
+        if (fimAntecipado != null) rodada.setFimPrecoAntecipado(fimAntecipado);
+        if (precoAntecipado != null) rodada.setPrecoAntecipado(precoAntecipado.max(BigDecimal.ZERO));
+        if (precoNoDia != null) rodada.setPrecoNoDia(precoNoDia.max(BigDecimal.ZERO));
+        if (limiteCartelas != null) rodada.setLimiteCartelas(Math.max(1, limiteCartelas));
+        if (especial != null) rodada.setEspecial(especial);
+        if (vendaAberta != null) rodada.setVendaAberta(vendaAberta);
+
+        if (agendadaPara != null
+                && (rodada.getStatus() == StatusRodada.CRIADA
+                || rodada.getStatus() == StatusRodada.AGUARDANDO)) {
+            rodada.setStatus(StatusRodada.AGENDADA);
+        }
+
+        if (rodada.getAgendadaPara() != null && rodada.getFimPrecoAntecipado() == null) {
+            rodada.setFimPrecoAntecipado(rodada.getAgendadaPara().toLocalDate().atStartOfDay());
+        }
+        if (rodada.getFimPrecoAntecipado() != null
+                && rodada.getAgendadaPara() != null
+                && rodada.getFimPrecoAntecipado().isAfter(rodada.getAgendadaPara())) {
+            throw new RegraNegocioException(
+                    "O prazo do preço antecipado deve terminar antes do início da rodada."
+            );
+        }
+        if (rodada.getPrecoAntecipado() != null
+                && rodada.getPrecoNoDia() != null
+                && rodada.getPrecoAntecipado().compareTo(rodada.getPrecoNoDia()) > 0) {
+            throw new RegraNegocioException(
+                    "O preço antecipado não pode ser maior que o preço no dia."
+            );
         }
     }
 
@@ -747,6 +809,29 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
         return texto.isBlank() ? null : texto;
     }
 
+    private Boolean extrairBoolean(Map<String, Object> payload, String... chaves) {
+        Object valor = buscarPrimeiroValor(payload, chaves);
+        if (valor == null) return null;
+        if (valor instanceof Boolean booleano) return booleano;
+        String texto = String.valueOf(valor).trim();
+        if (texto.isBlank()) return null;
+        return texto.equalsIgnoreCase("true")
+                || texto.equalsIgnoreCase("sim")
+                || texto.equals("1");
+    }
+
+    private LocalDateTime extrairDataHora(Map<String, Object> payload, String... chaves) {
+        Object valor = buscarPrimeiroValor(payload, chaves);
+        if (valor == null) return null;
+        try {
+            String texto = String.valueOf(valor).trim();
+            if (texto.length() == 10) return LocalDate.parse(texto).atStartOfDay();
+            return LocalDateTime.parse(texto);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     private String normalizarPremio(String premio) {
         if (premio == null || premio.isBlank()) {
             return null;
@@ -849,6 +934,14 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
         payload.put("premio", rodada.getPremioAtual());
 
         payload.put("premiosPagos", premiosPagosComoLista(rodada.getPremiosPagos()));
+        payload.put("titulo", rodada.getTitulo());
+        payload.put("agendadaPara", rodada.getAgendadaPara());
+        payload.put("especial", rodada.getEspecial());
+        payload.put("precoAntecipado", rodada.getPrecoAntecipado());
+        payload.put("precoNoDia", rodada.getPrecoNoDia());
+        payload.put("fimPrecoAntecipado", rodada.getFimPrecoAntecipado());
+        payload.put("limiteCartelas", rodada.getLimiteCartelas());
+        payload.put("vendaAberta", rodada.getVendaAberta());
 
         if (rodada.getIniciouEm() != null) {
             payload.put("iniciouEm", rodada.getIniciouEm().toString());
@@ -912,6 +1005,63 @@ public RodadaResponse continuarRodada(Long rodadaId, Usuario usuarioLogado) {
                 .premioAtual(rodada.getPremioAtual())
                 .premio(rodada.getPremioAtual())
                 .premiosPagos(premiosPagosComoLista(rodada.getPremiosPagos()))
+                .titulo(rodada.getTitulo())
+                .agendadaPara(rodada.getAgendadaPara())
+                .especial(Boolean.TRUE.equals(rodada.getEspecial()))
+                .precoAntecipado(rodada.getPrecoAntecipado())
+                .precoNoDia(rodada.getPrecoNoDia())
+                .fimPrecoAntecipado(rodada.getFimPrecoAntecipado())
+                .limiteCartelas(rodada.getLimiteCartelas())
+                .vendaAberta(Boolean.TRUE.equals(rodada.getVendaAberta()))
+                .precoAtual(calcularPrecoAtual(rodada))
+                .premiacaoTotal(somarPremiacao(rodada))
                 .build();
+    }
+
+    private BigDecimal calcularPrecoAtual(Rodada rodada) {
+        LocalDateTime limite = rodada.getFimPrecoAntecipado();
+        if (limite != null && LocalDateTime.now().isBefore(limite)
+                && rodada.getPrecoAntecipado() != null) {
+            return rodada.getPrecoAntecipado();
+        }
+        return rodada.getPrecoNoDia() != null ? rodada.getPrecoNoDia() : rodada.getPrecoAntecipado();
+    }
+
+    private BigDecimal somarPremiacao(Rodada rodada) {
+        return valorOuZero(rodada.getPremioLinha())
+                .add(valorOuZero(rodada.getPremioBingo()))
+                .add(valorOuZero(rodada.getPremioDuploBingo()));
+    }
+
+    private BigDecimal valorOuZero(BigDecimal valor) {
+        return valor == null ? BigDecimal.ZERO : valor;
+    }
+
+    @Transactional(readOnly = true)
+    public List<RodadaResponse> listarProgramacaoPublica() {
+        return rodadaRepository.findProgramacaoPublica(LocalDateTime.now().minusHours(3))
+                .stream()
+                .filter(rodada -> rodada.getStatus() != StatusRodada.FINALIZADA
+                        && rodada.getStatus() != StatusRodada.CANCELADA)
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RodadaResponse> listarProgramacaoDaSala(Long salaId, Usuario usuarioLogado) {
+        salaAcessoService.exigirAcesso(usuarioLogado, salaId);
+        return rodadaRepository.findProgramacaoDaSala(salaId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RodadaResponse> listarCatalogoDaSala(Long salaId) {
+        return rodadaRepository.findProgramacaoDaSala(salaId).stream()
+                .filter(rodada -> Boolean.TRUE.equals(rodada.getVendaAberta()))
+                .filter(rodada -> rodada.getStatus() != StatusRodada.FINALIZADA
+                        && rodada.getStatus() != StatusRodada.CANCELADA)
+                .map(this::toResponse)
+                .toList();
     }
 }

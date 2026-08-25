@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: "/dashboard", label: "Visão geral" },
   { to: "/rodada", label: "Rodada ao vivo" },
   { to: "/preparacao", label: "Preparação" },
+  { to: "/programacao", label: "Programação e vendas" },
   { to: "/participantes", label: "Participantes" },
   { to: "/cartelas", label: "Cartelas" },
   { to: "/ranking", label: "Ranking" },
@@ -16,7 +17,9 @@ export default function Layout({ title, subtitle, actions, children }) {
   const { user, logout } = useAuth();
   const itens = user?.perfil === "ADMIN"
     ? [...NAV_ITEMS, { to: "/acessos", label: "Acessos" }]
-    : NAV_ITEMS;
+    : user?.perfil === "JOGADOR"
+      ? []
+      : NAV_ITEMS;
 
   return (
     <div className="workspace-shell">

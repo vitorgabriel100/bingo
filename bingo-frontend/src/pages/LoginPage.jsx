@@ -112,6 +112,13 @@ export default function LoginPage() {
             </button>
           </form>
 
+          <div className="login-player-signup">
+            <span>Ainda não joga conosco?</span>
+            <button type="button" onClick={() => navigate("/cadastro-jogador")}>
+              Criar conta de jogador
+            </button>
+          </div>
+
           <div className="login-app-footer">
             <strong>Praça Moema 2</strong>
             <span></span>

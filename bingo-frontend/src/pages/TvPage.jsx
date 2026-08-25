@@ -262,6 +262,7 @@ export default function TvPage() {
   const [mensagem, setMensagem] = useState("Preparando transmissão...");
   const [premioAtual, setPremioAtual] = useState("PRIMEIRA_LINHA");
   const [premiacao, setPremiacao] = useState(PREMIACAO_INICIAL);
+  const [rankingAoVivo, setRankingAoVivo] = useState([]);
   const [faseAnimacao, setFaseAnimacao] = useState("idle");
   const [countdown, setCountdown] = useState(null);
   const [somLiberado, setSomLiberado] = useState(false);
@@ -817,6 +818,24 @@ export default function TvPage() {
     premioAtualRef.current = premioAtual;
   }, [somLiberado, sessaoId, rodadaId, premioAtual]);
 
+  useEffect(function atualizarRankingAoVivo() {
+    let ativo = true;
+    if (!rodadaId) {
+      Promise.resolve().then(function limparRanking() {
+        if (ativo) setRankingAoVivo([]);
+      });
+      return undefined;
+    }
+    api.get("/public/rodadas/" + rodadaId + "/ranking-ao-vivo")
+      .then(function aplicar(response) {
+        if (ativo) setRankingAoVivo(Array.isArray(response.data) ? response.data : []);
+      })
+      .catch(function ignorarFalhaTemporaria() {
+        if (ativo) setRankingAoVivo([]);
+      });
+    return function cancelar() { ativo = false; };
+  }, [rodadaId, historico.length, premioAtual]);
+
   useEffect(function sincronizarCarregadores() {
     carregarSessaoDaSalaRef.current = carregarSessaoDaSala;
     carregarRodadaAtivaRef.current = carregarRodadaAtiva;
@@ -1048,6 +1067,25 @@ export default function TvPage() {
 
       <div className="broadcast-main-grid">
         <section className="broadcast-left-column">
+          <article className="broadcast-panel broadcast-live-ranking-panel">
+            <div className="broadcast-live-ranking-heading">
+              <div><span>Disputa ao vivo</span><strong>Quem está mais perto</strong></div>
+              <small>Atualizado a cada bola</small>
+            </div>
+            <div className="broadcast-live-ranking-list">
+              {rankingAoVivo.slice(0, 5).map(function renderPosicao(item) {
+                return (
+                  <div className="broadcast-live-ranking-row" key={item.participanteId}>
+                    <strong>{item.posicao}º</strong>
+                    <span>{item.apelido}<small>Cartela {item.cartelaNumero}</small></span>
+                    <em>faltam {item.faltamParaPremio}</em>
+                  </div>
+                );
+              })}
+              {!rankingAoVivo.length && <p>Aguardando cartelas confirmadas.</p>}
+            </div>
+          </article>
+
           <article className="broadcast-panel broadcast-board-panel">
             <div className="broadcast-panel-heading">
               <div>

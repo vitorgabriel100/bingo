@@ -28,6 +28,10 @@ public class Participante {
     @JoinColumn(name = "sala_id", nullable = false)
     private Sala sala;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", unique = true)
+    private Usuario usuario;
+
     @Column(name = "nome_completo", nullable = false, length = 120)
     private String nomeCompleto;
 

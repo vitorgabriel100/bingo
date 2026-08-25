@@ -41,4 +41,15 @@ public class RodadaResponse {
     private String premio;
 
     private List<String> premiosPagos;
+
+    private String titulo;
+    private LocalDateTime agendadaPara;
+    private Boolean especial;
+    private BigDecimal precoAntecipado;
+    private BigDecimal precoNoDia;
+    private LocalDateTime fimPrecoAntecipado;
+    private Integer limiteCartelas;
+    private Boolean vendaAberta;
+    private BigDecimal precoAtual;
+    private BigDecimal premiacaoTotal;
 }

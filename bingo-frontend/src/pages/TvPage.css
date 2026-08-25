@@ -188,8 +188,36 @@
 }
 
 .broadcast-left-column {
-  grid-template-rows: minmax(0, 1fr) minmax(122px, 0.32fr);
+  grid-template-rows: minmax(118px, auto) minmax(0, 1fr) minmax(122px, 0.32fr);
 }
+
+.broadcast-live-ranking-panel {
+  padding: clamp(8px, 0.7vw, 12px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 7px;
+  border-color: rgba(245, 191, 53, 0.35);
+}
+
+.broadcast-live-ranking-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.broadcast-live-ranking-heading span,
+.broadcast-live-ranking-heading strong { display: block; }
+.broadcast-live-ranking-heading span { color: var(--gold); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
+.broadcast-live-ranking-heading strong { color: #fff; font-size: clamp(14px, 1.1vw, 19px); }
+.broadcast-live-ranking-heading small { color: #8ea8c8; font-size: 9px; }
+.broadcast-live-ranking-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.broadcast-live-ranking-list > p { grid-column: 1 / -1; margin: 0; color: #8ea8c8; font-size: 12px; align-self: center; }
+.broadcast-live-ranking-row { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: rgba(12, 32, 62, 0.78); border: 1px solid rgba(131, 170, 216, 0.15); }
+.broadcast-live-ranking-row > strong { color: var(--gold); font-size: clamp(15px, 1.2vw, 21px); }
+.broadcast-live-ranking-row > span { min-width: 0; overflow: hidden; color: #fff; font-size: 11px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.broadcast-live-ranking-row small { display: block; color: #8ea8c8; font-size: 8px; font-weight: 700; }
+.broadcast-live-ranking-row em { grid-column: 1 / -1; color: #7dd3fc; font-size: 9px; font-style: normal; font-weight: 900; text-align: right; }
 
 .broadcast-right-column {
   grid-template-rows: minmax(0, 1fr) auto auto;
@@ -829,7 +857,7 @@
   }
 
   .broadcast-left-column {
-    grid-template-rows: minmax(0, 1fr) 108px;
+    grid-template-rows: 104px minmax(0, 1fr) 108px;
   }
 
   .broadcast-board-panel {
@@ -903,6 +931,7 @@
   }
 
   .broadcast-board-panel,
+  .broadcast-live-ranking-panel,
   .broadcast-prizes-panel,
   .broadcast-machine-panel,
   .broadcast-now-card,
@@ -914,6 +943,8 @@
     display: flex;
     flex-direction: column;
   }
+
+  .broadcast-live-ranking-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .broadcast-number-band {
     grid-template-columns: 42px minmax(0, 1fr);

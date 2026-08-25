@@ -113,6 +113,11 @@ public class JogoCartelaController {
         );
     }
 
+    @GetMapping("/public/rodadas/{rodadaId}/ranking-ao-vivo")
+    public List<RankingAoVivoResponse> buscarRankingAoVivo(@PathVariable Long rodadaId) {
+        return jogoCartelaService.buscarRankingAoVivo(rodadaId);
+    }
+
     private Usuario getUsuarioAutenticado(Authentication authentication) {
         return usuarioRepository.findWithPerfilByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));

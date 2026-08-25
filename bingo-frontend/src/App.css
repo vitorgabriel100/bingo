@@ -11,6 +11,108 @@
   box-sizing: border-box;
 }
 
+/* Programação, cadastro e compra de cartelas */
+.login-player-signup { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(148, 163, 184, .22); display: grid; gap: 8px; text-align: center; }
+.login-player-signup span { color: #64748b; font-size: 13px; }
+.login-player-signup button { border: 0; background: transparent; color: #2563eb; font-weight: 800; cursor: pointer; }
+.player-auth-page { min-height: 100vh; display: grid; place-items: center; padding: 28px; background: radial-gradient(circle at top left, #dbeafe 0, transparent 38%), #f6f8fc; }
+.player-auth-card { width: min(680px, 100%); padding: clamp(24px, 5vw, 48px); border: 1px solid #e2e8f0; border-radius: 28px; background: rgba(255,255,255,.96); box-shadow: 0 28px 80px rgba(30,64,175,.13); }
+.player-auth-card h1 { margin: 8px 0; color: #0f172a; font-size: clamp(30px, 5vw, 48px); }
+.player-auth-card > p { margin: 0 0 26px; color: #64748b; }
+.player-auth-back { display: inline-block; margin-bottom: 24px; color: #2563eb; font-weight: 800; text-decoration: none; }
+.player-auth-form, .schedule-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.player-auth-form label, .schedule-form label { display: grid; gap: 7px; color: #334155; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+.player-auth-form input, .player-auth-form select, .schedule-form input { width: 100%; min-height: 46px; padding: 0 13px; border: 1px solid #cbd5e1; border-radius: 11px; background: #fff; color: #0f172a; font: inherit; text-transform: none; letter-spacing: normal; }
+.player-auth-form .ui-alert, .player-auth-form button, .span-2 { grid-column: span 2; }
+.schedule-editor, .schedule-list-panel, .pending-orders-panel { margin-bottom: 20px; }
+.schedule-form { margin-top: 20px; }
+.schedule-check { align-content: center; grid-template-columns: auto 1fr !important; align-items: center; min-height: 46px; padding: 10px 13px; border: 1px solid #dbe3ef; border-radius: 11px; }
+.schedule-check input { width: 18px; min-height: 18px; }
+.schedule-actions, .inline-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.schedule-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 15px; }
+.schedule-card { padding: 20px; border: 1px solid #dbe3ef; border-radius: 18px; background: #fff; box-shadow: 0 10px 28px rgba(15,23,42,.05); }
+.schedule-card.special { background: linear-gradient(145deg, #fff9e8, #fff); border-color: #f5bf35; }
+.schedule-card > div > span { color: #2563eb; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
+.schedule-card h3 { margin: 6px 0; color: #0f172a; font-size: 19px; }
+.schedule-card > div > strong { color: #64748b; font-size: 13px; }
+.schedule-card dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 18px 0; }
+.schedule-card dl div { padding: 9px; border-radius: 10px; background: #f8fafc; }
+.schedule-card dt { color: #64748b; font-size: 10px; }
+.schedule-card dd { margin: 2px 0 0; color: #0f172a; font-weight: 900; }
+.schedule-card footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sale-open, .sale-closed, .order-status { display: inline-flex; padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 900; }
+.sale-open, .status-pago { color: #047857; background: #d1fae5; }
+.sale-closed, .status-cancelado, .status-expirado { color: #b91c1c; background: #fee2e2; }
+.status-aguardando_pagamento { color: #92400e; background: #fef3c7; }
+
+.shop-page { min-height: 100vh; padding: 0 4vw 48px; background: radial-gradient(circle at 10% 0, #1d4ed8 0, #0b1838 34%, #071126 70%); color: #fff; }
+.shop-header { min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.shop-header > div:first-child { display: flex; align-items: center; gap: 12px; }
+.shop-header > div:first-child > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: #f5bf35; color: #0f172a; font-size: 24px; font-weight: 1000; }
+.shop-header strong, .shop-header small { display: block; }
+.shop-header small { color: #94a3b8; }
+.shop-user { display: flex; align-items: center; gap: 16px; }
+.shop-user button { padding: 9px 14px; border: 1px solid rgba(255,255,255,.24); border-radius: 10px; background: transparent; color: #fff; cursor: pointer; }
+.shop-hero { min-height: 260px; display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: 40px 0; }
+.shop-hero h1 { max-width: 780px; margin: 8px 0 10px; font-size: clamp(34px, 5vw, 70px); line-height: .98; }
+.shop-hero p { max-width: 650px; color: #a9bad4; font-size: 16px; }
+.shop-special-badge { min-width: 220px; padding: 24px; border: 1px solid rgba(245,191,53,.5); border-radius: 24px; background: rgba(245,191,53,.12); text-align: center; }
+.shop-special-badge span, .shop-special-badge strong, .shop-special-badge small { display: block; }
+.shop-special-badge span { color: #f5bf35; font-weight: 900; text-transform: uppercase; }
+.shop-special-badge strong { margin: 6px 0; color: #fff; font-size: 30px; }
+.shop-alert { margin-bottom: 18px; }
+.shop-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .38fr); gap: 20px; align-items: start; }
+.shop-games { display: grid; gap: 13px; }
+.shop-game-card { width: 100%; padding: 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 20px; border: 1px solid rgba(148,163,184,.18); border-radius: 20px; background: rgba(14,34,70,.86); color: #fff; text-align: left; cursor: pointer; transition: .18s ease; }
+.shop-game-card:hover, .shop-game-card.selected { transform: translateY(-2px); border-color: #38bdf8; box-shadow: 0 14px 40px rgba(14,165,233,.14); }
+.shop-game-card.special { border-color: rgba(245,191,53,.55); background: linear-gradient(110deg, rgba(86,58,8,.75), rgba(14,34,70,.9)); }
+.shop-game-card h2 { margin: 4px 0; font-size: 21px; }
+.shop-game-card p, .shop-game-card > div > span { margin: 0; color: #9eb2cf; font-size: 12px; }
+.shop-game-prizes { display: flex; gap: 8px; }
+.shop-game-prizes span { min-width: 84px; padding: 9px; border-radius: 10px; background: rgba(255,255,255,.06); font-size: 10px; }
+.shop-game-prizes strong { display: block; margin-top: 3px; color: #fff; font-size: 13px; }
+.shop-game-card footer { min-width: 120px; text-align: right; }
+.shop-game-card footer span, .shop-game-card footer strong { display: block; }
+.shop-game-card footer span { color: #9eb2cf; font-size: 10px; }
+.shop-game-card footer strong { color: #f5bf35; font-size: 22px; }
+.shop-checkout { position: sticky; top: 18px; color: #0f172a; }
+.shop-checkout h2 { margin-bottom: 4px; }
+.shop-checkout > p { margin-top: 0; color: #64748b; font-size: 12px; }
+.shop-price-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 18px 0; }
+.shop-price-comparison div { padding: 11px; border-radius: 11px; background: #f1f5f9; }
+.shop-price-comparison span, .shop-price-comparison strong { display: block; }
+.shop-price-comparison span { color: #64748b; font-size: 10px; }
+.shop-checkout label { color: #475569; font-size: 12px; font-weight: 800; }
+.shop-quantity { margin-top: 8px; display: grid; grid-template-columns: 42px 1fr 42px; align-items: center; border: 1px solid #dbe3ef; border-radius: 12px; overflow: hidden; }
+.shop-quantity button { height: 42px; border: 0; background: #f1f5f9; font-size: 20px; cursor: pointer; }
+.shop-quantity strong { text-align: center; }
+.shop-total { margin: 18px 0; display: flex; justify-content: space-between; align-items: end; }
+.shop-total strong { color: #1d4ed8; font-size: 28px; }
+.shop-buy-button { width: 100%; }
+.shop-payment, .shop-orders { margin-top: 22px; color: #0f172a; }
+.shop-payment { display: grid; grid-template-columns: 1.1fr .7fr 1.2fr; gap: 20px; align-items: center; border-color: #f5bf35; }
+.shop-payment span, .shop-payment strong, .shop-payment small { display: block; }
+.shop-payment code { display: block; margin: 6px 0; padding: 9px; overflow-wrap: anywhere; border-radius: 8px; background: #f1f5f9; }
+.shop-payment > p { grid-column: 1 / -1; margin: 0; color: #64748b; }
+
+@media (max-width: 900px) {
+  .player-auth-form, .schedule-form { grid-template-columns: 1fr; }
+  .player-auth-form .ui-alert, .player-auth-form button, .span-2 { grid-column: span 1; }
+  .shop-page { padding-inline: 16px; }
+  .shop-header, .shop-hero { align-items: flex-start; }
+  .shop-header { padding: 14px 0; }
+  .shop-user > span { display: none; }
+  .shop-hero { min-height: 0; flex-direction: column; }
+  .shop-special-badge { width: 100%; }
+  .shop-content { grid-template-columns: 1fr; }
+  .shop-checkout { position: static; }
+  .shop-game-card { grid-template-columns: 1fr; }
+  .shop-game-prizes { flex-wrap: wrap; }
+  .shop-game-card footer { text-align: left; }
+  .shop-payment { grid-template-columns: 1fr; }
+  .shop-payment > p { grid-column: auto; }
+}
+
 /* ========================================================= */
 /* WORKSPACE 2026 - NAVEGAÇÃO E PÁGINAS OPERACIONAIS         */
 /* ========================================================= */

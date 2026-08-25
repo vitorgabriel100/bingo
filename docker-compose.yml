@@ -35,9 +35,13 @@ services:
 
       CORS_ALLOWED_ORIGINS: https://${DOMAIN},https://www.${DOMAIN}
 
-      SPRING_FLYWAY_ENABLED: "false"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_JPA_PROPERTIES_HIBERNATE_BOOT_ALLOW_JDBC_METADATA_ACCESS: "true"
+
+      BINGO_PIX_KEY: ${BINGO_PIX_KEY}
+      BINGO_PIX_RECEIVER: ${BINGO_PIX_RECEIVER:-Bingo Beneficente}
+      BINGO_PAYMENT_INSTRUCTIONS: ${BINGO_PAYMENT_INSTRUCTIONS:-Envie o Pix e aguarde a confirmação do operador.}
     depends_on:
       postgres:
         condition: service_healthy

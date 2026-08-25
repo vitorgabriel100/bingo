@@ -97,6 +97,14 @@ public class SalaService {
         return toResponse(sala);
     }
 
+    @Transactional(readOnly = true)
+    public List<SalaResponse> listarPublicas() {
+        return salaRepository.findAll().stream()
+                .filter(sala -> Boolean.TRUE.equals(sala.getAtiva()))
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Transactional
     public void vincularUsuario(Long salaId, Long usuarioId) {
         Sala sala = salaRepository.findById(salaId)
