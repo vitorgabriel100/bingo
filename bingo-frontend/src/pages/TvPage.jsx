@@ -297,26 +297,8 @@ export default function TvPage() {
       { codigo: "PRIMEIRA_LINHA", titulo: "Linha", valor: formatarMoeda(premiacao.linha) },
       { codigo: "CARTELA_CHEIA", titulo: "Bingo", valor: formatarMoeda(premiacao.bingo) },
       { codigo: "DUPLA_LINHA", titulo: "Duplo Bingo", valor: formatarMoeda(premiacao.duploBingo) },
-      {
-        codigo: "SEGUNDA_LINHA",
-        titulo: "Bola Max",
-        valor: premiacao.bolaMax ? "Até a bola " + premiacao.bolaMax : "--",
-      },
-      { codigo: "DOACAO", titulo: "Doação", valor: formatarMoeda(premiacao.doacao) },
     ];
   }, [premiacao]);
-
-  function valorPremioAtual(codigo) {
-    const premio = codigo || premioAtual;
-    if (premio === "PRIMEIRA_LINHA") return formatarMoeda(premiacao.linha);
-    if (premio === "CARTELA_CHEIA") return formatarMoeda(premiacao.bingo);
-    if (premio === "DUPLA_LINHA") return formatarMoeda(premiacao.duploBingo);
-    if (premio === "DOACAO") return formatarMoeda(premiacao.doacao);
-    if (premio === "SEGUNDA_LINHA" || premio === "BOLA_MAX") {
-      return premiacao.bolaMax ? "Até a bola " + premiacao.bolaMax : "--";
-    }
-    return "--";
-  }
 
   function aplicarDadosRodada(data) {
     if (!data) return;
@@ -676,7 +658,7 @@ export default function TvPage() {
       setNumeroAnimado(valor);
       setFaseAnimacao("dropping");
       tocarEfeitoQueda();
-      await esperar(520);
+      await esperar(720);
 
       setHistorico(function adicionar(anterior) {
         return anterior.includes(valor) ? anterior : anterior.concat(valor);
@@ -1053,36 +1035,35 @@ export default function TvPage() {
           <span>Rodada</span>
           <strong>{"#" + (numeroRodada || rodadaId || "--")}</strong>
         </div>
-
-        <div className="broadcast-header-stat">
-          <span>Bolas cantadas</span>
-          <strong>{historico.length}<small>/75</small></strong>
-        </div>
-
-        <div className={"broadcast-status status-" + String(statusRodada).toLowerCase()}>
-          <i />
-          <span>{formatarStatus(statusRodada)}</span>
-        </div>
       </header>
 
       <div className="broadcast-main-grid">
         <section className="broadcast-left-column">
-          <article className="broadcast-panel broadcast-live-ranking-panel">
-            <div className="broadcast-live-ranking-heading">
-              <div><span>Disputa ao vivo</span><strong>Quem está mais perto</strong></div>
-              <small>Atualizado a cada bola</small>
+          <article className="broadcast-panel broadcast-prizes-panel">
+            <div className="broadcast-prizes-heading">
+              <div>
+                <span>Premiação da rodada</span>
+                <strong>Linha, Bingo e Duplo Bingo</strong>
+              </div>
+              <small>
+                Valendo agora: {NOMES_PREMIO[premioAtual] || premioAtual}
+              </small>
             </div>
-            <div className="broadcast-live-ranking-list">
-              {rankingAoVivo.slice(0, 5).map(function renderPosicao(item) {
+
+            <div className="broadcast-prize-list">
+              {premios.map(function renderPremio(premio) {
+                const ativo = premio.codigo === premioAtual;
                 return (
-                  <div className="broadcast-live-ranking-row" key={item.participanteId}>
-                    <strong>{item.posicao}º</strong>
-                    <span>{item.apelido}<small>Cartela {item.cartelaNumero}</small></span>
-                    <em>faltam {item.faltamParaPremio}</em>
+                  <div
+                    key={premio.codigo}
+                    className={"broadcast-prize-card " + (ativo ? "active" : "")}
+                  >
+                    <span>{premio.titulo}</span>
+                    <strong>{premio.valor}</strong>
+                    {ativo && <em>Em disputa</em>}
                   </div>
                 );
               })}
-              {!rankingAoVivo.length && <p>Aguardando cartelas confirmadas.</p>}
             </div>
           </article>
 
@@ -1122,26 +1103,31 @@ export default function TvPage() {
             </div>
           </article>
 
-          <article className="broadcast-panel broadcast-prizes-panel">
-            <div className="broadcast-current-prize">
-              <span>Concorrendo agora</span>
-              <strong>{NOMES_PREMIO[premioAtual] || premioAtual}</strong>
-              <em>{valorPremioAtual(premioAtual)}</em>
+          <article className="broadcast-panel broadcast-live-ranking-panel">
+            <div className="broadcast-live-ranking-heading">
+              <div>
+                <span>Mais perto de ganhar</span>
+                <strong>3 cartelas mais bem posicionadas</strong>
+              </div>
+              <small>Atualizado a cada bola</small>
             </div>
-
-            <div className="broadcast-prize-list">
-              {premios.map(function renderPremio(premio) {
-                const ativo = premio.codigo === premioAtual;
+            <div className="broadcast-live-ranking-list">
+              {rankingAoVivo.slice(0, 3).map(function renderPosicao(item) {
                 return (
-                  <div
-                    key={premio.codigo}
-                    className={"broadcast-prize-card " + (ativo ? "active" : "")}
-                  >
-                    <span>{premio.titulo}</span>
-                    <strong>{premio.valor}</strong>
+                  <div className="broadcast-live-ranking-row" key={item.participanteId}>
+                    <strong>{item.posicao}º</strong>
+                    <span>
+                      {item.apelido}
+                      <small>Cartela {item.cartelaNumero}</small>
+                    </span>
+                    <div className="broadcast-ranking-progress" aria-hidden="true">
+                      <i style={{ width: Math.max(0, Math.min(100, item.progressoPercentual || 0)) + "%" }} />
+                    </div>
+                    <em>faltam {item.faltamParaPremio}</em>
                   </div>
                 );
               })}
+              {!rankingAoVivo.length && <p>Aguardando a partida e as cartelas confirmadas.</p>}
             </div>
           </article>
         </section>
@@ -1150,7 +1136,13 @@ export default function TvPage() {
           <article className="broadcast-panel broadcast-machine-panel">
             <div className="broadcast-machine-heading">
               <span>Bolinheira oficial</span>
-              <i>{faseAnimacao === "spinning" ? "Sorteando..." : "Ao vivo"}</i>
+              <div className="broadcast-round-meta">
+                <small>{historico.length}<b>/75</b> bolas</small>
+                <i className={"status-" + String(statusRodada).toLowerCase()}>
+                  <b />
+                  {faseAnimacao === "spinning" ? "Sorteando..." : formatarStatus(statusRodada)}
+                </i>
+              </div>
             </div>
             <BingoGlobe3D
               numeroAtual={numeroAtual}
@@ -1159,27 +1151,10 @@ export default function TvPage() {
             />
           </article>
 
-          <article className="broadcast-now-card">
-            <div>
-              <span>Última bola cantada</span>
-              <strong>
-                {numeroAtual ? (
-                  <>
-                    <em>{letraDoNumero(numeroAtual)}</em>
-                    {formatarNumero(numeroAtual)}
-                  </>
-                ) : (
-                  "--"
-                )}
-              </strong>
-            </div>
-            <small>{historico.length ? historico.length + "ª bola da rodada" : "Aguardando sorteio"}</small>
-          </article>
-
           <article className="broadcast-panel broadcast-last-panel">
             <div className="broadcast-last-heading">
-              <span>Últimos números</span>
-              <small>mais recente primeiro</small>
+              <span>Últimas bolas cantadas</span>
+              <small>{historico.length ? historico.length + "ª bola da rodada" : "aguardando sorteio"}</small>
             </div>
             <div className="broadcast-last-balls">
               {Array.from({ length: 8 }, function renderUltima(_, indice) {

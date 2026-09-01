@@ -103,19 +103,16 @@ export default function BingoGlobe3D({
           <div className="bingo-video-globe-loading">Bolinheira indisponível</div>
         )}
 
-        <div className="bingo-video-exit-tube">
-          {mostrarQueda && (
+        {mostrarQueda && (
+          <div className="bingo-video-exit-tube" aria-label={"Bola sorteada " + numeroFormatado}>
             <div
               key={String(numeroExibido) + "-" + faseAnimacao}
               className="bingo-fixed-falling-ball"
             >
               <span>{numeroFormatado}</span>
             </div>
-          )}
-          <div className="bingo-fixed-current-ball">
-            <span>{numeroFormatado}</span>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
