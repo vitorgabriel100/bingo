@@ -3,6 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import useWebSocket from "../hooks/useWebSocket";
 import BingoGlobe3D from "../components/BingoGlobe3D";
+import {
+  MODOS_LOCUCAO,
+  caminhoAviso,
+  caminhoLocucao,
+  modoLocucaoValido,
+} from "../utils/bingoAudio";
 import "./TvPage.css";
 
 const LETRAS_BINGO = ["B", "I", "N", "G", "O"];
@@ -267,11 +273,18 @@ export default function TvPage() {
   const [countdown, setCountdown] = useState(null);
   const [somLiberado, setSomLiberado] = useState(false);
   const [ativandoSom, setAtivandoSom] = useState(false);
+  const [modoLocucao, setModoLocucao] = useState(function carregarModoLocucao() {
+    const salvo = localStorage.getItem("tvModoLocucao");
+    return modoLocucaoValido(salvo) ? salvo : "rodizio";
+  });
 
   const voiceAudioRef = useRef(null);
   const countdownAudioRef = useRef(null);
+  const avisoAudioRef = useRef(null);
   const audioContextRef = useRef(null);
   const somLiberadoRef = useRef(false);
+  const modoLocucaoRef = useRef(modoLocucao);
+  const historicoRef = useRef([]);
   const animandoRef = useRef(false);
   const filaRef = useRef([]);
   const numeroEmAnimacaoRef = useRef(null);
@@ -364,11 +377,15 @@ export default function TvPage() {
       await Promise.allSettled([
         desbloquearElemento(
           voiceAudioRef.current,
-          "/sounds/bingo-voice/B_1.mp3"
+          caminhoLocucao(1, modoLocucao, 1)
         ),
         desbloquearElemento(
           countdownAudioRef.current,
           "/sounds/countdown-vignette.mp3"
+        ),
+        desbloquearElemento(
+          avisoAudioRef.current,
+          caminhoAviso("termino-compras")
         ),
       ]);
 
@@ -442,7 +459,7 @@ export default function TvPage() {
     });
   }
 
-  function tocarLocucaoGravada(numero) {
+  function tocarLocucaoGravada(numero, ordem) {
     return new Promise(function reproduzir(resolve) {
       if (!somLiberadoRef.current || !voiceAudioRef.current) {
         resolve();
@@ -450,24 +467,26 @@ export default function TvPage() {
       }
 
       const audio = voiceAudioRef.current;
+      const caminho = caminhoLocucao(numero, modoLocucaoRef.current, ordem);
+      if (!caminho) {
+        resolve();
+        return;
+      }
       let terminou = false;
+      const limite = window.setTimeout(finalizar, 7000);
       function finalizar() {
         if (terminou) return;
         terminou = true;
+        window.clearTimeout(limite);
         audio.onended = null;
         audio.onerror = null;
         resolve();
       }
 
       audio.pause();
-      audio.src =
-        "/sounds/bingo-voice/" +
-        letraDoNumero(numero) +
-        "_" +
-        Number(numero) +
-        ".mp3";
+      audio.src = caminho;
       audio.volume = 1;
-      audio.playbackRate = 1.12;
+      audio.playbackRate = 1;
       audio.preservesPitch = true;
       audio.onended = finalizar;
       audio.onerror = function usarFallback() {
@@ -477,7 +496,38 @@ export default function TvPage() {
       audio.play().catch(function usarFallback() {
         falarComVozDoNavegador(numero).finally(finalizar);
       });
-      window.setTimeout(finalizar, 7000);
+    });
+  }
+
+  function tocarAvisoGeral(chave) {
+    return new Promise(function reproduzir(resolve) {
+      const caminho = caminhoAviso(chave);
+      if (!somLiberadoRef.current || !avisoAudioRef.current || !caminho) {
+        resolve();
+        return;
+      }
+
+      const audio = avisoAudioRef.current;
+      let terminou = false;
+      const limite = window.setTimeout(finalizar, 10000);
+      function finalizar() {
+        if (terminou) return;
+        terminou = true;
+        window.clearTimeout(limite);
+        audio.onended = null;
+        audio.onerror = null;
+        resolve();
+      }
+
+      audio.pause();
+      audio.src = caminho;
+      audio.currentTime = 0;
+      audio.volume = 1;
+      audio.playbackRate = 1;
+      audio.onended = finalizar;
+      audio.onerror = finalizar;
+      audio.load();
+      audio.play().catch(finalizar);
     });
   }
 
@@ -488,6 +538,7 @@ export default function TvPage() {
     setStatusRodada("AGUARDANDO");
     setNumeroAtual(null);
     setNumeroAnimado(null);
+    historicoRef.current = [];
     setHistorico([]);
     setPremioAtual("PRIMEIRA_LINHA");
     setPremiacao(PREMIACAO_INICIAL);
@@ -515,6 +566,7 @@ export default function TvPage() {
         .map(Number)
         .filter(Number.isFinite);
       const semRepeticao = Array.from(new Set(numeros));
+      historicoRef.current = semRepeticao;
       setHistorico(semRepeticao);
       const ultimo = semRepeticao.length
         ? semRepeticao[semRepeticao.length - 1]
@@ -592,9 +644,11 @@ export default function TvPage() {
     contagemCanceladaRef.current = false;
     setNumeroAtual(null);
     setNumeroAnimado(null);
+    historicoRef.current = [];
     setHistorico([]);
     setFaseAnimacao("countdown");
-    setMensagem("Rodada iniciada. Boa sorte a todos!");
+    setMensagem("Compras encerradas. A rodada vai começar!");
+    tocarAvisoGeral("termino-compras");
 
     const musica = countdownAudioRef.current;
     if (somLiberadoRef.current && musica) {
@@ -660,9 +714,11 @@ export default function TvPage() {
       tocarEfeitoQueda();
       await esperar(720);
 
-      setHistorico(function adicionar(anterior) {
-        return anterior.includes(valor) ? anterior : anterior.concat(valor);
-      });
+      const historicoAtualizado = historicoRef.current.includes(valor)
+        ? historicoRef.current
+        : historicoRef.current.concat(valor);
+      historicoRef.current = historicoAtualizado;
+      setHistorico(historicoAtualizado);
       setFaseAnimacao("revealed");
       setMensagem(
         (NOMES_PREMIO[premio] || NOMES_PREMIO[premioAtualRef.current]) +
@@ -671,7 +727,10 @@ export default function TvPage() {
           " " +
           formatarNumero(valor)
       );
-      await tocarLocucaoGravada(valor);
+      await tocarLocucaoGravada(
+        valor,
+        Math.max(1, historicoAtualizado.indexOf(valor) + 1)
+      );
       await esperar(180);
       setFaseAnimacao("idle");
     } finally {
@@ -732,6 +791,7 @@ export default function TvPage() {
 
     if (event.type === "ROUND_CREATED") {
       aplicarDadosRodada(event);
+      historicoRef.current = [];
       setHistorico([]);
       setNumeroAtual(null);
       setNumeroAnimado(null);
@@ -784,6 +844,7 @@ export default function TvPage() {
       setFaseAnimacao("idle");
       contagemCanceladaRef.current = true;
       filaRef.current = [];
+      tocarAvisoGeral("encerrado");
     }
   };
 
@@ -798,7 +859,8 @@ export default function TvPage() {
     sessaoIdRef.current = sessaoId;
     rodadaIdRef.current = rodadaId;
     premioAtualRef.current = premioAtual;
-  }, [somLiberado, sessaoId, rodadaId, premioAtual]);
+    modoLocucaoRef.current = modoLocucao;
+  }, [somLiberado, sessaoId, rodadaId, premioAtual, modoLocucao]);
 
   useEffect(function atualizarRankingAoVivo() {
     let ativo = true;
@@ -927,9 +989,11 @@ export default function TvPage() {
   useEffect(function limparAoSair() {
     const voiceAudio = voiceAudioRef.current;
     const countdownAudio = countdownAudioRef.current;
+    const avisoAudio = avisoAudioRef.current;
     return function limpar() {
       if (voiceAudio) voiceAudio.pause();
       if (countdownAudio) countdownAudio.pause();
+      if (avisoAudio) avisoAudio.pause();
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       if (audioContextRef.current) {
         audioContextRef.current.close();
@@ -992,6 +1056,7 @@ export default function TvPage() {
     <main className={"broadcast-page phase-" + faseAnimacao}>
       <audio ref={voiceAudioRef} preload="auto" />
       <audio ref={countdownAudioRef} preload="auto" />
+      <audio ref={avisoAudioRef} preload="auto" />
 
       {!somLiberado && (
         <div className="broadcast-sound-gate">
@@ -1185,6 +1250,27 @@ export default function TvPage() {
         </div>
 
         <div className="broadcast-footer-actions">
+          <label>
+            <span>Locução</span>
+            <select
+              value={modoLocucao}
+              onChange={function trocarLocucao(event) {
+                const novoModo = event.target.value;
+                if (!modoLocucaoValido(novoModo)) return;
+                localStorage.setItem("tvModoLocucao", novoModo);
+                modoLocucaoRef.current = novoModo;
+                setModoLocucao(novoModo);
+              }}
+            >
+              {MODOS_LOCUCAO.map(function opcaoLocucao(opcao) {
+                return (
+                  <option value={opcao.value} key={opcao.value}>
+                    {opcao.label}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
           {salas.length > 1 && (
             <label>
               <span>Sala</span>

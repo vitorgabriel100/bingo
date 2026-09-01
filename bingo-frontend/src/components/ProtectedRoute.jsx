@@ -10,7 +10,8 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   }
 
   if (allowedRoles?.length && !allowedRoles.includes(user?.perfil)) {
-    return <Navigate to="/dashboard" replace />;
+    const destinoSeguro = user?.perfil === "JOGADOR" ? "/jogador" : "/dashboard";
+    return <Navigate to={destinoSeguro} replace />;
   }
 
   return children;

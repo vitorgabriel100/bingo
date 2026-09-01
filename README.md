@@ -88,7 +88,8 @@ bingo-app
 - **Configurable schedule**: Operators define the title, date/time, prizes, special-event highlight, card limit and sale window for every round.
 - **Online card orders**: Players register, reserve cards on the website and receive the configured Pix instructions.
 - **Payment confirmation**: Operators confirm or cancel pending Pix orders in `/programacao`.
-- **Live TV ranking**: The TV shows the five players closest to the current prize and refreshes after every drawn ball.
+- **Live TV ranking**: The TV shows the three cards closest to the current prize and refreshes after every drawn ball.
+- **TV audio**: Five complete announcer voices can rotate automatically or be selected individually, with eight general announcements in the operator panel.
 
 ## Getting Started
 1. Clone the repository:

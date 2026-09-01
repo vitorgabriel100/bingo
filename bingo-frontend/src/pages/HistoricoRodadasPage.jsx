@@ -1,9 +1,33 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import SalaSelector from "../components/SalaSelector";
 import useSalas from "../hooks/useSalas";
 import api from "../services/api";
+
+function pegarDataBaseRodada(rodada) {
+  return (
+    rodada?.iniciouEm ||
+    rodada?.dataInicio ||
+    rodada?.data_inicio ||
+    rodada?.criadoEm ||
+    rodada?.createdAt ||
+    rodada?.created_at ||
+    null
+  );
+}
+
+function rodadaEhDaData(rodada, data) {
+  if (!data) return true;
+
+  const dataBase = pegarDataBaseRodada(rodada);
+  if (!dataBase) return false;
+
+  const dataObj = new Date(dataBase);
+  if (Number.isNaN(dataObj.getTime())) return false;
+
+  return dataObj.toISOString().slice(0, 10) === data;
+}
 
 export default function HistoricoRodadasPage() {
   const navigate = useNavigate();
@@ -22,6 +46,7 @@ export default function HistoricoRodadasPage() {
   const [rodadaAbertaId, setRodadaAbertaId] = useState(null);
   const [detalhesRodadas, setDetalhesRodadas] = useState({});
   const [carregandoDetalhes, setCarregandoDetalhes] = useState(false);
+  const iniciarTelaRef = useRef(null);
 
   const hoje = new Date().toISOString().slice(0, 10);
   const [dataFiltro, setDataFiltro] = useState(hoje);
@@ -180,18 +205,6 @@ export default function HistoricoRodadasPage() {
     return String(Number(numero)).padStart(2, "0");
   }
 
-  function pegarDataBaseRodada(rodada) {
-    return (
-      rodada?.iniciouEm ||
-      rodada?.dataInicio ||
-      rodada?.data_inicio ||
-      rodada?.criadoEm ||
-      rodada?.createdAt ||
-      rodada?.created_at ||
-      null
-    );
-  }
-
   function pegarInicioRodada(rodada) {
     return (
       rodada?.iniciouEm ||
@@ -250,20 +263,6 @@ export default function HistoricoRodadasPage() {
     }
 
     return `${segundos}s`;
-  }
-
-  function rodadaEhDaData(rodada, data) {
-    if (!data) return true;
-
-    const dataBase = pegarDataBaseRodada(rodada);
-
-    if (!dataBase) return false;
-
-    const dataObj = new Date(dataBase);
-
-    if (Number.isNaN(dataObj.getTime())) return false;
-
-    return dataObj.toISOString().slice(0, 10) === data;
   }
 
   function ordenarRodadas(lista) {
@@ -541,10 +540,14 @@ export default function HistoricoRodadasPage() {
   }
 
   useEffect(() => {
+    iniciarTelaRef.current = iniciarTela;
+  });
+
+  useEffect(() => {
     if (!salaSelecionadaId) return;
     let ativo = true;
     Promise.resolve().then(() => {
-      if (ativo) iniciarTela(salaSelecionadaId);
+      if (ativo) iniciarTelaRef.current?.(salaSelecionadaId);
     });
     return () => {
       ativo = false;

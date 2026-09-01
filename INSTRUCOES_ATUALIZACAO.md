@@ -45,5 +45,4 @@ Com Docker Compose, preencha também `POSTGRES_PASSWORD`, `JWT_SECRET`, `DOMAIN`
 - Operador: entre em `/programacao`, escolha a sala e defina livremente data, hora, prêmios, preços, prazo antecipado, limite de cartelas e se a rodada é especial.
 - Jogador: crie a conta em `/cadastro-jogador`, entre e compre em `/jogador`.
 - Pagamento: o pedido reserva as cartelas por 30 minutos; o operador confirma ou cancela o Pix na tela de programação.
-- TV: abra `/tv` ou `/tv/sala/{salaId}`. O ranking mostra os cinco jogadores mais próximos do prêmio atual e atualiza a cada bola.
-
+- TV: abra `/tv` ou `/tv/sala/{salaId}`. O ranking mostra as três cartelas mais próximas do prêmio atual e atualiza a cada bola.

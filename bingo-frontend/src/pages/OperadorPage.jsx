@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import api from "../services/api";
 import useWebSocket from "../hooks/useWebSocket";
+import { AVISOS_GERAIS, caminhoAviso } from "../utils/bingoAudio";
 
 export default function OperadorPage({ view = "sorteio" }) {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export default function OperadorPage({ view = "sorteio" }) {
 
   const [mostrarModalPremiacao, setMostrarModalPremiacao] = useState(false);
   const [salvandoPremiacao, setSalvandoPremiacao] = useState(false);
+  const [avisoTocando, setAvisoTocando] = useState(null);
 
   const [premiacaoRodada, setPremiacaoRodada] = useState({
     linha: "",
@@ -40,6 +42,10 @@ export default function OperadorPage({ view = "sorteio" }) {
   const timeoutAutoRef = useRef(null);
   const timeoutLiberarSorteioRef = useRef(null);
   const numerosRegistradosRef = useRef(new Set());
+  const avisoAudioRef = useRef(null);
+  const inicializarOperadorRef = useRef(null);
+  const sincronizarRodadaRef = useRef(null);
+  const sortearNumeroRef = useRef(null);
 
   const numeros = Array.from({ length: 75 }, (_, i) => i + 1);
 
@@ -855,7 +861,7 @@ export default function OperadorPage({ view = "sorteio" }) {
     }
   }
 
-  const handleWsMessage = useCallback((event) => {
+  const handleWsMessage = (event) => {
     if (!event?.type) return;
 
     const tiposAtualizacaoPremio = [
@@ -957,7 +963,7 @@ export default function OperadorPage({ view = "sorteio" }) {
       setSorteando(false);
       setMensagem("Rodada encerrada.");
     }
-  }, []);
+  };
 
   useWebSocket({
     sessaoId,
@@ -966,7 +972,7 @@ export default function OperadorPage({ view = "sorteio" }) {
   });
 
   useEffect(() => {
-    async function iniciarTela() {
+    inicializarOperadorRef.current = async function iniciarTela() {
       try {
         const sala = await carregarSalas();
 
@@ -985,17 +991,25 @@ export default function OperadorPage({ view = "sorteio" }) {
           error?.response?.data?.mensagem || "Erro ao carregar as salas."
         );
       }
-    }
+    };
+  });
 
-    iniciarTela();
+  useEffect(() => {
+    inicializarOperadorRef.current?.();
   }, []);
+
+  useEffect(() => {
+    sincronizarRodadaRef.current = function sincronizarRodada(idRodada) {
+      carregarHistorico(idRodada);
+      carregarDadosRodada(idRodada);
+    };
+  });
 
   useEffect(() => {
     let ativo = true;
     Promise.resolve().then(() => {
       if (!ativo) return;
-      carregarHistorico(rodadaId);
-      carregarDadosRodada(rodadaId);
+      sincronizarRodadaRef.current?.(rodadaId);
     });
     return () => {
       ativo = false;
@@ -1304,6 +1318,10 @@ export default function OperadorPage({ view = "sorteio" }) {
     }
   }
 
+  useEffect(() => {
+    sortearNumeroRef.current = sortearNumero;
+  });
+
   async function novaRodada() {
     if (!premiacaoValida()) {
       setMensagem("Preencha todos os valores da premiação.");
@@ -1441,7 +1459,7 @@ export default function OperadorPage({ view = "sorteio" }) {
 
     if (!autoSorteio) return;
     if (statusRodada !== "EM_ANDAMENTO") return;
-    if (rodadaPausada(statusRodada)) return;
+    if (String(statusRodada || "").toUpperCase() === "PAUSADA") return;
     if (!sorteioLiberado) return;
     if (!rodadaId) return;
     if (sorteando) return;
@@ -1452,7 +1470,7 @@ export default function OperadorPage({ view = "sorteio" }) {
     }
 
     timeoutAutoRef.current = setTimeout(() => {
-      sortearNumero();
+      sortearNumeroRef.current?.();
     }, INTERVALO_AUTO_MS);
 
     return () => {
@@ -1470,6 +1488,7 @@ export default function OperadorPage({ view = "sorteio" }) {
   ]);
 
   useEffect(() => {
+    const avisoAudio = avisoAudioRef.current;
     return () => {
       if (timeoutAutoRef.current) {
         clearTimeout(timeoutAutoRef.current);
@@ -1477,6 +1496,12 @@ export default function OperadorPage({ view = "sorteio" }) {
 
       if (timeoutLiberarSorteioRef.current) {
         clearTimeout(timeoutLiberarSorteioRef.current);
+      }
+
+      if (avisoAudio) {
+        avisoAudio.pause();
+        avisoAudio.onended = null;
+        avisoAudio.onerror = null;
       }
     };
   }, []);
@@ -1519,6 +1544,40 @@ export default function OperadorPage({ view = "sorteio" }) {
     );
   }
 
+  function pararAvisoGeral() {
+    const audio = avisoAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.onended = null;
+      audio.onerror = null;
+    }
+    setAvisoTocando(null);
+  }
+
+  function tocarAvisoGeral(chave) {
+    const caminho = caminhoAviso(chave);
+    const audio = avisoAudioRef.current;
+    if (!caminho || !audio) return;
+
+    audio.pause();
+    audio.src = caminho;
+    audio.currentTime = 0;
+    audio.volume = 1;
+    audio.playbackRate = 1;
+    audio.onended = () => setAvisoTocando(null);
+    audio.onerror = () => {
+      setAvisoTocando(null);
+      setMensagem("Não foi possível reproduzir esse aviso neste aparelho.");
+    };
+    setAvisoTocando(chave);
+    audio.load();
+    audio.play().catch(() => {
+      setAvisoTocando(null);
+      setMensagem("Clique novamente para liberar o áudio do operador.");
+    });
+  }
+
   return (
     <Layout
       title={view === "configuracoes" ? "Preparação da rodada" : "Rodada ao vivo"}
@@ -1539,6 +1598,7 @@ export default function OperadorPage({ view = "sorteio" }) {
       }
     >
       <div className="operator-app-page">
+        <audio ref={avisoAudioRef} preload="none" />
         <header className="operator-app-header">
           <div>
             <span>Painel do Operador</span>
@@ -1585,8 +1645,9 @@ export default function OperadorPage({ view = "sorteio" }) {
         </header>
 
         {view === "sorteio" && (
-          <main className="operator-app-grid">
-            <section className="operator-app-card operator-app-board-card">
+          <>
+            <main className="operator-app-grid">
+              <section className="operator-app-card operator-app-board-card">
               <div className="operator-app-card-title">
                 <span>Cartela de números</span>
                 <strong>
@@ -1607,9 +1668,9 @@ export default function OperadorPage({ view = "sorteio" }) {
                   </div>
                 ))}
               </div>
-            </section>
+              </section>
 
-            <aside className="operator-app-side">
+              <aside className="operator-app-side">
               <section className="operator-app-card operator-current-app-card">
                 <span className="operator-app-label">Bola atual</span>
 
@@ -1709,8 +1770,44 @@ export default function OperadorPage({ view = "sorteio" }) {
                   </button>
                 </div>
               </section>
-            </aside>
-          </main>
+              </aside>
+            </main>
+
+            <section className="operator-app-card operator-audio-card">
+              <div className="operator-app-card-title">
+                <span>Áudios da TV</span>
+                <strong>
+                  {avisoTocando
+                    ? AVISOS_GERAIS.find((aviso) => aviso.value === avisoTocando)
+                        ?.label
+                    : "Pronto"}
+                </strong>
+              </div>
+
+              <div className="operator-audio-grid">
+                {AVISOS_GERAIS.map((aviso) => (
+                  <button
+                    type="button"
+                    key={aviso.value}
+                    className={avisoTocando === aviso.value ? "active" : ""}
+                    aria-pressed={avisoTocando === aviso.value}
+                    onClick={() => tocarAvisoGeral(aviso.value)}
+                  >
+                    <span aria-hidden="true">♪</span>
+                    {aviso.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="operator-audio-stop"
+                  onClick={pararAvisoGeral}
+                  disabled={!avisoTocando}
+                >
+                  Parar áudio
+                </button>
+              </div>
+            </section>
+          </>
         )}
 
         {view === "configuracoes" && (

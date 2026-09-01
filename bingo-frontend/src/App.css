@@ -6691,6 +6691,55 @@ button:disabled {
   padding: 14px;
 }
 
+.operator-audio-card {
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.operator-audio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+
+.operator-audio-grid button {
+  min-height: 50px;
+  padding: 10px 12px;
+  border: 1px solid rgba(250, 204, 21, 0.25);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8fafc;
+  font-weight: 1000;
+}
+
+.operator-audio-grid button span {
+  margin-right: 7px;
+  color: #facc15;
+}
+
+.operator-audio-grid button.active {
+  background: linear-gradient(180deg, #fde68a 0%, #fbbf24 52%, #d97706 100%);
+  color: #1f1300;
+  border-color: rgba(255, 245, 194, 0.9);
+  box-shadow: 0 0 18px rgba(245, 196, 82, 0.38);
+}
+
+.operator-audio-grid button.active span {
+  color: #1f1300;
+}
+
+.operator-audio-grid .operator-audio-stop {
+  background: rgba(239, 68, 68, 0.14);
+  color: #fecaca;
+  border-color: rgba(252, 165, 165, 0.35);
+}
+
+.operator-audio-grid button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .operator-app-actions-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -7009,6 +7058,10 @@ button:disabled {
     grid-template-columns: 1fr 1fr;
   }
 
+  .operator-audio-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .operator-config-values,
   .operator-config-payments {
     grid-column: auto;
@@ -7042,6 +7095,7 @@ button:disabled {
   }
 
   .operator-app-actions-grid,
+  .operator-audio-grid,
   .operator-history-summary,
   .operator-history-actions,
   .operator-prize-modal-actions {
